@@ -1,0 +1,33 @@
+{
+  "name": "beyond-the-chatbot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A system beyond chat never emits a sentence it cannot back: every claim is ruled entailed, weakened, contradicted, ungrounded or conflicted against fixed evidence, so a draft that says more than its evidence entails is cut back to exactly what the evidence does entail.",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit && tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "demo:order-desk": "node --import ./scripts/register-ts-loader.mjs scripts/demo-order-desk.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.11.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}
