@@ -311,7 +311,7 @@ describe("why the oracle widens its window: the rule it replaced is wrong, and t
     expect(sumForward(ops(...operands))).toStrictEqual(ext(-3, 0));
   });
 
-  it("an UNBOUNDED side that never reaches the window's edge is still unbounded: backward from [null, 5] with the others [0, 0] and [1, 1]", () => {
+  it("an UNBOUNDED side that never reaches the window's edge is still unbounded: backward from [null, 5] with the operands [0, 0] (the one asked about, so ignored) and [1, 1]", () => {
     const result = ext(null, 5);
     const operands = [ext(0, 0), ext(1, 1)];
     // The values are (a number up to 5) minus 1, so the least value is the window's edge minus 1: past the edge, never on it.

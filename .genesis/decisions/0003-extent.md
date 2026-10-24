@@ -1,7 +1,9 @@
 # ADR 0003 — M3 extent algebra: one door for an untrusted extent, six pure functions, and what was and was not checked
 
 - **Date:** 2026-10-24
-- **Status:** proposed — written by the builder, not yet verified by an independent L4 pass
+- **Status:** proposed — written by the builder; revised after the first independent L4 pass rejected `a0a33e2` (read-once
+  was pinned for some first reads only, three ADR sentences claimed more than was shown, one oracle check had never
+  been shown to fire); this version has not been re-verified
 - **Phase / milestone:** M3 (BUILD, EXTENT) — `lib/extent/**` and this file
 
 Every number below was produced by a run in this session. Sabotage results are quoted as "N failed" plus the
@@ -43,9 +45,21 @@ by every one of `"x"`, `NaN`, `7.5`, `2**41`, `undefined`, an object, `3` and `n
 `NaN`, `Infinity`, a string, `undefined`, an object and `2**40 + 1` in both signs in the second (each followed by `null`,
 `0`, `-0`, `3`, `-3`, `2**40` and `-(2**40)`); and throwing reads (an `Error`, a string, `null`, `undefined`, a symbol, an object
 whose own getters throw, a throwing Proxy trap, a revoked Proxy). Re-reading `lo` when the first read was a number:
-**10 failed** (`hostile-input.test.ts`). Reading `hi` before `lo`: **6 failed** (`hostile-input.test.ts`). The
+**12 failed** (`hostile-input.test.ts`). Reading `hi` before `lo`: **6 failed** (`hostile-input.test.ts`). The
 returned extent is plain data (own value properties, ordinary prototype), so a getter on the input cannot follow it
 out.
+
+**A gap the first version of these probes had.** Their first reads were all of one kind, and an independent verifier
+found ten edits of `checkExtent` that left the whole suite green: five that re-read `hi` and two that re-read `lo`
+only for a first read of another kind (on `hi`: `null`, `0`, a negative, a finite fraction, or `null` together with a
+`null` `lo`; on `lo`: `0`, `NaN` or an infinity), and three that take the returned copy from a second read (`hi` when
+the checked `hi` is `null` or negative, `lo` when the checked `lo` is `null`). The `null` ones are the serious ones: with `{ lo: 1, get hi() {
+null, then "not-a-number" } }` the edited code returned `hi` equal to `"not-a-number"` after two reads of `hi`, a value
+that was never checked. I reproduced all ten green on the previous head (0 failed over the whole suite each) and that
+result for `L4-T01`; the table described above is what closed them, and they are the `L4-` rows of the ledger. A wider
+family (a re-read, or a copy from the raw object, for each of twelve classes of first value on each side: 34 edits)
+was also run against `hostile-input.test.ts` and `check-extent.test.ts` alone and every one went red; that run is in
+the scratch directory, not in the ledger.
 
 **Choices the plan does not make, made and pinned:**
 
@@ -54,7 +68,7 @@ out.
   before the range is looked at, and so is any value that is both (`2**40 + 0.5`).
 - **A missing side is refused, never read as unbounded.** `undefined` is not an integer, so `{ hi: 3 }` is
   `bound-not-an-integer` on `lo`. `null` is the only spelling of "unbounded", and nothing turns it into `0`
-  (making it `0`: **18 failed**, `boundaries`, `check-extent`, `meet-subset`, `sum-exactness`).
+  (making it `0`: **20 failed**, `boundaries`, `check-extent`, `hostile-input`, `meet-subset`, `sum-exactness`).
 - **An array is `not-an-object`.** It is an object in JavaScript but not the record `Extent` is; without the
   special case `[1, 2]` would be reported as a missing `lo`, which blames the wrong thing. Removing it: **4 failed**
   (`check-extent` 3, `hostile-input` 1).
@@ -64,7 +78,7 @@ out.
   with a throwing getter, is never touched. A JSON-parsed own `"__proto__"` key is data and cannot reach the
   result. With `Object.prototype.lo` and `.hi` set, `{}` is accepted: I tried it once in a scratch script and it is
   not a test, because it would mean mutating a global.
-- **`-0` becomes `0`** (`value === 0 ? 0 : value`). Without it: **3 failed** (`check-extent`).
+- **`-0` becomes `0`** (`value === 0 ? 0 : value`). Without it: **5 failed** (`check-extent` 3, `hostile-input` 2).
 
 **What this does not show.** The plan cites adaptive-agent's ADR 0003 Decision 4 as the technique for read-once; I
 did not read that document and built the technique from the plan's one-line description. The probes above are the
@@ -147,8 +161,8 @@ largest finite bound in the case; the bound is read at that window and again at 
 same at both; an unbounded side runs to the new edge. The plan (section 8, defect 9) records that stopping at the
 edge got 24,276 of 79,764 checks wrong in its first harness. That rule is kept as `naiveSum` in `fixtures.ts` so
 that it can be shown wrong here: two hand-picked cases (a finite bound that lands on the edge, forward
-`[-2, 0] + [-1, 0]`; an unbounded side that never reaches it, backward from `[null, 5]` with the others `[0, 0]` and
-`[1, 1]`) and the same rule over the same grids, which gets **2750 of 3353 forward and 128236 of 164291 backward
+`[-2, 0] + [-1, 0]`; an unbounded side that never reaches it, backward from `[null, 5]` with the operands `[0, 0]`,
+the one asked about and so ignored, and `[1, 1]`) and the same rule over the same grids, which gets **2750 of 3353 forward and 128236 of 164291 backward
 wrong** against the widening oracle (the number is printed by the same command; only "not zero" is asserted). The
 plan names its rule as "the oracle reaches its cap" without saying how a sum reaches a cap; this is my reading of
 it, so its count need not match, and I do not claim to have reproduced 24,276.
@@ -165,8 +179,8 @@ inference from the numbers; I did not see the model.
 ## Decision 6 — the boundaries
 
 `checkExtent` accepts `±MAX_MAGNITUDE` and refuses `±(MAX_MAGNITUDE + 1)` on each side, naming it; the test first
-shows `MAX_MAGNITUDE + 1` is a distinct exactly representable integer. `>` to `>=` there: **3 failed**
-(`boundaries` 2, `check-extent` 1).
+shows `MAX_MAGNITUDE + 1` is a distinct exactly representable integer. `>` to `>=` there: **5 failed**
+(`boundaries` 2, `check-extent` 1, `hostile-input` 2).
 
 **The 63-operand worst case, as I read it.** The plan says "a 63-operand-deep worst case, cross-checked against
 `BigInt`" without saying what "deep" is. `MAX_FIELDS` is 64, and 63 operands plus their result is 64 fields, the most
@@ -201,10 +215,13 @@ fails loudly (an import that does not resolve) rather than passing.
 
 Each edit was applied to the committed source as an exact-match replacement that was first checked to occur once,
 the whole suite was run, the file was restored with `git checkout -- <file>`, and `git status --porcelain` was empty
-afterwards. All 30 edits turned the suite red; none left it green, and every failing test is under `lib/extent`
-(no M1 or M2 test failed). Some files fail without testing the edited function directly, because they call it to
+afterwards. All 40 edits turned the suite red; none left it green, and every failing test is under `lib/extent`
+(no M1 or M2 test failed). The counts are from the final tests: they were measured again after the read-once table
+and the hole-detector tests were added, and six rows moved (`P2e`, `M01`, `M02`, `M03`, `M12`, `M13`, each by the
+`hostile-input` tests the table added). Some files fail without testing the edited function directly, because they call it to
 build their input (for example `checkExtent` inside the grid tests). The plan's four are the first ten rows (two
-variants for the swap, five for null-as-0, two for the boundary, one for `unmetSides`); mine are `M01` to `M20`.
+variants for the swap, five for null-as-0, two for the boundary, one for `unmetSides`); mine are `M01` to `M20`; the
+last ten are the verifier's (`L4-` plus its own label), each of which was green before the read-once table.
 
 | # | Edit | Result |
 |---|---|---|
@@ -214,13 +231,13 @@ variants for the swap, five for null-as-0, two for the boundary, one for `unmetS
 | P2b | `isSubset`: `satisfiesLo` reads `null` as `0` | **19 failed**: `meet-subset` 9, `sum-exactness` 1, `unmet` 9 |
 | P2c | `sumForward`: a `null` lower bound adds `0` | **10 failed**: `boundaries` 1, `sum-exactness` 9 |
 | P2d | `sumBackward`: a `null` other `hi` subtracts `0` from `lo` | **11 failed**: `boundaries` 1, `sum-exactness` 10 |
-| P2e | `checkExtent`: `null` becomes the bound `0` | **18 failed**: `boundaries` 1, `check-extent` 7, `meet-subset` 2, `sum-exactness` 8 |
+| P2e | `checkExtent`: `null` becomes the bound `0` | **20 failed**: `boundaries` 1, `check-extent` 7, `hostile-input` 2, `meet-subset` 2, `sum-exactness` 8 |
 | P3a | `isSubset`: `>=` becomes `>` on the lower bound | **23 failed**: `meet-subset` 11, `sum-exactness` 1, `unmet` 11 |
 | P3b | `isSubset`: `<=` becomes `<` on the upper bound | **23 failed**: `meet-subset` 11, `sum-exactness` 1, `unmet` 11 |
 | P4 | `unmetSides` always reports both sides | **42 failed**: `unmet` 42 |
-| M01 | `checkExtent` keeps `-0` | **3 failed**: `check-extent` 3 |
-| M02 | `checkExtent` re-reads `raw.lo` when the first read was a number | **10 failed**: `hostile-input` 10 |
-| M03 | `checkExtent`: `> MAX_MAGNITUDE` becomes `>=` | **3 failed**: `boundaries` 2, `check-extent` 1 |
+| M01 | `checkExtent` keeps `-0` | **5 failed**: `check-extent` 3, `hostile-input` 2 |
+| M02 | `checkExtent` re-reads `raw.lo` when the first read was a number | **12 failed**: `hostile-input` 12 |
+| M03 | `checkExtent`: `> MAX_MAGNITUDE` becomes `>=` | **5 failed**: `boundaries` 2, `check-extent` 1, `hostile-input` 2 |
 | M04 | `sumBackward`: `index >= length` becomes `index > length` | **3 failed**: `sum-exactness` 3 |
 | M05 | `checkExtent`: `lo > hi` becomes `lo >= hi` (rejects points) | **17 failed**: `boundaries` 2, `check-extent` 6, `meet-subset` 1, `sum-exactness` 8 |
 | M06 | `meet` never returns `undefined` | **7 failed**: `meet-subset` 7 |
@@ -229,8 +246,8 @@ variants for the swap, five for null-as-0, two for the boundary, one for `unmetS
 | M09 | `sumBackward` does not skip `operands[index]` | **17 failed**: `boundaries` 4, `sum-exactness` 13 |
 | M10 | `sumForward` adds the operands' `lo` into the upper bound | **16 failed**: `boundaries` 4, `sum-exactness` 12 |
 | M11 | `checkExtent` no longer refuses an array | **4 failed**: `check-extent` 3, `hostile-input` 1 |
-| M12 | `checkExtent`: `Number.isInteger` becomes `Number.isFinite` | **10 failed**: `check-extent` 7, `hostile-input` 3 |
-| M13 | `checkExtent` returns the object it was given, not a copy | **18 failed**: `check-extent` 8, `hostile-input` 10 |
+| M12 | `checkExtent`: `Number.isInteger` becomes `Number.isFinite` | **12 failed**: `check-extent` 7, `hostile-input` 5 |
+| M13 | `checkExtent` returns the object it was given, not a copy | **20 failed**: `check-extent` 8, `hostile-input` 12 |
 | M14 | `checkExtent` names `hi` for a bad `lo` | **28 failed**: `boundaries` 3, `check-extent` 23, `hostile-input` 2 |
 | M15 | `checkExtent` rethrows instead of `hostile-input` | **17 failed**: `hostile-input` 17 |
 | M16 | `checkExtent` reads `hi` before `lo` | **6 failed**: `hostile-input` 6 |
@@ -238,31 +255,59 @@ variants for the swap, five for null-as-0, two for the boundary, one for `unmetS
 | M18 | `sumForward`: a `null` upper bound adds `0` | **9 failed**: `boundaries` 1, `sum-exactness` 8 |
 | M19 | `meet`: `tighterHi` takes the larger bound | **23 failed**: `meet-subset` 22, `sum-exactness` 1 |
 | M20 | `isSubset`: an unbounded inner upper side counts as inside a bounded outer one | **21 failed**: `meet-subset` 9, `unmet` 12 |
+| L4-V07 | `checkExtent` re-reads `hi` when the first read was `null` | **3 failed**: `hostile-input` 3 |
+| L4-R01 | `checkExtent` re-reads `hi` when the first read was `0` | **1 failed**: `hostile-input` 1 |
+| L4-R02 | `checkExtent` re-reads `hi` when the first read was a negative number | **2 failed**: `hostile-input` 2 |
+| L4-R04 | `checkExtent` re-reads `lo` when the first read was `0` | **1 failed**: `hostile-input` 1 |
+| L4-R09 | `checkExtent` re-reads `lo` when the first read was `NaN` or an infinity | **1 failed**: `hostile-input` 1 |
+| L4-R11 | `checkExtent` re-reads `hi` when the first read was a finite non-integer | **1 failed**: `hostile-input` 1 |
+| L4-R13 | `checkExtent` re-reads `hi` when both first reads were `null` | **2 failed**: `hostile-input` 2 |
+| L4-T01 | `checkExtent` takes `hi` of the returned copy from a second read when the checked `hi` is `null` | **2 failed**: `hostile-input` 2 |
+| L4-T02 | `checkExtent` takes `lo` of the returned copy from a second read when the checked `lo` is `null` | **2 failed**: `hostile-input` 2 |
+| L4-T05 | `checkExtent` takes `hi` of the returned copy from a second read when the checked `hi` is negative | **1 failed**: `hostile-input` 1 |
 
 The plan quotes "738 failing" for the always-both-sides edit on its throwaway model, counted in instances out of
 2,000. P4's 42 is tests in this repository. The two are not comparable and neither confirms the other. The edits
 are described in words; the script that applied them (an exact-match replace and the restore) lives in the
-session's scratch directory, not in the repository.
+session's scratch directory, not in the repository. The oracle's own detectors are not in this table because they
+are edits of test support, not of the library: replacing the hole predicate by `false`, replacing its call site by
+`false`, changing it to `>` or to an off-by-one, and removing each of the three counters of `Tally`, each went red in
+`sum-exactness.test.ts`: the call site replaced by `false` 1 failed; the predicate replaced by `false` 2, changed to `>`
+2, changed to an off-by-one 10; each of the three counters removed (holes, invalid results, mismatches) 1 failed
+apiece; and `oracleSum` ignoring its enumeration parameter 1 failed. Replacing the call site alone is the case a test
+of the predicate by itself would have missed.
 
 ## Timing
 
-Measured with `vitest run --reporter=json` (per-test durations), three runs without load and three with six
-`yes > /dev/null` processes running, then one `npm test` under the same load; the six processes were killed
-afterwards and `pgrep -x yes` found none. The machine was not idle to begin with: its load average was roughly 8 to
-12 on 10 cores when the batches started, because of other work on it.
+Measured with `vitest run --reporter=json` (per-test durations). The machine was busy throughout, because of other
+work on it, and busier than in the first round of measurements: its load average (1, 5 and 15 minutes) was 10, 12 and
+10 when the first batch started, 12 at the start of the second, and 16 to 19 in the last runs, on 10 cores. The
+second batch ran with six `yes > /dev/null` processes added; they were killed afterwards and `pgrep -x yes` found none.
 
-| | slowest `lib/extent` test | slowest `lib/extent` file (wall) | whole suite (`npm test`) |
-|---|---|---|---|
-| no extra load, 3 runs | 335, 439 and 401 ms (`sum-exactness`) | about 1.6 to 2.3 s (`sum-exactness`) | 10.0 s (one run, after the loaded ones) |
-| six `yes` running, 3 runs | 684, 474 and 582 ms (`sum-exactness`) | about 3.0 to 3.4 s (`sum-exactness`) | 13.7 s (one run) |
+| Run | Slowest `lib/extent` test | Slowest `lib/extent` file (wall) |
+|---|---|---|
+| whole suite, ambient load, run 1 | 1061 ms (`architecture`) | 4815 ms (`sum-exactness`) |
+| whole suite, ambient load, run 2 | 963 ms (`architecture`) | 3783 ms (`sum-exactness`) |
+| whole suite, ambient load, run 3 | 814 ms (`sum-exactness`) | 4494 ms (`sum-exactness`) |
+| whole suite, six `yes` added, run 1 | 1164 ms (`architecture`) | 6896 ms (`sum-exactness`) |
+| whole suite, six `yes` added, run 2 | 1104 ms (`architecture`) | 5562 ms (`sum-exactness`) |
+| whole suite, six `yes` added, run 3 | 957 ms (`architecture`) | 5100 ms (`sum-exactness`) |
+| `lib/extent` alone, ambient load, run 1 | 118 ms (`sum-exactness`) | 707 ms (`sum-exactness`) |
+| `lib/extent` alone, ambient load, run 2 | 180 ms (`sum-exactness`) | 787 ms (`sum-exactness`) |
+| `lib/extent` alone, ambient load, run 3 | 137 ms (`sum-exactness`) | 1135 ms (`sum-exactness`) |
 
-Vitest's default timeout is 5 s; no timeout was raised anywhere (`vitest.config.ts` is the scaffold's and was not
-touched). Two things were slower than I wanted and were fixed rather than tolerated: the two lattice-law loops over
-all 34³ triples called `expect` on every comparison (about 340 ms for the file's slowest test in the suite, about
-1 s under load; collecting the failures and asserting once made the slowest test in that file 6 ms when run on its
-own), and a first version of the "wrong rule" measurement ran all grids in one test (1.0 to 1.8 s in the suite, 1.2 to
-2.6 s under load, over three runs each) and is now one test per index. The slowest test in the whole suite is M1's
-`never-sabotage.test.ts` (about 1.0 to 1.2 s in the final runs).
+`npm test` took 19.25 s with the six `yes` running and 16.26 s straight afterwards. The earlier round, on a quieter
+machine, had 10.0 s and 13.7 s for the same two situations on the previous tests, so the whole-suite figures above
+say more about the machine than about the tests. A file's wall time is many tests plus the wait for a worker; vitest's
+default timeout (5 s) applies to one test, and the slowest `lib/extent` test in any whole-suite run above is 1164 ms.
+No timeout was raised anywhere (`vitest.config.ts` is the scaffold's and was not touched).
+
+Two things were slower than I wanted when they were written and were fixed rather than tolerated; the figures are from
+then, on the earlier tests: the two lattice-law loops over all 34³ triples called `expect` on every comparison (about
+340 ms for the file's slowest test in the suite, about 1 s under load; collecting the failures and asserting once made
+the slowest test in that file 6 ms when run on its own), and a first version of the "wrong rule" measurement ran all
+grids in one test (1.0 to 1.8 s in the suite, 1.2 to 2.6 s under load, over three runs each) and is now one test per
+index. The slowest test in the whole suite in the runs above is M1's `never-sabotage.test.ts` (1686 to 1959 ms).
 
 ## Rejected alternatives
 
@@ -296,15 +341,16 @@ own), and a first version of the "wrong rule" measurement ran all grids in one t
   operands. Four or more operands are covered only by the `BigInt` boundary cases, not by enumeration.
 - That read-once covers every way of observing an input (Decision 1).
 - That anything forces a later layer to call `checkExtent`: this milestone provides the door; M4 and M5 must use it.
-- That the functions behave on a value `checkExtent` would refuse (Decision 2).
-- That the sabotage ledger covers every possible edit: it shows 30 edits go red, not that no edit goes green.
+- That the functions behave on a value `checkExtent` would refuse, or on an `Extent` whose getter throws (Decision 2).
+- That a sum is exact beyond 8,192 operands (Decision 2): nothing in this layer limits the operand count.
+- That the sabotage ledger covers every possible edit: it shows 40 edits go red, not that no edit goes green.
 - That timing holds on another machine, or under a load other than the one used.
 - That CI passes on the pushed branch: see the pull request.
 
 ## Falsifiability log
 
 ```
-git diff main -- . ':!lib/extent' ':!.genesis/decisions/0003-extent.md'      # empty
+git diff origin/main...m3-extent -- . ':!lib/extent' ':!.genesis/decisions/0003-extent.md'      # empty (three dots: main has moved)
 npm ci && ls node_modules/@rolldown/binding-darwin-arm64
 npm run typecheck
 npm test                                  # M1, M2 and M3 together
