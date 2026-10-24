@@ -20,6 +20,7 @@ const EXPECTED_DIRECTIVES: Readonly<Record<string, number>> = {
   "exhaustiveness.proofs.ts": 6,
   "non-empty-array.proofs.ts": 5,
   "required.proofs.ts": 175,
+  "residuals.proofs.ts": 0,
   "schema-forbidden.proofs.ts": 14,
 };
 
