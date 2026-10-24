@@ -252,7 +252,9 @@ Non-test sources under `lib/**` and `domains/**`; the plan's ten identifiers, `M
 it does not parse (`.tsx`, `.js`, `.mjs`, ...). It over-reports on purpose (a function called `process` is flagged;
 a comment or string mentioning a name is not). **Limits, all pinned as files the guard is expected NOT to flag:**
 a computed name (`globalThis["Da"+"te"]`), a variable name, `eval`, `new Function`, `Reflect.get(globalThis, ...)`,
-an alias of `Math`, `Math` destructured in a parameter default, and `Intl` / `toLocaleString`. The plan names two
+an alias variable of `Math` (`const M = Math` or `const M = globalThis.Math`), `Math` destructured in a parameter
+default, and `Intl` / `toLocaleString`. (`globalThis.Math.random()` and `globalThis["Math"].random()` ARE caught; a
+probe for that bypass after the first push found it open and it was closed.) The plan names two
 of these (`globalThis["Da"+"te"]`, `eval`); the rest were found by writing the fixtures. Not built, on purpose: a
 name-scan for "confidence"/"score"/"threshold" (plan: that class of scanner cost control-tower five rounds; the
 absence of a scalar is proved behaviourally in M4).

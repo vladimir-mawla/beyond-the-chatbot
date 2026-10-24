@@ -21,7 +21,8 @@ import { isTestPath, walk } from "./module-graph.js";
  * source under `lib/**` and `domains/**`. It fails on:
  *   - the identifiers `Date`, `performance`, `crypto`, `fetch`, `XMLHttpRequest`, `WebSocket`, `process`,
  *     `setTimeout`, `setInterval`, `queueMicrotask`;
- *   - `Math.random` (as `Math.random`, as `Math["random"]`, or destructured: `const { random } = Math`);
+ *   - `Math.random` (as `Math.random`, as `Math["random"]`, or destructured: `const { random } = Math`), where
+ *     `Math` may also be a PROPERTY named `Math` (`globalThis.Math.random()`, `globalThis["Math"].random()`);
  *   - a dynamic `import()`;
  *   - `localeCompare`;
  *   - a banned name written as a string key: `globalThis["Date"]`, `x["localeCompare"]`;
@@ -33,8 +34,9 @@ import { isTestPath, walk } from "./module-graph.js";
  *  - A name built at run time: `globalThis["Da" + "te"]`, `globalThis[name]`. (The plan's named limit.)
  *  - `eval(...)`, `new Function(...)`, `Reflect.get(globalThis, "Date")` and any other way of reaching a global
  *    from a string. (The plan's named limit.)
- *  - An ALIAS of `Math`: `const M = Math; M.random()` is not seen; only `Math` written directly is. Destructuring
- *    `Math` in a PARAMETER default (`function f({ random } = Math)`) is not seen either.
+ *  - An ALIAS of `Math`: `const M = Math; M.random()` and `const M = globalThis.Math; M.random()` are not seen;
+ *    only `Math` written directly at the point of use (or as a property name, `globalThis.Math.random()`) is.
+ *    Destructuring `Math` in a PARAMETER default (`function f({ random } = Math)`) is not seen either.
  *  - Any source of nondeterminism that is not in the list: `Intl`, `toLocaleString`, `Symbol` registries,
  *    `WeakRef`, an unstable `sort` comparator, the iteration order of a `Map` built from nondeterministic input,
  *    `structuredClone`, `import.meta`. The list is the plan's; widening it is a decision, not a fix.
@@ -87,6 +89,15 @@ const BANNED = new Set(BANNED_IDENTIFIERS);
 /** Extensions of code the parser here does not read; a file with one under `lib/` or `domains/` is itself a violation. */
 const UNSCANNED_CODE = [".tsx", ".jsx", ".js", ".mjs", ".cjs", ".mts", ".cts", ".d.ts"];
 
+/** `Math`, or a property named `Math` (`globalThis.Math`, `self["Math"]`): the object whose `random` is banned. */
+function isMathObject(node: Node | undefined): boolean {
+  if (node === undefined) return false;
+  if (isIdentifier(node)) return node.text === "Math";
+  if (isPropertyAccessExpression(node)) return node.name.text === "Math";
+  if (isElementAccessExpression(node)) return keyText(node.argumentExpression) === "Math";
+  return false;
+}
+
 /** The text of a property key (an identifier or a string-like literal), or `undefined` for a computed one. */
 function keyText(node: Node | undefined): string | undefined {
   if (node === undefined) return undefined;
@@ -133,13 +144,13 @@ export function scanDeterminism(options: { readonly root: string; readonly tscon
           if (BANNED.has(node.text)) report(node, "banned-identifier", node.text);
           if (node.text === "localeCompare") report(node, "locale-compare", "localeCompare");
         } else if (isPropertyAccessExpression(node)) {
-          if (isIdentifier(node.expression) && node.expression.text === "Math" && node.name.text === "random") {
+          if (isMathObject(node.expression) && node.name.text === "random") {
             report(node, "math-random", "Math.random");
           }
         } else if (isElementAccessExpression(node)) {
           const key = keyText(node.argumentExpression);
           if (key !== undefined) {
-            if (isIdentifier(node.expression) && node.expression.text === "Math" && key === "random") report(node, "math-random", 'Math["random"]');
+            if (isMathObject(node.expression) && key === "random") report(node, "math-random", 'Math["random"]');
             else if (BANNED.has(key)) report(node, "banned-identifier", `["${key}"]`);
             else if (key === "localeCompare") report(node, "locale-compare", '["localeCompare"]');
           }
@@ -152,9 +163,7 @@ export function scanDeterminism(options: { readonly root: string; readonly tscon
             isObjectBindingPattern(pattern) &&
             declaration !== undefined &&
             isVariableDeclaration(declaration) &&
-            declaration.initializer !== undefined &&
-            isIdentifier(declaration.initializer) &&
-            declaration.initializer.text === "Math" &&
+            isMathObject(declaration.initializer) &&
             keyText(node.propertyName ?? node.name) === "random"
           ) {
             report(node, "math-random", "const { random } = Math");
