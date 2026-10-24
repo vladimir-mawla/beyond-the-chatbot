@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_MAGNITUDE } from "../../contracts/index.js";
 import { checkExtent } from "../index.js";
 
 /**
@@ -250,6 +251,72 @@ describe("the checked value is the returned value: a getter that answers differe
       expect(descriptor).toHaveProperty("value");
     }
   });
+});
+
+type FlippedSide = "lo" | "hi";
+const OTHER_SIDE: Record<FlippedSide, FlippedSide> = { lo: "hi", hi: "lo" };
+
+/**
+ * A raw extent whose `side` is a getter that answers `first` on its first read and `later` on every read after
+ * that. The other side is a getter too, and always answers `null`. Both are counted, so a re-read of EITHER side
+ * shows up, not only a re-read that happens to change the answer.
+ */
+function flipping(side: FlippedSide, first: unknown, later: unknown): { raw: object; reads: () => { side: number; other: number } } {
+  let sideReads = 0;
+  let otherReads = 0;
+  const raw = {
+    get [OTHER_SIDE[side]](): null {
+      otherReads += 1;
+      return null;
+    },
+    get [side](): unknown {
+      sideReads += 1;
+      return sideReads === 1 ? first : later;
+    },
+  };
+  return { raw, reads: () => ({ side: sideReads, other: otherReads }) };
+}
+
+describe("each side is read once and the copy is that read, whatever the first value is", () => {
+  // The probes above flip a getter whose first read is one kind of value. A re-read that only happens for another
+  // kind (a `null`, a zero, a negative, the cap) is a different edit of `checkExtent` and needs its own first read,
+  // so this is a table over the first read, on each side, with the number of reads of BOTH sides counted.
+  const VALID_FIRST: readonly (number | null)[] = [null, 0, -0, 1, -1, 5, -5, MAX_MAGNITUDE, -MAX_MAGNITUDE];
+  const ANYTHING_LATER: readonly unknown[] = ["x", Number.NaN, 7.5, 2 ** 41, undefined, {}, 3, null];
+  const REFUSED_FIRST: readonly unknown[] = [1.5, Number.NaN, Number.POSITIVE_INFINITY, "x", undefined, {}, MAX_MAGNITUDE + 1, -(MAX_MAGNITUDE + 1)];
+  const VALID_LATER: readonly (number | null)[] = [null, 0, -0, 3, -3, MAX_MAGNITUDE, -MAX_MAGNITUDE];
+
+  for (const side of ["lo", "hi"] as const) {
+    it(`${side}: a valid first read, then a different second read, is accepted with the FIRST value and each side is read once`, () => {
+      let cases = 0;
+      for (const first of VALID_FIRST) {
+        for (const later of ANYTHING_LATER.filter((value) => value !== first)) {
+          const probe = flipping(side, first, later);
+          const where = `${side}: ${String(first)} then ${String(later)}`;
+          // `-0` is normalised to `0`, so the first read -0 is expected as 0; the other side is `null`.
+          expect(checkExtent(probe.raw), where).toStrictEqual({ ok: true, extent: { lo: null, hi: null, [side]: first === 0 ? 0 : first } });
+          expect(probe.reads(), where).toEqual({ side: 1, other: 1 });
+          cases += 1;
+        }
+      }
+      // 9 first reads x 8 second reads, less the one second read equal to the first when the first is null.
+      expect(cases).toBe(9 * 8 - 1);
+    });
+
+    it(`${side}: a refused first read stays refused when the second read would be valid, and each side is read once`, () => {
+      let cases = 0;
+      for (const first of REFUSED_FIRST) {
+        for (const later of VALID_LATER) {
+          const probe = flipping(side, first, later);
+          const where = `${side}: ${String(first)} then ${String(later)}`;
+          expect(checkExtent(probe.raw).ok, where).toBe(false);
+          expect(probe.reads(), where).toEqual({ side: 1, other: 1 });
+          cases += 1;
+        }
+      }
+      expect(cases).toBe(8 * 7);
+    });
+  }
 });
 
 describe("a read that throws is `hostile-input`, never a throw", () => {
