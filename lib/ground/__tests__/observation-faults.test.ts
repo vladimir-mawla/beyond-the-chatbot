@@ -214,6 +214,24 @@ describe("digit-containment accepts exactly what the plan's rule accepts, and no
   });
 });
 
+describe("ids that are prototype names are ordinary ids", () => {
+  it("an observation id of __proto__, constructor or toString is accepted and sorted like any other, and a repeated __proto__ is a duplicate", () => {
+    const names = ["toString", "__proto__", "constructor", "hasOwnProperty"];
+    const r = ground(ORDER_DESK, names.map((id, i) => obs(id, ["packDays", "transitDays", "customsDays", "deliveryDay"][i] as string, 0, 5)));
+    expect(r.ok && r.rejected).toEqual([]);
+    expect(r.ok && r.grounding.observations.map((o) => o.id)).toEqual(["__proto__", "constructor", "hasOwnProperty", "toString"]);
+    const twice = ground(ORDER_DESK, [obs("__proto__", "packDays", 0, 5), obs("__proto__", "transitDays", 0, 5)]);
+    expect(twice.ok && twice.rejected.map((x) => x.fault)).toEqual([{ kind: "duplicate-id", id: "__proto__" }, { kind: "duplicate-id", id: "__proto__" }]);
+  });
+
+  it("a JSON-parsed observation with its own __proto__ key is read like any other record: the key is data and reaches nothing", () => {
+    const parsed = JSON.parse('{"id":"p","field":"packDays","extent":{"lo":1,"hi":2},"quote":"1 to 2 days","source":"s","__proto__":{"id":"hijacked"}}');
+    const r = ground(ORDER_DESK, [parsed]);
+    expect(r.ok && r.grounding.observations.map((o) => o.id)).toEqual(["p"]);
+    expect(Object.prototype.hasOwnProperty.call(Object.prototype, "id")).toBe(false);
+  });
+});
+
 describe("precedence: duplicate-id > malformed > unknown-field > number-not-in-quote > outside-baseline", () => {
   const verdict = (snapshot: RawObservation[], index: number): string => {
     const r = ground(SCHEMA, snapshot);

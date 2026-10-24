@@ -30,8 +30,8 @@ import type { Ruling } from "./oracle.js";
  * gets, and an 8-operand sum; and the canonical scenario of plan section 7 at this layer.
  */
 
-const CHUNKS = 16;
-const PER_CHUNK = 500;
+const CHUNKS = 40;
+const PER_CHUNK = 200;
 const TOTAL = CHUNKS * PER_CHUNK;
 
 interface Tally {
@@ -199,6 +199,8 @@ describe("the engine against brute-force world enumeration on generated instance
     expect(tally.consistentTrees).toBeGreaterThanOrEqual(5000);
     expect(tally.conflictedTrees).toBeGreaterThanOrEqual(1000);
     for (const size of [2, 3, 4]) expect(count(cores, size), `cores of size ${size}`).toBeGreaterThanOrEqual(25);
+    expect(largestCore, "the largest core the generator reached").toBeGreaterThanOrEqual(4);
+    expect(tally.maxFieldsInTree, "the most fields in one generated tree").toBeGreaterThanOrEqual(6);
     for (const kind of ["duplicate-id", "malformed", "unknown-field", "number-not-in-quote", "outside-baseline", "hostile-input"]) expect(count(intake, kind), `intake fault ${kind}`).toBeGreaterThanOrEqual(25);
     for (const ruling of ["entailed", "weakened", "contradicted", "ungrounded", "conflicted", "vacuous"]) expect(count(rulings, ruling), `claims ruled ${ruling}`).toBeGreaterThanOrEqual(500);
   });

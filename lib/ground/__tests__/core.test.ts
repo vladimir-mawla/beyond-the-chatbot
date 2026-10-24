@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MAX_FIELDS, MAX_OBSERVATIONS, compareIds, fieldId } from "../../contracts/index.js";
-import { ground, supportOf } from "../index.js";
+import { extentOf, ground, supportOf } from "../index.js";
 import { CANON, ORDER_DESK, base, canon, derived, genInstance, mulberry32, obs, oracleFields, refIntake, schemaOf } from "./fixtures.js";
 import type { RawField, RawObservation } from "./fixtures.js";
 import { observationsInTreeOf, oracleCost, oracleShrink, oracleTreeOf, oracleTrees } from "./oracle.js";
@@ -189,6 +189,36 @@ describe("the largest core tested: 33 observations of a schema of 64 fields and 
       const r = ground(schema, all.filter((o) => o.id !== drop));
       if (!r.ok) throw new Error("failed");
       expect(r.grounding.trees.every((t) => t.state.kind === "consistent"), `without ${drop}`).toBe(true);
+    }
+  });
+});
+
+describe("the failures of extentOf and supportOf", () => {
+  const g = (ids: ("o1" | "o2" | "o3" | "o4")[]) => {
+    const r = ground(ORDER_DESK, canon(...ids));
+    if (!r.ok) throw new Error("failed");
+    return r.grounding;
+  };
+
+  it("a field no schema declares is unknown-field, whatever it is called, including names that exist on every object", () => {
+    const grounding = g(["o1", "o2"]);
+    for (const name of ["ghost", "constructor", "__proto__", "toString", "", "PACKDAYS"]) {
+      expect(extentOf(grounding, fieldId(name)), name).toStrictEqual({ ok: false, failure: { kind: "unknown-field", field: name } });
+      expect(supportOf(grounding, fieldId(name)), name).toStrictEqual({ ok: false, failure: { kind: "unknown-field", field: name } });
+    }
+  });
+
+  it("every field of a conflicted tree is conflicted with that tree's core, a fresh copy each time", () => {
+    const grounding = g(["o1", "o2", "o3", "o4"]);
+    const tree = grounding.trees[0]!;
+    if (tree.state.kind !== "conflicted") throw new Error("expected conflicted");
+    for (const field of ["packDays", "transitDays", "customsDays", "deliveryDay"]) {
+      const e = extentOf(grounding, fieldId(field));
+      const s = supportOf(grounding, fieldId(field));
+      expect(e).toStrictEqual({ ok: false, failure: { kind: "conflicted", core: ["o1", "o2", "o3", "o4"] } });
+      expect(s).toStrictEqual({ ok: false, failure: { kind: "conflicted", core: ["o1", "o2", "o3", "o4"] } });
+      if (e.ok || e.failure.kind !== "conflicted") throw new Error("expected conflicted");
+      expect(e.failure.core).not.toBe(tree.state.core);
     }
   });
 });
