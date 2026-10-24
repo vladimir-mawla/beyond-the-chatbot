@@ -183,18 +183,31 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
-- `.genesis/decisions/` holds one decision record, `0001-contracts.md`, written by M1 (an ADR is written
-  by the milestone that made the decisions it records). M2 to M9 have none yet. Its own `Status` line
-  still reads "proposed ... not yet verified by an independent L4 pass", which is out of date now that
-  M1 has had that pass. It is not edited here: the bookkeeping exception covers only `DONE.html` and
-  this file.
+- `.genesis/decisions/` holds two decision records, `0001-contracts.md` (M1) and `0002-deploy.md` (M2),
+  each written by the milestone that made the decisions it records (an ADR is written by the milestone
+  that made them). M3 to M9 have none yet. Both `Status` lines still read "proposed ... not yet verified
+  by an independent L4 pass", which is out of date now that M1 and M2 have each had that pass. ADR 0002
+  was also written before the merge: its Decision 7 says the integration will redeploy `main` and that
+  the deploy of `main` "is not something this milestone verified", and its "What is not proven" list
+  still has "That the `main` redeploy after merge is healthy". "What M2 adds" above is one observation of
+  that redeploy, at one instant. Neither record is edited here: the bookkeeping exception covers only
+  `DONE.html` and this file.
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
   which model did the work. So the trailer differs between this repo and its siblings, and neither
   string should be read as authorship evidence beyond itself.
-- No live URL exists yet. The account's standing rule applies: deploy at milestone 2, never last. M2
-  deploys a live skeleton second, not last, so this project does not repeat the previous project's gap.
+- The live URL (M2, above) serves a skeleton: `/` is the genesis placeholder and `/api/health`
+  self-checks `lib/contracts` only. The interactive demo is M8 and is `todo`. The account's standing rule
+  was deploy at milestone 2, never last; M2 did that, so this project does not repeat the previous
+  project's gap.
+- **Prose outside the bookkeeping exception is out of date and was not edited.** `README.md` still has the
+  heading "Status: in progress, nothing built yet" and says "genesis scaffold only", "two small tests",
+  "no engine code and no domain logic" and "all nine milestones are `todo`"; its `Live:` line is the one
+  line M2 changed and is current. `.env.example` still says `app/api/health/route.ts` is "NOT BUILT
+  YET". The README sentences have been wrong since M1 merged and the `.env.example` one since M2 did; ADR
+  0002's plan observations 1 and 2 record the same two. `app/page.tsx` ("no engine and no live demo
+  yet") is still accurate.
 - **Dependency versions were copied unchanged from autonomous-company-simulator `origin/main`
   (`ab14763`, `next` 16.4.3) and `npm audit` still reports 4 findings (2 high, 2 moderate), none
   addressed.** `ab14763` was `fc17afd` before that repository's own 2026-10-24 history rewrite (see the
@@ -226,4 +239,8 @@ exactly two lines (the `"name"` fields). Comment-only edits, with the executable
 `package.json` (name, description, `demo:order-desk`), `.env.example`, `app/layout.tsx`, `app/page.tsx`,
 `README.md`. New: `tests/lockfile.test.ts`, `.genesis/`. Added since genesis by M1 (PR #1), all new
 files and none of the files above touched: `lib/contracts/**` (45 files) and
-`.genesis/decisions/0001-contracts.md`.
+`.genesis/decisions/0001-contracts.md`. Added by M2 (PR #3): `app/api/health/**` (5 files: `route.ts`,
+`checks.ts` and three test files) and `.genesis/decisions/0002-deploy.md`, all new, plus one edited
+file, `README.md`, where the `Live:` line is the only line changed (`git diff --stat f9cb2eb d7aedb4`
+lists it as 1 insertion and 1 deletion). Over `lib/`, `vercel.json`, `next.config.ts`, `package.json`,
+`package-lock.json`, both `tsconfig*.json` and `.github/`, `git diff f9cb2eb d7aedb4` is empty.
