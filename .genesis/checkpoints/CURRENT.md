@@ -190,6 +190,105 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   cells of M1's guard and one whole value, not every cell, so a guard that broke another cell would not
   turn the endpoint red; M1's `integrity.test.ts` is what pins the rest.
 
+## What M3 adds, and what was run to check it
+
+`.genesis/decisions/0003-extent.md` (ADR 0003) is the record of what M3 decided, measured and left
+unproven. This section points at it and records only what was run for this revision; where it cites a
+Decision, the ADR's wording is the claim and this file adds nothing to it.
+
+- **What it is.** `lib/extent/**`: the seven functions of `.genesis/PLAN.md` section 5 (`checkExtent`,
+  `meet`, `isSubset`, `isSameExtent`, `unmetSides`, `sumForward`, `sumBackward`), exported from
+  `lib/extent/index.ts` with the type `ExtentCheck`. `checkExtent` is the one door an untrusted value comes
+  in by: it reads `lo` and `hi` once each and returns a fresh copy or one of five refusal reasons
+  (Decision 1). The other six take `Extent`s and do not re-validate them; ADR 0003 claims "total" for them
+  only for plain-data arguments, as `checkExtent` returns them, not for every value the declared types
+  admit (Decision 2).
+- **The exhaustive grids, against an oracle.** ADR 0003 (Decision 5) compares `sumForward` and
+  `sumBackward` with an oracle in `lib/extent/__tests__/fixtures.ts` that lists every integer assignment
+  and, it says, never calls the library: every extent with sides in `{null, -2..3}` (34 extents) over 2
+  operands, and with sides in `{null, 0..2}` (13 extents) over 3 operands, for every index. The ADR states
+  the limit: the grids are exhaustive over their own values and over 2 and 3 operands, and four or more
+  operands are covered only by the `BigInt` boundary cases ("What is not proven"). It describes the oracle
+  for the two sum functions only; how `fixtures.ts`'s `oracleMeet`, `oracleIsSubset` and
+  `oracleUnmetSides` are used was not traced for this entry. Run for this revision on a fresh clone of
+  `main` at `612bdd4`, with `env -u AI_AGENT -u CLAUDECODE npx vitest run
+  lib/extent/__tests__/sum-exactness.test.ts` (ADR 0003, Decision 5, records that the same command under an
+  agent printed none of the grid lines): the eight lines the ADR prints came out with the same counts, the
+  last being `sum grids in total: 167644 checks, 0 mismatches, 0 sets with a hole, 0 results that fail
+  checkExtent`. Those are one run of the test's own tallies, not an independent recount.
+- **Read-once, for the first reads the table lists and no others.** ADR 0003 (Decision 1) says `raw.lo` and
+  `raw.hi` are each read once and that the returned copy is made from that single read, and it says what
+  pins this: four probes in `lib/extent/__tests__/hostile-input.test.ts`, the one with getters that answer
+  differently on a second read being a table over the first read, on each of `lo` and `hi`, with the reads
+  of both sides counted. Read from the file for this revision, the table's first reads are `null`, `0`, `-0`, `1`, `-1`, `5`, `-5`, `2**40` and
+  `-(2**40)`, each followed by any of `"x"`, `NaN`, `7.5`, `2**41`, `undefined`, `{}`, `3` and `null` that
+  differs from it (accepted with the first value); and `1.5`, `NaN`, `Infinity`, `"x"`, `undefined`, `{}`,
+  `2**40 + 1` and `-(2**40 + 1)`, each followed by `null`, `0`, `-0`, `3`, `-3`, `2**40` and `-(2**40)`
+  (stays refused). That matches the ADR's list, with one reading to note: the ADR's "in both signs" is
+  true of `2**40 + 1` in the table, while `1.5` and `Infinity` appear there as positive values only. ADR
+  0003 claims nothing beyond what it lists: the probes are "the ways of observing an input that were
+  tried; nothing here claims that they are all of them", and "That read-once covers every way of observing
+  an input" is on its "What is not proven" list.
+- **The boundaries.** `checkExtent` accepts `±MAX_MAGNITUDE` and refuses `±(MAX_MAGNITUDE + 1)` on each
+  side, naming it; a call on 63 operands, `sumBackward` at each of the 63 indexes and a ladder of 62
+  chained calls are compared with `BigInt`, and the ADR adds "Not shown: any magnitude, shape or operand
+  count beyond these cases" (Decision 6). A sum's bounds are not clamped to `MAX_MAGNITUDE`, and past
+  `2**53` an addition silently loses exactness: ADR 0003 records a call on 8,193 operands, each accepted by
+  `checkExtent`, whose lower bound is off by one (checked in a scratch script, pinned by no test), and says
+  nothing in this layer limits the operand count and that no later layer is shown to (Decision 2).
+- **Nothing calls it yet.** `git grep -nE "extent/|from \"\.\./extent|lib/extent"`, over the tree outside
+  `lib/extent/` and `.genesis/`, hits only M1's own tests under `lib/contracts/__tests__/` (synthetic file
+  trees held as strings, a layer table and comments); that is the whole of what the grep covers, and it
+  found no `import` of `lib/extent` in `app/`, `tests/` or any non-test source. By the reasoning in the
+  smoke-test bullet above (not re-measured for M3), `npm run build` therefore does not reach it. ADR 0003
+  records that nothing forces a later layer to call `checkExtent`: "M4 and M5 must use it".
+- **Tests:** `npm ci && npm test` on a fresh clone of `main` at `612bdd4` printed `Test Files  28 passed (28)`
+  and `Tests  769 passed (769)`. By directory, counted with `vitest run --reporter=json`: `tests/` (the two
+  genesis files) 2 files / 6 tests, `lib/contracts/__tests__/` 16 files / 294 tests,
+  `app/api/health/__tests__/` 3 files / 63 tests and `lib/extent/__tests__/` 7 files / 406 tests
+  (`architecture.test.ts` 18, `boundaries.test.ts` 20, `check-extent.test.ts` 79, `hostile-input.test.ts` 39,
+  `meet-subset.test.ts` 140, `sum-exactness.test.ts` 61, `unmet.test.ts` 49). `npm run typecheck` and
+  `npm run build` (from a deleted `.next`) also exited 0 on that tree. The same four commands were run again
+  on the `mark M3 done` branch, which differs from `612bdd4` only in the two `.genesis/` files this PR edits.
+  These are this PR author's own runs, not the L4 verifier's.
+- **Observed 2026-10-24 at 22:23 UTC, before this PR:** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
+  answered HTTP 200 with the body below. Its `commit` was `612bdd403ba5eef894237cf1088ad86f10b0b333`, the
+  current `main`: `git rev-parse origin/main`, fetched at 22:23:56 UTC, gave the same value (`612bdd4`, M3's
+  own merge commit). `checks.contracts.pass` was true, `failing` was empty, and each of the four cases had
+  `pass` true and `actual` equal to `expected`. The `Vercel` commit status on `612bdd4` is `success`
+  ("Deployment has completed") at 22:19:52 UTC, 33 seconds after PR #5 merged at 22:19:19 UTC
+  (`gh api repos/vladimir-mawla/beyond-the-chatbot/commits/612bdd403ba5eef894237cf1088ad86f10b0b333/status`).
+  That is one deploy of one merge. PR #4, which changed only the two `.genesis/` files, also got a `Vercel`
+  `success` status (14:02:39 UTC, after it merged at 14:01:58 UTC), so merging this PR is expected to
+  redeploy `main` and move the live `commit` off `612bdd4`.
+
+  ```json
+  {"status":"ok","commit":"612bdd403ba5eef894237cf1088ad86f10b0b333","checks":{"contracts":{"pass":true,"failing":[],"cases":[{"name":"well-formed-conflicted","pass":true,"expected":"ok","actual":"ok"},{"name":"ungrounded-carrying-established","pass":true,"expected":"unexpected-field/ungrounded/established","actual":"unexpected-field/ungrounded/established"},{"name":"weakened-with-empty-unmet","pass":true,"expected":"empty-array/weakened/unmet","actual":"empty-array/weakened/unmet"},{"name":"conflicted-missing-core","pass":true,"expected":"missing-field/conflicted/core","actual":"missing-field/conflicted/core"}]}}}
+  ```
+
+- That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
+  judging that was the independent verification's job, and its verdict is in the milestone table above.
+  The verifier's report is not in this repository: the round and verdict are as handed to this PR's
+  author, with the three fix rounds described as (1) a read-once test gap, closed by a table over the first
+  read in `hostile-input.test.ts`, a test seam for the oracle's hole check and corrected ADR sentences,
+  (2) a test title and an ADR clause narrowed, and (3) a PR-body diff command corrected. The third is an
+  edit to the PR description, not to a file, so the next bullet cannot show it.
+- **What the fix rounds changed**, as far as the repository shows. PR #5 had twenty commits. ADR 0003's
+  Status line names `a0a33e2` as the head the first independent review rejected. The eight commits after it
+  (`ffedf61` to `c6588b5`, the PR head) change `lib/extent/__tests__/hostile-input.test.ts`,
+  `lib/extent/__tests__/fixtures.ts`, `lib/extent/__tests__/sum-exactness.test.ts` and ADR 0003, and no file
+  under `lib/extent` outside `__tests__` (`git diff --stat a0a33e2 refs/pull/5/head -- lib/extent
+  ':!lib/extent/__tests__'` is empty). `git diff` between the PR's head ref (`refs/pull/5/head`) and `main`
+  over `lib/`, `app/`, `tests/` and `.genesis/decisions/` is empty, so the squash commit's tree is the PR
+  head's tree for everything PR #5 touched. Over the whole tree the two differ in exactly
+  `.genesis/DONE.html` and `.genesis/checkpoints/CURRENT.md`, which PR #4 edited after PR #5's branch was cut
+  from `d7aedb4`.
+- **What this does not show.** One `curl` is one request at one time: it shows which commit Vercel served
+  and that the four self-checks passed then, not that the deployment is unchanged since. The health route
+  imports only `lib/contracts`, so the response says nothing about M3's code. `lib/ground` and `lib/entail`
+  do not exist, so nothing about folding evidence over a schema, ruling a claim or rechecking a certificate
+  has been built or demonstrated; M3 supplies arithmetic for that and no caller yet.
+
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
 - `.genesis/decisions/` holds two decision records, `0001-contracts.md` (M1) and `0002-deploy.md` (M2),
