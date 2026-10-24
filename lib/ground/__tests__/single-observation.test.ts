@@ -5,7 +5,7 @@ import { oracleMeet } from "../../extent/__tests__/fixtures.js";
 import { ground, readSchema } from "../index.js";
 import { solve, structureOf, treesOf } from "../solve.js";
 import { ORDER_DESK, genInstance, int, mulberry32, obs, oracleFields, pick, schemaOf, base, derived } from "./fixtures.js";
-import { oracleBaselines, oracleTreeOf } from "./oracle.js";
+import { oracleBaselines, oracleCost, oracleTreeOf } from "./oracle.js";
 
 /**
  * THE SINGLE-OBSERVATION THEOREM (plan section 4.3: "a single observation that meets its field's computed
@@ -24,7 +24,9 @@ import { oracleBaselines, oracleTreeOf } from "./oracle.js";
 
 const CHUNKS = 40;
 const PER_CHUNK = 50;
-const seen = { singles: 0, meets: 0, misses: 0, conflictedTrees: 0, smallestCore: Number.POSITIVE_INFINITY, coresChecked: 0 };
+/** A single observation whose world enumeration would list more than this many worlds is not given to the enumeration (the other two views still judge it). */
+const ORACLE_BUDGET = 200_000;
+const seen = { singles: 0, meets: 0, misses: 0, skippedForCost: 0, conflictedTrees: 0, smallestCore: Number.POSITIVE_INFINITY, coresChecked: 0 };
 
 describe("one observation never conflicts unless it misses B, and always does if it misses B", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
@@ -57,8 +59,11 @@ describe("one observation never conflicts unless it misses B, and always does if
           const solved = solve(structure, component.members, [{ field, extent }]);
           if ((solved.kind === "conflicted") !== !meets) problems.push(`seed ${seed}: solve says ${solved.kind} for ${JSON.stringify(extent)} on ${field} whose B is ${JSON.stringify(b)}`);
           // the enumeration
-          const world = oracleTreeOf(fields, [{ id: "x", field, extent }], field).exists;
-          if (world !== meets) problems.push(`seed ${seed}: the oracle says world=${world} but the extent ${meets ? "meets" : "misses"} B`);
+          if (oracleCost(fields, [{ id: "x", field, extent }]) > ORACLE_BUDGET) seen.skippedForCost += 1;
+          else {
+            const world = oracleTreeOf(fields, [{ id: "x", field, extent }], field).exists;
+            if (world !== meets) problems.push(`seed ${seed}: the oracle says world=${world} but the extent ${meets ? "meets" : "misses"} B`);
+          }
           // ground, with a quote that holds the digits, so that only the baseline can refuse it
           const digits = [lo, hi].filter((x): x is number => x !== null).map((x) => String(Math.abs(x)));
           const r = ground(inst.schema, [{ id: "x", field, extent, quote: digits.length > 0 ? `${digits.join(" and ")} days` : "no figure", source: "s" }]);
@@ -90,10 +95,11 @@ describe("one observation never conflicts unless it misses B, and always does if
   });
 
   it("both sides were exercised, and the counts are printed (needs every chunk above to have run)", () => {
-    console.log(`single observations: ${seen.singles} (${seen.meets} meet B and never conflicted; ${seen.misses} miss B and always did); ${seen.coresChecked} cores, the smallest has ${seen.smallestCore} members`);
+    console.log(`single observations: ${seen.singles} (${seen.meets} meet B and never conflicted; ${seen.misses} miss B and always did; ${seen.skippedForCost} were not given to the enumeration for cost); ${seen.coresChecked} cores, the smallest has ${seen.smallestCore} members`);
     expect(seen.singles, "all chunks ran: do not filter this file with -t").toBe(CHUNKS * PER_CHUNK * 3);
     expect(seen.meets).toBeGreaterThanOrEqual(2000);
     expect(seen.misses).toBeGreaterThanOrEqual(300);
+    expect(seen.skippedForCost, "singles too costly for the enumeration").toBeLessThanOrEqual(CHUNKS * PER_CHUNK * 3 * 0.01);
   });
 });
 

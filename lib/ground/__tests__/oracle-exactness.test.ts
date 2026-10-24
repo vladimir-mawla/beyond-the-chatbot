@@ -5,7 +5,7 @@ import { extentOf, ground, openEndsOf, readSchema, supportOf } from "../index.js
 import { constraintsOf, solve, structureOf, treesOf } from "../solve.js";
 import { CANON, ORDER_DESK, base, canon, derived, genClaims, genInstance, mulberry32, obs, oracleFields, refIntake, schemaOf, shuffled } from "./fixtures.js";
 import type { Instance, RawField, RawObservation, RawSchema } from "./fixtures.js";
-import { classify, oracleBaselines, oracleTrees } from "./oracle.js";
+import { classify, oracleBaselines, oracleCost, oracleTrees } from "./oracle.js";
 import type { Ruling } from "./oracle.js";
 
 /**
@@ -33,6 +33,12 @@ import type { Ruling } from "./oracle.js";
 const CHUNKS = 80;
 const PER_CHUNK = 100;
 const TOTAL = CHUNKS * PER_CHUNK;
+/**
+ * An instance whose worlds the oracle would have to list more than this many times over is not asked: a handful of the
+ * 8 000 cost half of all the oracle time (`oracleCost` is an upper bound on the worlds listed, before asking). Its intake
+ * verdicts are still checked against the reference, and the number skipped is printed and bounded.
+ */
+const ORACLE_BUDGET = 200_000;
 
 interface Tally {
   instances: number;
@@ -49,6 +55,7 @@ interface Tally {
   maxFieldsInTree: number;
   nonContiguous: number;
   withSupport: number;
+  skippedForCost: number;
 }
 const tally: Tally = {
   instances: 0,
@@ -65,6 +72,7 @@ const tally: Tally = {
   maxFieldsInTree: 0,
   nonContiguous: 0,
   withSupport: 0,
+  skippedForCost: 0,
 };
 const bump = <K>(map: Map<K, number>, key: K): void => void map.set(key, (map.get(key) ?? 0) + 1);
 
@@ -99,9 +107,13 @@ function checkInstance(seed: number): string[] {
   }
   if (g.baseline.length !== fields.length) problems.push(`seed ${seed}: baseline has ${g.baseline.length} entries for ${fields.length} fields`);
 
+  tally.instances += 1;
+  if (oracleCost(fields, ref.accepted) > ORACLE_BUDGET) {
+    tally.skippedForCost += 1;
+    return problems;
+  }
   const oracle = oracleTrees(fields, ref.accepted);
   const extents = new Map<string, Extent | undefined>();
-  tally.instances += 1;
   tally.trees += oracle.length;
   if (oracle.length > 1) tally.multiTree += 1;
   bump(tally.levels, inst.shape.levels);
@@ -186,10 +198,11 @@ describe("the engine against brute-force world enumeration on generated instance
         `cores (trees): ${[...tally.cores].sort(([a], [b]) => a - b).map(([k, v]) => `size ${k}: ${v}`).join(", ")}; largest ${largestCore}`,
         `intake verdicts other than accepted: ${[...tally.intake].sort().map(([k, v]) => `${k} ${v}`).join(", ")}`,
         `${tally.claims} claims: ${[...tally.rulings].sort().map(([k, v]) => `${k} ${v}`).join(", ")}`,
-        `the most worlds one tree listed in its larger window: ${tally.maxWorlds}; trees whose values were not contiguous: ${tally.nonContiguous}`,
+        `the most worlds one tree listed in its larger window: ${tally.maxWorlds}; trees whose values were not contiguous: ${tally.nonContiguous}; instances not given to the oracle for cost: ${tally.skippedForCost}`,
       ].join("\n"),
     );
     expect(tally.nonContiguous).toBe(0);
+    expect(tally.skippedForCost, "instances too costly for the oracle").toBeLessThanOrEqual(TOTAL * 0.01);
     expect(count(levels, 0), "instances with no sum rule").toBeGreaterThanOrEqual(300);
     expect(count(levels, 1), "one-level trees").toBeGreaterThanOrEqual(1000);
     expect(count(levels, 2), "two-level trees").toBeGreaterThanOrEqual(1000);

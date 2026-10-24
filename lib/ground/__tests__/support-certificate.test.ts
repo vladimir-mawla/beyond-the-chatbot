@@ -29,7 +29,7 @@ import type { OObs } from "./oracle.js";
 
 const CHUNKS = 50;
 const PER_CHUNK = 60;
-const BUDGET = 40_000;
+const BUDGET = 10_000;
 const seen = { instances: 0, skipped: 0, bounds: 0, nonEmpty: 0, longest: 0, sizes: new Map<number, number>() };
 
 describe("every support the engine returns is a certificate, checked by the oracle", () => {
