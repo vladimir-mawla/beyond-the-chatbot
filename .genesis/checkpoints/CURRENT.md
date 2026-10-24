@@ -375,4 +375,8 @@ files and none of the files above touched: `lib/contracts/**` (45 files) and
 `checks.ts` and three test files) and `.genesis/decisions/0002-deploy.md`, all new, plus one edited
 file, `README.md`, where the `Live:` line is the only line changed (`git diff --stat f9cb2eb d7aedb4`
 lists it as 1 insertion and 1 deletion). Over `lib/`, `vercel.json`, `next.config.ts`, `package.json`,
-`package-lock.json`, both `tsconfig*.json` and `.github/`, `git diff f9cb2eb d7aedb4` is empty.
+`package-lock.json`, both `tsconfig*.json` and `.github/`, `git diff f9cb2eb d7aedb4` is empty. Added by M3
+(PR #5): `lib/extent/**` (14 files: six sources, seven test files and `__tests__/fixtures.ts`) and
+`.genesis/decisions/0003-extent.md`, all new: `git diff --stat 40eb046 612bdd4` lists those 15 files with
+3188 insertions and no deletions, and `git diff 40eb046 612bdd4 -- . ':!lib/extent'
+':!.genesis/decisions/0003-extent.md'` is empty, so no file above was touched.
