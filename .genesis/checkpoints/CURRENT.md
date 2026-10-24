@@ -110,10 +110,10 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   the lockfile from 80 platform entries (215 packages) to 53 (188), removing exactly those 27; npm 10.9.9
   keeps all 80. The test does not detect other kinds of lockfile damage.
 - **Does not prove anything about the engine.** The scaffold has none. The only engine code is M1's
-  contracts (types and structural invariants) and the health route that self-checks M1's guard (M2),
-  covered in the next two sections; M3 to M5 are `todo`, so the extent algebra, grounding, propagation,
-  ruling and recheck are still designs, not results. The plan's own section 8 numbers come from a
-  throwaway model that is not in this repository.
+  contracts (types and structural invariants), the health route that self-checks M1's guard (M2) and the
+  extent algebra (M3), covered in the next three sections; M4 and M5 are `todo`, so grounding, propagation
+  over a schema, ruling and recheck are still designs, not results. The plan's own section 8 numbers come
+  from a throwaway model that is not in this repository.
 - `vercel.json` is committed and pinned to `npm ci` / `npm run build`, and since M2 a test pins it:
   `app/api/health/__tests__/vercel-config.test.ts` requires exactly those two keys with exactly those two
   values. Checked on a throwaway copy of `main` at `d7aedb4`: adding a `"framework"` key made that file
@@ -132,8 +132,9 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   the two `.genesis/` files that PR edited. These were that PR author's own runs, not the L4 verifier's.
 - That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
   judging that was the independent verification's job, and its verdict is in the milestone table above.
-- M1 is the contracts only. M3 to M5 are `todo`, so nothing about folding evidence into extents,
-  propagating bounds, ruling a claim or rechecking a certificate has been built or demonstrated.
+- M1 is the contracts only. When M1 merged, M3 to M5 were `todo`, so nothing about folding evidence into
+  extents, propagating bounds, ruling a claim or rechecking a certificate had been built or demonstrated.
+  M3 has since built the extent algebra (see "What M3 adds"); M4 and M5 are still `todo`.
 
 ## What M2 adds, and what was run to check it
 
@@ -156,7 +157,7 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   status on `d7aedb4` is `success` ("Deployment has completed") at 13:48:38 UTC, 39 seconds after PR #3
   merged at 13:47:59 UTC (`gh api repos/vladimir-mawla/beyond-the-chatbot/commits/d7aedb4c770d34248b3c34bc25584ed22cff94ff/status`). That
   is one deploy of one merge, not every deploy.
-- **Observed 2026-10-24 at 13:52 UTC, before this PR:** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
+- **Observed 2026-10-24 at 13:52 UTC, before the `mark M2 done` PR (#4):** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
   answered HTTP 200 with the body below. Its `commit` equalled `git rev-parse origin/main` at that moment
   (`d7aedb4`, M2's own merge commit), `checks.contracts.pass` was true, `failing` was empty, and each of the
   four cases had `pass` true and `actual` equal to `expected`.
@@ -170,22 +171,24 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   `lib/contracts/__tests__/` 16 files / 294 tests, and `app/api/health/__tests__/` 3 files / 63 tests
   (`checks.test.ts` 20, `route.test.ts` 17, `vercel-config.test.ts` 26). `npm run typecheck` and
   `npm run build` (from a deleted `.next`) also exited 0 on that tree. The same four commands were run again
-  on the mark-done branch, which differs from `d7aedb4` only in the two `.genesis/` files this PR edits.
-  These are this PR author's own runs, not the L4 verifier's.
+  on the `mark M2 done` branch (PR #4), whose merge commit `40eb046` differs from `d7aedb4` only in the two
+  `.genesis/` files that PR edited (`git diff --stat d7aedb4 40eb046`). These were that PR author's own
+  runs, not the L4 verifier's.
 - That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
   judging that was the independent verification's job, and its verdict is in the milestone table above.
-  The verifier's report is not in this repository: the round and verdict are as handed to this PR's
-  author.
+  The verifier's report is not in this repository: the round and verdict are as handed to the `mark M2
+  done` PR's author.
 - **What the fix round changed**, as far as the repository shows. PR #3 had seven commits; the last,
   `74843f0`, changes ADR 0002 (Decision 1 and "Rejected alternatives") and one comment in
   `app/api/health/__tests__/checks.test.ts`, and no other file. `git diff` between the PR's head ref
   (`refs/pull/3/head`) and `main` is empty, so the squash commit's tree is the PR head's tree.
 - **What this does not show.** One `curl` is one request at one time: it shows which commit Vercel served
-  and that the four self-checks passed then, not that the deployment is unchanged since. `lib/extent`,
-  `lib/ground` and `lib/entail` do not exist yet, so a green `/api/health` says nothing about them. By
-  ADR 0002's own account (Decision 1) the four values exercise three cells of M1's guard and one whole
-  value, not every cell, so a guard that broke another cell would not turn the endpoint red; M1's
-  `integrity.test.ts` is what pins the rest.
+  and that the four self-checks passed then, not that the deployment is unchanged since. The health route
+  imports only `lib/contracts` (`route.ts` imports `./checks`, and `checks.ts` imports `lib/contracts`), so
+  a green `/api/health` says nothing about `lib/extent`, which M3 has since added, and `lib/ground` and
+  `lib/entail` do not exist yet. By ADR 0002's own account (Decision 1) the four values exercise three
+  cells of M1's guard and one whole value, not every cell, so a guard that broke another cell would not
+  turn the endpoint red; M1's `integrity.test.ts` is what pins the rest.
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
