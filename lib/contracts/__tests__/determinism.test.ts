@@ -129,6 +129,15 @@ describe("a synthetic tree, one file per case", () => {
     "lib/contracts/limit-math-alias.ts": "const M = Math;\nexport const n6 = M.random();\n",
     "lib/contracts/limit-math-alias-global.ts": "const M = (globalThis as { Math: Math }).Math;\nexport const n9 = M.random();\n",
     "lib/contracts/limit-math-param-default.ts": "export function n7({ random } = Math): number {\n  return random();\n}\n",
+    "lib/contracts/limit-math-paren.ts": "export const n10 = (Math).random();\n",
+    "lib/contracts/limit-math-as.ts": "export const n11 = (Math as { random(): number }).random();\n",
+    "lib/contracts/limit-math-nonnull.ts": "export const n12 = Math!.random();\n",
+    "lib/contracts/limit-math-comma.ts": "export const n13 = (0, Math).random();\n",
+    "lib/contracts/limit-math-satisfies.ts": "export const n14 = (Math satisfies Math).random();\n",
+    "lib/contracts/limit-math-destructure-assign.ts": "let r: () => number;\n({ random: r } = Math);\nexport const n15 = r();\n",
+    "lib/contracts/limit-math-for-head.ts": "export const n16: number[] = [];\nfor (const { random } of [Math]) n16.push(random());\n",
+    "lib/contracts/limit-math-spread.ts": "export const n17 = ({ ...Math }).random();\n",
+    "lib/contracts/limit-math-argument.ts": "const call = (m: Math): number => m.random();\nexport const n18 = call(Math);\n",
     "lib/contracts/limit-intl.ts": 'export const n8 = new Intl.NumberFormat("de-DE").format(1.5) + (1.5).toLocaleString();\n',
   };
 

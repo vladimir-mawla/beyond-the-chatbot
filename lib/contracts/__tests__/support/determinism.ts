@@ -34,9 +34,14 @@ import { isTestPath, walk } from "./module-graph.js";
  *  - A name built at run time: `globalThis["Da" + "te"]`, `globalThis[name]`. (The plan's named limit.)
  *  - `eval(...)`, `new Function(...)`, `Reflect.get(globalThis, "Date")` and any other way of reaching a global
  *    from a string. (The plan's named limit.)
- *  - An ALIAS of `Math`: `const M = Math; M.random()` and `const M = globalThis.Math; M.random()` are not seen;
- *    only `Math` written directly at the point of use (or as a property name, `globalThis.Math.random()`) is.
- *    Destructuring `Math` in a PARAMETER default (`function f({ random } = Math)`) is not seen either.
+ *  - Any way of reaching `Math.random` other than the forms listed above, in which `Math` is the bare
+ *    identifier, a property named `Math` or a string key `"Math"`, directly followed by `.random` or
+ *    `["random"]`, or the initializer of a destructuring declaration (`const`, `let` or `var { random } = ...`).
+ *    In particular NOT seen: an ALIAS (`const M = Math; M.random()`, `const M = globalThis.Math; M.random()`,
+ *    `call(Math)`, `{ ...Math }`); `Math` wrapped in parentheses, `as`, `!`, `satisfies` or a comma expression
+ *    (`(Math).random()`, `Math!.random()`, `(0, Math).random()`); `Math` destructured by an ASSIGNMENT
+ *    (`({ random } = Math)`), in a `for` head (`for (const { random } of [Math])`) or in a PARAMETER default
+ *    (`function f({ random } = Math)`).
  *  - Any source of nondeterminism that is not in the list: `Intl`, `toLocaleString`, `Symbol` registries,
  *    `WeakRef`, an unstable `sort` comparator, the iteration order of a `Map` built from nondeterministic input,
  *    `structuredClone`, `import.meta`. The list is the plan's; widening it is a decision, not a fix.
