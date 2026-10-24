@@ -1,20 +1,22 @@
 # CURRENT
 
-- **active_loop:** none. This is the G3 genesis repo only: **genesis only, no engine code.**
-  `.genesis/PLAN.md` (G0-G2) is in place, the tooling skeleton is in place, and `app/page.tsx` is a
-  placeholder. No engine code exists: M1 (`lib/contracts/**`) has not started. M1 is a separate
-  milestone with its own branch, its own PR, and its own independent (L4) verifier.
+- **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`) is `done`; M2 to M9 are `todo` in
+  this revision. The engine proper is not built: M1 is types and structural invariants only, and
+  `lib/extent`, `lib/ground` and `lib/entail` do not exist. `.genesis/PLAN.md` (G0-G2) and the tooling
+  skeleton are in place, and `app/page.tsx` is still the genesis placeholder. Each milestone is
+  separate, with its own branch, its own PR, and its own independent (L4) verifier.
 
-- **last updated:** 2026-10-24, immediately after genesis (repo scaffold, `.genesis/` ritual, README,
-  two tests, CI workflow), before any milestone build has begun. Recorded now, honestly, rather than
-  implying progress that does not exist: a checkpoint that overstates status is worse than no
-  checkpoint at all.
+- **last updated:** 2026-10-24, in the `chore(genesis): mark M1 done` bookkeeping PR, after M1 passed
+  independent L4 verification and merged (PR #1). The previous revision was written immediately after
+  genesis (repo scaffold, `.genesis/` ritual, README, two tests, CI workflow), before any milestone
+  build had begun. Recorded honestly rather than implying progress that does not exist: a checkpoint
+  that misstates status in either direction is worse than no checkpoint at all.
 
 ## Milestone state, as of this revision
 
 | | Status | Where |
 |---|---|---|
-| M1 contracts | `todo` | designed only (`.genesis/PLAN.md` §4, §6): no branch, no code |
+| M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged); independent L4 APPROVE on the fourth review, after three fix rounds |
 | M2 deploy | `todo` | designed only |
 | M3 extent algebra | `todo` | designed only |
 | M4 ground | `todo` | designed only |
@@ -24,9 +26,10 @@
 | M8 interactive demo | `todo` | designed only |
 | M9 deliverables | `todo` | designed only |
 
-`main` is the single base history produced by genesis: the plan, tooling config, app shell, two tests,
-a CI workflow, the README and the `.genesis/` ritual. There is no `lib/`, no `domains/`, no health
-route, and no deploy. The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
+`main` is the genesis base (the plan, tooling config, app shell, two tests, a CI workflow, the README and
+the `.genesis/` ritual) plus one merged PR: #1, M1 (`lib/contracts/**`, its tests, and
+`.genesis/decisions/0001-contracts.md`). `lib/` holds only `contracts`; there is no `domains/`, no
+health route, and no deploy. The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
 `lib/contracts`), not the house-template names; if a brief says otherwise, `.genesis/PLAN.md` wins and
 the builder flags the mismatch.
 
@@ -53,8 +56,11 @@ the builder flags the mismatch.
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
-- No decision record exists yet in `.genesis/decisions/`. The first one (`0001-contracts.md`) is M1's
-  own artifact, not genesis's: an ADR is written by the milestone that made the decisions it records.
+- `.genesis/decisions/` holds one decision record, `0001-contracts.md`, written by M1 (an ADR is written
+  by the milestone that made the decisions it records). M2 to M9 have none yet. Its own `Status` line
+  still reads "proposed ... not yet verified by an independent L4 pass", which is out of date now that
+  M1 has had that pass. It is not edited here: the bookkeeping exception covers only `DONE.html` and
+  this file.
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
@@ -89,4 +95,6 @@ exactly two lines (the `"name"` fields). Comment-only edits, with the executable
 `vitest.config.ts`, `.github/workflows/ci.yml`, `scripts/ts-loader-hooks.mjs`, `app/globals.css`
 (the sibling's comments named another project's milestones and decisions). Changed on purpose:
 `package.json` (name, description, `demo:order-desk`), `.env.example`, `app/layout.tsx`, `app/page.tsx`,
-`README.md`. New: `tests/lockfile.test.ts`, `.genesis/`.
+`README.md`. New: `tests/lockfile.test.ts`, `.genesis/`. Added since genesis by M1 (PR #1), all new
+files and none of the files above touched: `lib/contracts/**` (45 files) and
+`.genesis/decisions/0001-contracts.md`.
