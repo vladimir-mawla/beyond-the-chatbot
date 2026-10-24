@@ -103,6 +103,7 @@ describe("the exhaustiveness proofs react when a union grows, and only the right
         );
       },
       groups: [],
+      integrityTable: false,
     };
     const report = withCopy(grown, (copy) => {
       const copied = join(copy, "__tests__", "proofs");

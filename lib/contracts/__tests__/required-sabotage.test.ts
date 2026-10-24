@@ -86,7 +86,14 @@ const EMPTY: readonly Row[] = [
 ];
 
 const ROWS: readonly Row[] = [...MISSING, ...SCHEMA_MISSING, ...EMPTY];
-const MUTATIONS: readonly Mutation[] = ROWS.map((r) => ({ id: r.id, file: r.file, apply: r.apply, groups: r.groups }));
+const MUTATIONS: readonly Mutation[] = ROWS.map((r) => ({
+  id: r.id,
+  file: r.file,
+  apply: r.apply,
+  groups: r.groups,
+  // `integrity.ts` ties its table to the `Entailment` variants only, so a change to a `FieldDecl` must not move it.
+  integrityTable: r.file === "entailment.ts",
+}));
 
 const results: { id: string; outcome: SabotageOutcome }[] = [];
 afterAll(() => {

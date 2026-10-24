@@ -70,6 +70,7 @@ const MUTATIONS: readonly Mutation[] = NEVER_FIELDS.map((n) => ({
   file: n.file,
   apply: deleteNever(n.iface, n.field),
   groups: [n.group],
+  integrityTable: n.file === "entailment.ts",
 }));
 
 /** A fresh-literal assignment carrying the forbidden field: the form that cannot tell the `?: never` from its absence. */
@@ -107,6 +108,7 @@ describe("17 `?: never` fields, each deleted alone from a copy of lib/contracts"
   it("CONTROL: with nothing deleted no proof goes red, strict or as written", { timeout: 60_000 }, () => {
     const outcome = runSabotage(undefined);
     expect(outcome.unattributed).toEqual([]);
+    expect(outcome.sourceDiagnostics).toEqual([]);
     expect([...outcome.strict.keys()]).toEqual([]);
     expect([...outcome.asWritten.keys()]).toEqual([]);
   });

@@ -33,6 +33,12 @@ export interface Mutation {
   readonly apply: (source: string) => string;
   /** The proof groups that must go red. */
   readonly groups: readonly string[];
+  /**
+   * Whether the mutation must ALSO make the compile-time table assertion at the bottom of `integrity.ts` fail
+   * (every mutation of an `Entailment` variant's fields or shape must; one of `FieldDecl` must not, because
+   * the guard's table does not cover it).
+   */
+  readonly integrityTable: boolean;
 }
 
 /** The proof group and route of the declaration at (or nearest above) a 1-based line. */
@@ -65,6 +71,13 @@ export interface SabotageOutcome {
   readonly asWritten: ReadonlyMap<string, ReadonlySet<string>>;
   /** Anything that is not attributable to a `group_route` proof line, as sentences: must be empty. */
   readonly unattributed: readonly string[];
+  /**
+   * Diagnostics in a contract SOURCE file that a proof imports (sorted, unique: `<file>:<line>:TS<code>`), as
+   * opposed to in a proof. A mutation can make a source's OWN compile-time assertion fail (the table-versus-type
+   * assertions at the bottom of `integrity.ts`); that is a second, independent guard reacting, and is reported
+   * here rather than counted against the proofs.
+   */
+  readonly sourceDiagnostics: readonly string[];
 }
 
 function add(map: Map<string, Set<string>>, group: string, route: string): void {
@@ -95,11 +108,18 @@ export function runSabotage(mutation: Mutation | undefined): SabotageOutcome {
     const strict = new Map<string, Set<string>>();
     const asWritten = new Map<string, Set<string>>();
     const unattributed: string[] = [];
+    const sourceDiagnostics = new Set<string>();
     const proofsDir = join(copy, "__tests__", "proofs");
     const inputs = proofFiles(copy).map((file) => ({ name: file, source: readFileSync(file, "utf8") }));
     const sourceOf = new Map(inputs.map((i) => [i.name, i.source]));
     for (const [file, report] of checkProofSources(inputs, proofsDir)) {
       for (const failure of report.failures) {
+        if (failure.kind === "imported-file") {
+          // "[config] <path>(<line>): TS<code> in a file the proof imports, not in the proof"
+          const match = /\] (.+?)\((\d+)\): TS(\d+) in a file/.exec(failure.message);
+          sourceDiagnostics.add(match === null ? failure.message : `${basename(match[1] as string)}:${match[2]}:TS${match[3]}`);
+          continue;
+        }
         const name = failure.line > 0 ? proofNameAt(sourceOf.get(file) as string, failure.line) : undefined;
         if (name === undefined) unattributed.push(`[strict] ${basename(file)}: ${failure.message}`);
         else add(strict, name.group, name.route);
@@ -115,7 +135,7 @@ export function runSabotage(mutation: Mutation | undefined): SabotageOutcome {
         }
       }
     }
-    return { strict, asWritten, unattributed };
+    return { strict, asWritten, unattributed, sourceDiagnostics: [...sourceDiagnostics].sort() };
   });
 }
 
@@ -219,6 +239,12 @@ export function outcomeProblems(mutation: Mutation, outcome: SabotageOutcome): s
   for (const g of own) {
     if (routes(outcome.asWritten, g) !== asWrittenExpected) problems.push(`as written: ${g} had TS2578 on [${routes(outcome.asWritten, g)}], expected [${asWrittenExpected}]`);
   }
+  // The second, independent guard: the compile-time assertions inside `integrity.ts` that tie its table to the types.
+  const integrity = outcome.sourceDiagnostics.filter((d) => d.startsWith("integrity.ts:") && d.endsWith(":TS2344"));
+  const others = outcome.sourceDiagnostics.filter((d) => !integrity.includes(d));
+  if (others.length > 0) problems.push(`a contract source other than the integrity table stopped compiling: ${others.join(", ")}`);
+  if (mutation.integrityTable && integrity.length === 0) problems.push("the integrity.ts table assertion did NOT react to a change of an Entailment variant");
+  if (!mutation.integrityTable && integrity.length > 0) problems.push(`the integrity.ts table assertion reacted (${integrity.join(", ")}) to a change that is not about Entailment`);
   return problems;
 }
 
