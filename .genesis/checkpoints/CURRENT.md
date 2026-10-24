@@ -1,18 +1,21 @@
 # CURRENT
 
-- **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`) and M2 (deploy skeleton,
-  `app/api/health/**`) are `done`; M3 to M9 are `todo` in this revision. The engine proper is not built:
-  M1 is types and structural invariants only, and `lib/extent`, `lib/ground` and `lib/entail` do not
-  exist. `.genesis/PLAN.md` (G0-G2) and the tooling skeleton are in place, a skeleton is deployed (see
-  "What M2 adds"), and `app/page.tsx` is still the genesis placeholder. Each milestone is separate, with
-  its own branch, its own PR, and its own independent (L4) verifier.
+- **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`), M2 (deploy skeleton,
+  `app/api/health/**`) and M3 (extent algebra, `lib/extent/**`) are `done`; M4 to M9 are `todo` in this
+  revision. The part of the engine that grounds evidence and rules a claim is not built: `lib/ground` and
+  `lib/entail` do not exist. What exists is M1's types and structural invariants and M3's extent algebra,
+  the interval arithmetic those layers are planned to use (see "What M3 adds"; nothing imports it yet).
+  `.genesis/PLAN.md` (G0-G2) and the tooling skeleton are in place, a skeleton is deployed (see "What M2
+  adds"), and `app/page.tsx` is still the genesis placeholder. Each milestone is separate, with its own
+  branch, its own PR, and its own independent (L4) verifier.
 
-- **last updated:** 2026-10-24, in the `chore(genesis): mark M2 done` bookkeeping PR, after M2 passed
-  independent L4 verification and merged (PR #3). The previous revision was the `mark M1 done` PR's
-  (PR #2), written after M1 merged (PR #1), and the one before it was written immediately after genesis
-  (repo scaffold, `.genesis/` ritual, README, two tests, CI workflow), before any milestone build had
-  begun. Recorded honestly rather than implying progress that does not exist: a checkpoint that
-  misstates status in either direction is worse than no checkpoint at all.
+- **last updated:** 2026-10-24 (UTC), in the `chore(genesis): mark M3 done` bookkeeping PR, after M3 passed
+  independent L4 verification and merged (PR #5). The previous revision was the `mark M2 done` PR's
+  (PR #4), written after M2 merged (PR #3); the one before it was the `mark M1 done` PR's (PR #2), written
+  after M1 merged (PR #1), and the one before that was written immediately after genesis (repo scaffold,
+  `.genesis/` ritual, README, two tests, CI workflow), before any milestone build had begun. Recorded
+  honestly rather than implying progress that does not exist: a checkpoint that misstates status in
+  either direction is worse than no checkpoint at all.
 
 ## Milestone state, as of this revision
 
@@ -20,7 +23,7 @@
 |---|---|---|
 | M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged; the PR page still shows the pre-rewrite `1a7cf44`, see below); independent L4 APPROVE on the fourth review, after three fix rounds |
 | M2 deploy | `done` | PR #3 → `d7aedb4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE in round 2, after one fix round; live, see "What M2 adds" below |
-| M3 extent algebra | `todo` | designed only |
+| M3 extent algebra | `done` | PR #5 → `612bdd4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE on the fourth review, after three fix rounds; see "What M3 adds" below |
 | M4 ground | `todo` | designed only |
 | M5 entail | `todo` | designed only |
 | M6 domain (order desk) | `todo` | designed only |
@@ -29,14 +32,16 @@
 | M9 deliverables | `todo` | designed only |
 
 `main` is the genesis base (the plan, tooling config, app shell, two tests, a CI workflow, the README and
-the `.genesis/` ritual) plus three merged PRs: #1, M1 (`lib/contracts/**`, its tests, and
+the `.genesis/` ritual) plus five merged PRs: #1, M1 (`lib/contracts/**`, its tests, and
 `.genesis/decisions/0001-contracts.md`); #2, `mark M1 done`, which edited only the two `.genesis/` files
-(`git diff --stat c3eba1d f9cb2eb`); and #3, M2 (`app/api/health/**` with its tests,
-`.genesis/decisions/0002-deploy.md`, and one changed line in `README.md`, the `Live:` line). `lib/`
-holds only `contracts` and there is no `domains/`. The one route is `app/api/health`; it is deployed (see
-"What M2 adds"). The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
-`lib/contracts`), not the house-template names; if a brief says otherwise, `.genesis/PLAN.md` wins and
-the builder flags the mismatch.
+(`git diff --stat c3eba1d f9cb2eb`); #3, M2 (`app/api/health/**` with its tests,
+`.genesis/decisions/0002-deploy.md`, and one changed line in `README.md`, the `Live:` line); #4,
+`mark M2 done`, which edited only the same two `.genesis/` files (`git diff --stat d7aedb4 40eb046`); and
+#5, M3 (`lib/extent/**` with its tests, and `.genesis/decisions/0003-extent.md`: 15 new files, nothing else
+touched, see the last section). `lib/` holds `contracts` and `extent` and there is no `domains/`. The one
+route is `app/api/health`; it is deployed (see "What M2 adds"). The engine directories are `lib/extent`,
+`lib/ground`, `lib/entail` (plus `lib/contracts`), not the house-template names; if a brief says
+otherwise, `.genesis/PLAN.md` wins and the builder flags the mismatch.
 
 ## `main` history was rewritten on 2026-10-24 (SHAs you may see on PR pages)
 
@@ -53,8 +58,9 @@ GitHub's PR page for #1 still shows the pre-rewrite merge SHA. To match it again
 
 The genesis tip moved the same way: `8943493` (the pre-rewrite parent of `1a7cf44`) is now `141f1cd`.
 
-PR #2 and PR #3 need no pair: GitHub reports their merge commits as `f9cb2ebc55bd...` and `d7aedb4c770d...`
-(`gh pr list --state all --json number,mergeCommit`), which are the SHAs on `main` now.
+PR #2, #3, #4 and #5 need no pair: GitHub reports their merge commits as `f9cb2ebc55bd...`,
+`d7aedb4c770d...`, `40eb046a918a...` and `612bdd403ba5...` (`gh pr list --state all --json number,mergeCommit`),
+which are the SHAs on `main` now.
 
 What was compared, and nothing more. The pre-rewrite commits are on no branch any more; they were read
 by SHA from GitHub's commits API, which still serves them today and may not always.
