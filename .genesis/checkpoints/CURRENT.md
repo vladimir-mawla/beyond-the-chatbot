@@ -291,15 +291,39 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
-- `.genesis/decisions/` holds two decision records, `0001-contracts.md` (M1) and `0002-deploy.md` (M2),
-  each written by the milestone that made the decisions it records (an ADR is written by the milestone
-  that made them). M3 to M9 have none yet. Both `Status` lines still read "proposed ... not yet verified
-  by an independent L4 pass", which is out of date now that M1 and M2 have each had that pass. ADR 0002
-  was also written before the merge: its Decision 7 says the integration will redeploy `main` and that
-  the deploy of `main` "is not something this milestone verified", and its "What is not proven" list
-  still has "That the `main` redeploy after merge is healthy". "What M2 adds" above is one observation of
-  that redeploy, at one instant. Neither record is edited here: the bookkeeping exception covers only
-  `DONE.html` and this file.
+- `.genesis/decisions/` holds three decision records, `0001-contracts.md` (M1), `0002-deploy.md` (M2) and
+  `0003-extent.md` (M3), each written by the milestone that made the decisions it records (an ADR is
+  written by the milestone that made them). M4 to M9 have none yet. All three `Status` lines are out of
+  date now that each of those milestones has had its independent pass. ADR 0001 and ADR 0002 still read
+  "proposed ... not yet verified by an independent L4 pass". **ADR 0003's Status line (its lines 4 to 6)
+  still says "this version has not been re-verified"**: the full line reads "proposed — written by the
+  builder; revised after the first independent L4 pass rejected `a0a33e2` (...); this version has not been
+  re-verified". That was true of the revision it was written for and is stale now that M3 has passed
+  independent verification (APPROVE on the fourth review, as handed to this PR's author). The word
+  "proposed" is stale in the same way. ADR 0002 was also written before the merge: its Decision 7 says the
+  integration will redeploy `main` and that the deploy of `main` "is not something this milestone
+  verified", and its "What is not proven" list still has "That the `main` redeploy after merge is
+  healthy". "What M2 adds" above is one observation of that redeploy, at one instant. None of the three
+  records is edited here: each is its milestone's frozen file, and the bookkeeping exception covers only
+  `DONE.html` and this file. They are recorded as known gaps instead.
+- **Text in M1's frozen files that M3 made false, not edited.** ADR 0003 ("Plan wording and neighbours",
+  item 5) lists three; each was true when written: `lib/contracts/bounds.ts` lines 17 and 18 (`checkExtent`
+  "is not built; until it is, nothing in this repository refuses such a value"; `checkExtent` now exists
+  and refuses those values, though "a hand-built `Extent` is trusted by every reader" in the same
+  sentence is still so, since nothing forces a caller to use it), `lib/contracts/limits.ts` line 17 (the
+  argument that propagation never sums more than `MAX_FIELDS` extents "is M3's to check against `BigInt`
+  and is not built"; M3 checked it for the cases in ADR 0003 Decision 6 and no others) and
+  `.genesis/decisions/0001-contracts.md` line 275 ("None of M3-M5 is built"). A grep for this revision
+  found two more that read as stale and that the ADR does not list:
+  `lib/contracts/__tests__/canonical-scenario.test.ts` line 13 ("that is M3-M5, and no engine exists") and
+  `lib/contracts/__tests__/proofs/honest-limits.proofs.ts` line 17 (`checkExtent` "is planned to refuse
+  it"). Not counted: `lib/contracts/__tests__/honest-limits.test.ts` line 35 says "None of M3-M5 is built
+  when this is written", dated by its own words. The greps were `\bM3\b|M3-M5|M3 to M5|checkExtent|lib/extent`
+  over everything except `lib/extent/`, `.genesis/PLAN.md`, this file, `DONE.html`, ADR 0003 and
+  `package-lock.json`, and `not built|not yet|does not exist|nothing built|nothing is built|proposed|NOT
+  BUILT` over the same exclusions but with ADR 0003 included. A search is not a proof that nothing else is
+  stale, and neither looked at `.genesis/PLAN.md`, the frozen genesis plan. Nothing is fixed here: the files above belong to
+  M1 and M3, and `README.md` belongs to M9 (`.genesis/PLAN.md` section 6, M9 "Owns").
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
