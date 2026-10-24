@@ -86,7 +86,8 @@ describe("each cast-built value has exactly one fault", () => {
 
 describe("why the values are complete and not bare", () => {
   // The trap M1's verifier found, pinned: the guard checks a variant's REQUIRED fields before its FORBIDDEN
-  // ones, so a bare literal reports a different, earlier fault than the one a health check wants to see.
+  // ones, so a bare ungrounded or weakened literal reports a different, earlier fault than the one a health check
+  // wants to see (a bare conflicted without a core reports the plan's cell, so it is not an instance of this trap).
   it("a bare ungrounded carrying established reports the missing openEnds, not the unexpected established", () => {
     const bare = { kind: "ungrounded", established: { lo: 4, hi: 9 } } as unknown as Entailment;
     expect(assertEntailmentWellFormed(bare)).toEqual({

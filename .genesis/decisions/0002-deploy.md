@@ -31,8 +31,11 @@ Two directions on purpose: 1 goes red if the guard becomes "reject everything", 
 **Why complete values and not bare literals.** M1's verifier found, and `integrity.ts`'s doc comment records,
 that the guard reports the FIRST problem it finds and checks a variant's required fields before its forbidden
 ones. `{ kind: "ungrounded", established }` therefore reports `missing-field` / `openEnds`, never the
-`unexpected-field` the plan expects, and a check built from bare literals would be testing a different cell
-than its name says. `checks.test.ts` pins both halves: the bare forms really do report the earlier fault, and
+`unexpected-field` the plan expects, and a bare `weakened` with `unmet: []` reports `missing-field` /
+`established`, never the `empty-array` the plan expects, so a check built from either of those bare literals
+would be testing a different cell than its name says. (A bare `conflicted` without `core` does report the
+plan's cell, `missing-field` / `conflicted` / `core`, as M1's ADR notes.) `checks.test.ts` pins both halves:
+the bare `ungrounded` and `weakened` forms really do report the earlier fault, and
 for each of 2 to 4, repairing the one named field leaves a value the guard accepts (a second fault would still
 fail after the repair). That is what "exactly one field" means here, and it is as the guard sees it.
 
@@ -178,7 +181,9 @@ commit of this branch. The checks above are about the CLI deploys of this branch
 ## Rejected alternatives
 
 - **A bare liveness `{ ok: true }`**: the plan refuses it; it can never fail.
-- **Building the three faults from bare literals**: see Decision 1; they report the wrong cell.
+- **Building faults 2 and 3 from bare literals**: see Decision 1; a bare `ungrounded` carrying `established` and a
+  bare `weakened` with `unmet: []` each report an earlier `missing-field` cell, not the cell the plan names. A bare
+  `conflicted` without `core` does report the plan's cell, `missing-field` / `conflicted` / `core`.
 - **Exporting `runCase` from `route.ts` for the tests**: Next rejects unknown route exports.
 - **Editing `vercel.json`**: it is the scaffold's file; M2 pins it.
 - **Reading the SHA from `git rev-parse` locally**: a local value can disagree with what is deployed, and the
