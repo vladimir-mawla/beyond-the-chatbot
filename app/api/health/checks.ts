@@ -28,10 +28,11 @@ import type { Conflicted, Entailment, EntailmentIntegrity, Ungrounded, Weakened 
  * (Decision 3) list the other routes by which a value like these can exist (a supertype, mutation after
  * construction, parsed JSON, ...); this file takes one of them and does not claim it is the only one.
  *
- * WHAT COULD STILL GO WRONG WITHOUT THIS GOING RED. Four cells of a 25-cell table are exercised, not all
- * of them (`lib/contracts/__tests__/integrity.test.ts` pins every cell). A guard that broke some other cell
- * would not turn this red. This is a deploy-time smoke check that M1's own checks ran in the deployed
- * process, not a replacement for them.
+ * WHAT COULD STILL GO WRONG WITHOUT THIS GOING RED. Three cells of the guard's table (one forbidden, one
+ * required, one non-empty) and one value that must pass whole are exercised, not every cell
+ * (`lib/contracts/__tests__/integrity.test.ts` pins them all). A guard that broke some other cell would not
+ * turn this red. This is a smoke check that M1's guard still behaves in the deployed process, not a
+ * replacement for M1's own tests.
  */
 
 /** One self-check. `expected` is `ok`, or the guard's error written as `kind/variant/field`. */
@@ -140,9 +141,9 @@ function describeThrown(thrown: unknown): string {
 /**
  * Runs one case. NEITHER step may escape: input construction (`build`) and the guard call are BOTH inside the
  * `try`, so a case that throws while being built, or a guard that throws, is a failed check with the phase
- * named, and the route answers 503 instead of a bare 500 with no body. If `build()` is hoisted out of the `try`
- * (it looks like a harmless tidy-up) the first throw escapes, which `checks.test.ts` and `route.test.ts` each
- * catch.
+ * named, and the route answers 503 instead of letting the exception out of `GET`. If `build()` is hoisted out
+ * of the `try` (it looks like a harmless tidy-up) the first throw escapes, which `checks.test.ts` and
+ * `route.test.ts` each catch.
  */
 export function runCase(healthCase: HealthCase): CaseResult {
   const { name, expected } = healthCase;
