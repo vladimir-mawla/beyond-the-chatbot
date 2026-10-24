@@ -1,18 +1,21 @@
 # CURRENT
 
-- **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`) and M2 (deploy skeleton,
-  `app/api/health/**`) are `done`; M3 to M9 are `todo` in this revision. The engine proper is not built:
-  M1 is types and structural invariants only, and `lib/extent`, `lib/ground` and `lib/entail` do not
-  exist. `.genesis/PLAN.md` (G0-G2) and the tooling skeleton are in place, a skeleton is deployed (see
-  "What M2 adds"), and `app/page.tsx` is still the genesis placeholder. Each milestone is separate, with
-  its own branch, its own PR, and its own independent (L4) verifier.
+- **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`), M2 (deploy skeleton,
+  `app/api/health/**`) and M3 (extent algebra, `lib/extent/**`) are `done`; M4 to M9 are `todo` in this
+  revision. The part of the engine that grounds evidence and rules a claim is not built: `lib/ground` and
+  `lib/entail` do not exist. What exists is M1's types and structural invariants and M3's extent algebra,
+  the interval arithmetic those layers are planned to use (see "What M3 adds"; nothing imports it yet).
+  `.genesis/PLAN.md` (G0-G2) and the tooling skeleton are in place, a skeleton is deployed (see "What M2
+  adds"), and `app/page.tsx` is still the genesis placeholder. Each milestone is separate, with its own
+  branch, its own PR, and its own independent (L4) verifier.
 
-- **last updated:** 2026-10-24, in the `chore(genesis): mark M2 done` bookkeeping PR, after M2 passed
-  independent L4 verification and merged (PR #3). The previous revision was the `mark M1 done` PR's
-  (PR #2), written after M1 merged (PR #1), and the one before it was written immediately after genesis
-  (repo scaffold, `.genesis/` ritual, README, two tests, CI workflow), before any milestone build had
-  begun. Recorded honestly rather than implying progress that does not exist: a checkpoint that
-  misstates status in either direction is worse than no checkpoint at all.
+- **last updated:** 2026-10-24 (UTC), in the `chore(genesis): mark M3 done` bookkeeping PR, after M3 passed
+  independent L4 verification and merged (PR #5). The previous revision was the `mark M2 done` PR's
+  (PR #4), written after M2 merged (PR #3); the one before it was the `mark M1 done` PR's (PR #2), written
+  after M1 merged (PR #1), and the one before that was written immediately after genesis (repo scaffold,
+  `.genesis/` ritual, README, two tests, CI workflow), before any milestone build had begun. Recorded
+  honestly rather than implying progress that does not exist: a checkpoint that misstates status in
+  either direction is worse than no checkpoint at all.
 
 ## Milestone state, as of this revision
 
@@ -20,7 +23,7 @@
 |---|---|---|
 | M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged; the PR page still shows the pre-rewrite `1a7cf44`, see below); independent L4 APPROVE on the fourth review, after three fix rounds |
 | M2 deploy | `done` | PR #3 → `d7aedb4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE in round 2, after one fix round; live, see "What M2 adds" below |
-| M3 extent algebra | `todo` | designed only |
+| M3 extent algebra | `done` | PR #5 → `612bdd4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE on the fourth review, after three fix rounds; see "What M3 adds" below |
 | M4 ground | `todo` | designed only |
 | M5 entail | `todo` | designed only |
 | M6 domain (order desk) | `todo` | designed only |
@@ -29,14 +32,16 @@
 | M9 deliverables | `todo` | designed only |
 
 `main` is the genesis base (the plan, tooling config, app shell, two tests, a CI workflow, the README and
-the `.genesis/` ritual) plus three merged PRs: #1, M1 (`lib/contracts/**`, its tests, and
+the `.genesis/` ritual) plus five merged PRs: #1, M1 (`lib/contracts/**`, its tests, and
 `.genesis/decisions/0001-contracts.md`); #2, `mark M1 done`, which edited only the two `.genesis/` files
-(`git diff --stat c3eba1d f9cb2eb`); and #3, M2 (`app/api/health/**` with its tests,
-`.genesis/decisions/0002-deploy.md`, and one changed line in `README.md`, the `Live:` line). `lib/`
-holds only `contracts` and there is no `domains/`. The one route is `app/api/health`; it is deployed (see
-"What M2 adds"). The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
-`lib/contracts`), not the house-template names; if a brief says otherwise, `.genesis/PLAN.md` wins and
-the builder flags the mismatch.
+(`git diff --stat c3eba1d f9cb2eb`); #3, M2 (`app/api/health/**` with its tests,
+`.genesis/decisions/0002-deploy.md`, and one changed line in `README.md`, the `Live:` line); #4,
+`mark M2 done`, which edited only the same two `.genesis/` files (`git diff --stat d7aedb4 40eb046`); and
+#5, M3 (`lib/extent/**` with its tests, and `.genesis/decisions/0003-extent.md`: 15 new files, nothing else
+touched, see the last section). `lib/` holds `contracts` and `extent` and there is no `domains/`. The one
+route is `app/api/health`; it is deployed (see "What M2 adds"). The engine directories are `lib/extent`,
+`lib/ground`, `lib/entail` (plus `lib/contracts`), not the house-template names; if a brief says
+otherwise, `.genesis/PLAN.md` wins and the builder flags the mismatch.
 
 ## `main` history was rewritten on 2026-10-24 (SHAs you may see on PR pages)
 
@@ -53,8 +58,9 @@ GitHub's PR page for #1 still shows the pre-rewrite merge SHA. To match it again
 
 The genesis tip moved the same way: `8943493` (the pre-rewrite parent of `1a7cf44`) is now `141f1cd`.
 
-PR #2 and PR #3 need no pair: GitHub reports their merge commits as `f9cb2ebc55bd...` and `d7aedb4c770d...`
-(`gh pr list --state all --json number,mergeCommit`), which are the SHAs on `main` now.
+PR #2, #3, #4 and #5 need no pair: GitHub reports their merge commits as `f9cb2ebc55bd...`,
+`d7aedb4c770d...`, `40eb046a918a...` and `612bdd403ba5...` (`gh pr list --state all --json number,mergeCommit`),
+which are the SHAs on `main` now.
 
 What was compared, and nothing more. The pre-rewrite commits are on no branch any more; they were read
 by SHA from GitHub's commits API, which still serves them today and may not always.
@@ -104,10 +110,10 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   the lockfile from 80 platform entries (215 packages) to 53 (188), removing exactly those 27; npm 10.9.9
   keeps all 80. The test does not detect other kinds of lockfile damage.
 - **Does not prove anything about the engine.** The scaffold has none. The only engine code is M1's
-  contracts (types and structural invariants) and the health route that self-checks M1's guard (M2),
-  covered in the next two sections; M3 to M5 are `todo`, so the extent algebra, grounding, propagation,
-  ruling and recheck are still designs, not results. The plan's own section 8 numbers come from a
-  throwaway model that is not in this repository.
+  contracts (types and structural invariants), the health route that self-checks M1's guard (M2) and the
+  extent algebra (M3), covered in the next three sections; M4 and M5 are `todo`, so grounding, propagation
+  over a schema, ruling and recheck are still designs, not results. The plan's own section 8 numbers come
+  from a throwaway model that is not in this repository.
 - `vercel.json` is committed and pinned to `npm ci` / `npm run build`, and since M2 a test pins it:
   `app/api/health/__tests__/vercel-config.test.ts` requires exactly those two keys with exactly those two
   values. Checked on a throwaway copy of `main` at `d7aedb4`: adding a `"framework"` key made that file
@@ -126,8 +132,9 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   the two `.genesis/` files that PR edited. These were that PR author's own runs, not the L4 verifier's.
 - That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
   judging that was the independent verification's job, and its verdict is in the milestone table above.
-- M1 is the contracts only. M3 to M5 are `todo`, so nothing about folding evidence into extents,
-  propagating bounds, ruling a claim or rechecking a certificate has been built or demonstrated.
+- M1 is the contracts only. When M1 merged, M3 to M5 were `todo`, so nothing about folding evidence into
+  extents, propagating bounds, ruling a claim or rechecking a certificate had been built or demonstrated.
+  M3 has since built the extent algebra (see "What M3 adds"); M4 and M5 are still `todo`.
 
 ## What M2 adds, and what was run to check it
 
@@ -150,7 +157,7 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   status on `d7aedb4` is `success` ("Deployment has completed") at 13:48:38 UTC, 39 seconds after PR #3
   merged at 13:47:59 UTC (`gh api repos/vladimir-mawla/beyond-the-chatbot/commits/d7aedb4c770d34248b3c34bc25584ed22cff94ff/status`). That
   is one deploy of one merge, not every deploy.
-- **Observed 2026-10-24 at 13:52 UTC, before this PR:** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
+- **Observed 2026-10-24 at 13:52 UTC, before the `mark M2 done` PR (#4):** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
   answered HTTP 200 with the body below. Its `commit` equalled `git rev-parse origin/main` at that moment
   (`d7aedb4`, M2's own merge commit), `checks.contracts.pass` was true, `failing` was empty, and each of the
   four cases had `pass` true and `actual` equal to `expected`.
@@ -164,34 +171,160 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   `lib/contracts/__tests__/` 16 files / 294 tests, and `app/api/health/__tests__/` 3 files / 63 tests
   (`checks.test.ts` 20, `route.test.ts` 17, `vercel-config.test.ts` 26). `npm run typecheck` and
   `npm run build` (from a deleted `.next`) also exited 0 on that tree. The same four commands were run again
-  on the mark-done branch, which differs from `d7aedb4` only in the two `.genesis/` files this PR edits.
-  These are this PR author's own runs, not the L4 verifier's.
+  on the `mark M2 done` branch (PR #4), whose merge commit `40eb046` differs from `d7aedb4` only in the two
+  `.genesis/` files that PR edited (`git diff --stat d7aedb4 40eb046`). These were that PR author's own
+  runs, not the L4 verifier's.
 - That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
   judging that was the independent verification's job, and its verdict is in the milestone table above.
-  The verifier's report is not in this repository: the round and verdict are as handed to this PR's
-  author.
+  The verifier's report is not in this repository: the round and verdict are as handed to the `mark M2
+  done` PR's author.
 - **What the fix round changed**, as far as the repository shows. PR #3 had seven commits; the last,
   `74843f0`, changes ADR 0002 (Decision 1 and "Rejected alternatives") and one comment in
   `app/api/health/__tests__/checks.test.ts`, and no other file. `git diff` between the PR's head ref
   (`refs/pull/3/head`) and `main` is empty, so the squash commit's tree is the PR head's tree.
 - **What this does not show.** One `curl` is one request at one time: it shows which commit Vercel served
-  and that the four self-checks passed then, not that the deployment is unchanged since. `lib/extent`,
-  `lib/ground` and `lib/entail` do not exist yet, so a green `/api/health` says nothing about them. By
-  ADR 0002's own account (Decision 1) the four values exercise three cells of M1's guard and one whole
-  value, not every cell, so a guard that broke another cell would not turn the endpoint red; M1's
-  `integrity.test.ts` is what pins the rest.
+  and that the four self-checks passed then, not that the deployment is unchanged since. The health route
+  imports only `lib/contracts` (`route.ts` imports `./checks`, and `checks.ts` imports `lib/contracts`), so
+  a green `/api/health` says nothing about `lib/extent`, which M3 has since added, and `lib/ground` and
+  `lib/entail` do not exist yet. By ADR 0002's own account (Decision 1) the four values exercise three
+  cells of M1's guard and one whole value, not every cell, so a guard that broke another cell would not
+  turn the endpoint red; M1's `integrity.test.ts` is what pins the rest.
+
+## What M3 adds, and what was run to check it
+
+`.genesis/decisions/0003-extent.md` (ADR 0003) is the record of what M3 decided, measured and left
+unproven. This section points at it and records only what was run for this revision; where it cites a
+Decision, the ADR's wording is the claim and this file adds nothing to it.
+
+- **What it is.** `lib/extent/**`: the seven functions of `.genesis/PLAN.md` section 5 (`checkExtent`,
+  `meet`, `isSubset`, `isSameExtent`, `unmetSides`, `sumForward`, `sumBackward`), exported from
+  `lib/extent/index.ts` with the type `ExtentCheck`. `checkExtent` is the one door an untrusted value comes
+  in by: it reads `lo` and `hi` once each and returns a fresh copy or one of five refusal reasons
+  (Decision 1). The other six take `Extent`s and do not re-validate them; ADR 0003 claims "total" for them
+  only for plain-data arguments, as `checkExtent` returns them, not for every value the declared types
+  admit (Decision 2).
+- **The exhaustive grids, against an oracle.** ADR 0003 (Decision 5) compares `sumForward` and
+  `sumBackward` with an oracle in `lib/extent/__tests__/fixtures.ts` that lists every integer assignment
+  and, it says, never calls the library: every extent with sides in `{null, -2..3}` (34 extents) over 2
+  operands, and with sides in `{null, 0..2}` (13 extents) over 3 operands, for every index. The ADR states
+  the limit: the grids are exhaustive over their own values and over 2 and 3 operands, and four or more
+  operands are covered only by the `BigInt` boundary cases ("What is not proven"). It describes the oracle
+  for the two sum functions only; how `fixtures.ts`'s `oracleMeet`, `oracleIsSubset` and
+  `oracleUnmetSides` are used was not traced for this entry. Run for this revision on a fresh clone of
+  `main` at `612bdd4`, with `env -u AI_AGENT -u CLAUDECODE npx vitest run
+  lib/extent/__tests__/sum-exactness.test.ts` (ADR 0003, Decision 5, records that the same command under an
+  agent printed none of the grid lines): the eight lines the ADR prints came out with the same counts, the
+  last being `sum grids in total: 167644 checks, 0 mismatches, 0 sets with a hole, 0 results that fail
+  checkExtent`. Those are one run of the test's own tallies, not an independent recount.
+- **Read-once, for the first reads the table lists and no others.** ADR 0003 (Decision 1) says `raw.lo` and
+  `raw.hi` are each read once and that the returned copy is made from that single read, and it says what
+  pins this: four probes in `lib/extent/__tests__/hostile-input.test.ts`, the one with getters that answer
+  differently on a second read being a table over the first read, on each of `lo` and `hi`, with the reads
+  of both sides counted. Read from the file for this revision, the table's first reads are `null`, `0`,
+  `-0`, `1`, `-1`, `5`, `-5`, `2**40` and `-(2**40)`, each followed by any of `"x"`, `NaN`, `7.5`, `2**41`,
+  `undefined`, `{}`, `3` and `null` that differs from it (accepted with the first value); and `1.5`, `NaN`,
+  `Infinity`, `"x"`, `undefined`, `{}`, `2**40 + 1` and `-(2**40 + 1)`, each followed by `null`, `0`, `-0`,
+  `3`, `-3`, `2**40` and `-(2**40)` (stays refused). That matches the ADR's list, with one reading to
+  note: the ADR's "in both signs" is true of `2**40 + 1` in the table, while `1.5` and `Infinity` appear
+  there as positive values only. ADR 0003 claims nothing beyond what it lists: the probes are "the ways of observing an input that were
+  tried; nothing here claims that they are all of them", and "That read-once covers every way of observing
+  an input" is on its "What is not proven" list.
+- **The boundaries.** `checkExtent` accepts `±MAX_MAGNITUDE` and refuses `±(MAX_MAGNITUDE + 1)` on each
+  side, naming it; a call on 63 operands, `sumBackward` at each of the 63 indexes and a ladder of 62
+  chained calls are compared with `BigInt`, and the ADR adds "Not shown: any magnitude, shape or operand
+  count beyond these cases" (Decision 6). A sum's bounds are not clamped to `MAX_MAGNITUDE`, and past
+  `2**53` an addition silently loses exactness: ADR 0003 records a call on 8,193 operands, each accepted by
+  `checkExtent`, whose lower bound is off by one (checked in a scratch script, pinned by no test), and says
+  nothing in this layer limits the operand count and that no later layer is shown to (Decision 2).
+- **Nothing calls it yet.** `git grep -nE "extent/|from \"\.\./extent|lib/extent"`, over the tree outside
+  `lib/extent/` and `.genesis/`, hits only M1's own tests under `lib/contracts/__tests__/` (synthetic file
+  trees held as strings, a layer table and comments); that is the whole of what the grep covers, and none
+  of its hits is in `app/`, `tests/` or a non-test source. By the reasoning in the
+  smoke-test bullet above (not re-measured for M3), `npm run build` therefore does not reach it. ADR 0003
+  records that nothing forces a later layer to call `checkExtent`: "M4 and M5 must use it".
+- **Tests:** `npm ci && npm test` on a fresh clone of `main` at `612bdd4` printed `Test Files  28 passed (28)`
+  and `Tests  769 passed (769)`. By directory, counted with `vitest run --reporter=json`: `tests/` (the two
+  genesis files) 2 files / 6 tests, `lib/contracts/__tests__/` 16 files / 294 tests,
+  `app/api/health/__tests__/` 3 files / 63 tests and `lib/extent/__tests__/` 7 files / 406 tests
+  (`architecture.test.ts` 18, `boundaries.test.ts` 20, `check-extent.test.ts` 79, `hostile-input.test.ts` 39,
+  `meet-subset.test.ts` 140, `sum-exactness.test.ts` 61, `unmet.test.ts` 49). `npm run typecheck` and
+  `npm run build` (from a deleted `.next`) also exited 0 on that tree. The same four commands were run again
+  on the `mark M3 done` branch, which differs from `612bdd4` only in the two `.genesis/` files this PR edits.
+  These are this PR author's own runs, not the L4 verifier's.
+- **Observed 2026-10-24 at 22:23 UTC, before this PR:** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
+  answered HTTP 200 with the body below. Its `commit` was `612bdd403ba5eef894237cf1088ad86f10b0b333`, the
+  current `main`: `git rev-parse origin/main`, fetched at 22:23:56 UTC, gave the same value (`612bdd4`, M3's
+  own merge commit). `checks.contracts.pass` was true, `failing` was empty, and each of the four cases had
+  `pass` true and `actual` equal to `expected`. The `Vercel` commit status on `612bdd4` is `success`
+  ("Deployment has completed") at 22:19:52 UTC, 33 seconds after PR #5 merged at 22:19:19 UTC
+  (`gh api repos/vladimir-mawla/beyond-the-chatbot/commits/612bdd403ba5eef894237cf1088ad86f10b0b333/status`).
+  That is one deploy of one merge. PR #4, which changed only the two `.genesis/` files, also got a `Vercel`
+  `success` status (14:02:39 UTC, after it merged at 14:01:58 UTC), so merging this PR is expected to
+  redeploy `main` and move the live `commit` off `612bdd4`.
+
+  ```json
+  {"status":"ok","commit":"612bdd403ba5eef894237cf1088ad86f10b0b333","checks":{"contracts":{"pass":true,"failing":[],"cases":[{"name":"well-formed-conflicted","pass":true,"expected":"ok","actual":"ok"},{"name":"ungrounded-carrying-established","pass":true,"expected":"unexpected-field/ungrounded/established","actual":"unexpected-field/ungrounded/established"},{"name":"weakened-with-empty-unmet","pass":true,"expected":"empty-array/weakened/unmet","actual":"empty-array/weakened/unmet"},{"name":"conflicted-missing-core","pass":true,"expected":"missing-field/conflicted/core","actual":"missing-field/conflicted/core"}]}}}
+  ```
+
+- That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
+  judging that was the independent verification's job, and its verdict is in the milestone table above.
+  The verifier's report is not in this repository: the round and verdict are as handed to this PR's
+  author, with the three fix rounds described as (1) a read-once test gap, closed by a table over the first
+  read in `hostile-input.test.ts`, a test seam for the oracle's hole check and corrected ADR sentences,
+  (2) a test title and an ADR clause narrowed, and (3) a PR-body diff command corrected. The third is an
+  edit to the PR description, not to a file, so the next bullet cannot show it.
+- **What the fix rounds changed**, as far as the repository shows. PR #5 had twenty commits. ADR 0003's
+  Status line names `a0a33e2` as the head the first independent review rejected. The eight commits after it
+  (`ffedf61` to `c6588b5`, the PR head) change `lib/extent/__tests__/hostile-input.test.ts`,
+  `lib/extent/__tests__/fixtures.ts`, `lib/extent/__tests__/sum-exactness.test.ts` and ADR 0003, and no file
+  under `lib/extent` outside `__tests__` (`git diff --stat a0a33e2 refs/pull/5/head -- lib/extent
+  ':!lib/extent/__tests__'` is empty). `git diff` between the PR's head ref (`refs/pull/5/head`) and `main`
+  over `lib/`, `app/`, `tests/` and `.genesis/decisions/` is empty, so the squash commit's tree is the PR
+  head's tree for everything PR #5 touched. Over the whole tree the two differ in exactly
+  `.genesis/DONE.html` and `.genesis/checkpoints/CURRENT.md`, which PR #4 edited after PR #5's branch was cut
+  from `d7aedb4`.
+- **What this does not show.** One `curl` is one request at one time: it shows which commit Vercel served
+  and that the four self-checks passed then, not that the deployment is unchanged since. The health route
+  imports only `lib/contracts`, so the response says nothing about M3's code. `lib/ground` and `lib/entail`
+  do not exist, so nothing about folding evidence over a schema, ruling a claim or rechecking a certificate
+  has been built or demonstrated; M3 supplies arithmetic for that and no caller yet.
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
-- `.genesis/decisions/` holds two decision records, `0001-contracts.md` (M1) and `0002-deploy.md` (M2),
-  each written by the milestone that made the decisions it records (an ADR is written by the milestone
-  that made them). M3 to M9 have none yet. Both `Status` lines still read "proposed ... not yet verified
-  by an independent L4 pass", which is out of date now that M1 and M2 have each had that pass. ADR 0002
-  was also written before the merge: its Decision 7 says the integration will redeploy `main` and that
-  the deploy of `main` "is not something this milestone verified", and its "What is not proven" list
-  still has "That the `main` redeploy after merge is healthy". "What M2 adds" above is one observation of
-  that redeploy, at one instant. Neither record is edited here: the bookkeeping exception covers only
-  `DONE.html` and this file.
+- `.genesis/decisions/` holds three decision records, `0001-contracts.md` (M1), `0002-deploy.md` (M2) and
+  `0003-extent.md` (M3), each written by the milestone that made the decisions it records (an ADR is
+  written by the milestone that made them). M4 to M9 have none yet. All three `Status` lines are out of
+  date now that each of those milestones has had its independent pass. ADR 0001 and ADR 0002 still read
+  "proposed ... not yet verified by an independent L4 pass". **ADR 0003's Status line (its lines 4 to 6)
+  still says "this version has not been re-verified"**: the full line reads "proposed — written by the
+  builder; revised after the first independent L4 pass rejected `a0a33e2` (...); this version has not been
+  re-verified". That was true of the revision it was written for and is stale now that M3 has passed
+  independent verification (APPROVE on the fourth review, as handed to this PR's author). The word
+  "proposed" is stale in the same way. ADR 0002 was also written before the merge: its Decision 7 says the
+  integration will redeploy `main` and that the deploy of `main` "is not something this milestone
+  verified", and its "What is not proven" list still has "That the `main` redeploy after merge is
+  healthy". "What M2 adds" above is one observation of that redeploy, at one instant. None of the three
+  records is edited here: each is its milestone's frozen file, and the bookkeeping exception covers only
+  `DONE.html` and this file. They are recorded as known gaps instead.
+- **Text in M1's frozen files that M3 made false, not edited.** ADR 0003 ("Plan wording and neighbours",
+  item 5) lists three; each was true when written: `lib/contracts/bounds.ts` lines 17 and 18 (`checkExtent`
+  "is not built; until it is, nothing in this repository refuses such a value"; `checkExtent` now exists
+  and refuses those values, though "a hand-built `Extent` is trusted by every reader" in the same
+  sentence is still so, since nothing forces a caller to use it), `lib/contracts/limits.ts` line 17 (the
+  argument that propagation never sums more than `MAX_FIELDS` extents "is M3's to check against `BigInt`
+  and is not built"; M3 checked it for the cases in ADR 0003 Decision 6 and no others) and
+  `.genesis/decisions/0001-contracts.md` line 275 ("None of M3-M5 is built"). A grep for this revision
+  found two more that read as stale and that the ADR does not list:
+  `lib/contracts/__tests__/canonical-scenario.test.ts` line 13 ("that is M3-M5, and no engine exists") and
+  `lib/contracts/__tests__/proofs/honest-limits.proofs.ts` line 17 (`checkExtent` "is planned to refuse
+  it"). Not counted: `lib/contracts/__tests__/honest-limits.test.ts` line 35 says "None of M3-M5 is built
+  when this is written", dated by its own words. The greps were `\bM3\b|M3-M5|M3 to M5|checkExtent|lib/extent`
+  over everything except `lib/extent/`, `.genesis/PLAN.md`, this file, `DONE.html`, ADR 0003 and
+  `package-lock.json`, and `not built|not yet|does not exist|nothing built|nothing is built|proposed|NOT
+  BUILT` over the same exclusions but with ADR 0003 included. A search is not a proof that nothing else is
+  stale, and neither looked at `.genesis/PLAN.md`, the frozen genesis plan. Nothing is fixed here: the
+  files above belong to M1 and M3, and `README.md` belongs to M9 (`.genesis/PLAN.md` section 6, M9
+  "Owns").
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
@@ -243,4 +376,8 @@ files and none of the files above touched: `lib/contracts/**` (45 files) and
 `checks.ts` and three test files) and `.genesis/decisions/0002-deploy.md`, all new, plus one edited
 file, `README.md`, where the `Live:` line is the only line changed (`git diff --stat f9cb2eb d7aedb4`
 lists it as 1 insertion and 1 deletion). Over `lib/`, `vercel.json`, `next.config.ts`, `package.json`,
-`package-lock.json`, both `tsconfig*.json` and `.github/`, `git diff f9cb2eb d7aedb4` is empty.
+`package-lock.json`, both `tsconfig*.json` and `.github/`, `git diff f9cb2eb d7aedb4` is empty. Added by M3
+(PR #5): `lib/extent/**` (14 files: six sources, seven test files and `__tests__/fixtures.ts`) and
+`.genesis/decisions/0003-extent.md`, all new: `git diff --stat 40eb046 612bdd4` lists those 15 files with
+3188 insertions and no deletions, and `git diff 40eb046 612bdd4 -- . ':!lib/extent'
+':!.genesis/decisions/0003-extent.md'` is empty, so no file above was touched.
