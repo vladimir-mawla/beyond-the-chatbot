@@ -295,7 +295,7 @@ describe("what it does NOT catch, pinned so the limit is code and not only prose
     expect(assertEntailmentWellFormed(build(ENTAILMENT_SAMPLES.conflicted, { core: new Array(3) })).ok).toBe(true);
   });
 
-  it("it is not total: a forbidden-field getter that throws makes it throw (hostile input is read once at intake, not here)", () => {
+  it("it is not total: a getter that throws on a REQUIRED field makes it throw (hostile input is read once at intake, not here)", () => {
     const hostile: Record<string, unknown> = { ...ENTAILMENT_SAMPLES.ungrounded };
     Object.defineProperty(hostile, "openEnds", {
       get() {
