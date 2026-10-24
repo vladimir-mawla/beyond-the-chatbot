@@ -15,9 +15,10 @@ import { checkProofFile } from "./support/proof-harness.js";
 const PROOFS_DIR = join(import.meta.dirname, "proofs");
 
 const EXPECTED_DIRECTIVES: Readonly<Record<string, number>> = {
-  "entailment-forbidden.proofs.ts": 105,
   "ids.proofs.ts": 4,
+  "entailment-forbidden.proofs.ts": 105,
   "non-empty-array.proofs.ts": 5,
+  "required.proofs.ts": 175,
   "schema-forbidden.proofs.ts": 14,
 };
 
