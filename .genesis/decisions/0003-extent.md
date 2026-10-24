@@ -36,8 +36,12 @@ before an extent that is also numerically inverted.
 and the returned copy are made from that single read. Four probes in `hostile-input.test.ts`: a counting getter per
 side (also when the extent is then refused); a Proxy that logs every trap, which sees exactly `get:lo` and `get:hi`
 and no `has`, `ownKeys`, descriptor or prototype probe; getters that answer differently on a second read, in both
-directions (valid-then-garbage is accepted with the first values, garbage-then-valid is refused), so a copy built
-from a re-read would be caught; and throwing reads (an `Error`, a string, `null`, `undefined`, a symbol, an object
+directions (a valid first read followed by a different second read is accepted with the first value; a refused first
+read stays refused when the second read would be valid), on each side, with the reads of both sides counted each time.
+The first reads are `null`, `0`, `-0`, `1`, `-1`, `5`, `-5`, `2**40` and `-(2**40)` in the first direction (each followed
+by every one of `"x"`, `NaN`, `7.5`, `2**41`, `undefined`, an object, `3` and `null` that differs from it) and `1.5`,
+`NaN`, `Infinity`, a string, `undefined`, an object and `2**40 + 1` in both signs in the second (each followed by `null`,
+`0`, `-0`, `3`, `-3`, `2**40` and `-(2**40)`); and throwing reads (an `Error`, a string, `null`, `undefined`, a symbol, an object
 whose own getters throw, a throwing Proxy trap, a revoked Proxy). Re-reading `lo` when the first read was a number:
 **10 failed** (`hostile-input.test.ts`). Reading `hi` before `lo`: **6 failed** (`hostile-input.test.ts`). The
 returned extent is plain data (own value properties, ordinary prototype), so a getter on the input cannot follow it
