@@ -56,10 +56,25 @@ the builder flags the mismatch.
   at genesis on a throwaway copy: `npm install --package-lock-only` under npm 11.5.1 exits 0 and takes
   the lockfile from 80 platform entries (215 packages) to 53 (188), removing exactly those 27; npm 10.9.9
   keeps all 80. The test does not detect other kinds of lockfile damage.
-- **Does not prove anything about the engine.** There is none. Every plan claim is a design, not a result.
-  The plan's own section 8 numbers come from a throwaway model that is not in this repository.
+- **Does not prove anything about the engine.** The scaffold has none. The only engine code is M1's
+  contracts (types and structural invariants), covered in the next section; M3 to M5 are `todo`, so the
+  extent algebra, grounding, propagation, ruling and recheck are still designs, not results. The plan's
+  own section 8 numbers come from a throwaway model that is not in this repository.
 - `vercel.json` is committed and pinned to `npm ci` / `npm run build`, but **nothing tests it yet**: M2
   adds that test. Nothing has been deployed and `vercel` has not been run from this repo.
+
+## What M1 adds, and what was run to check it
+
+- `npm ci && npm test` on a fresh clone of `main` at `c3eba1d` printed `Test Files  18 passed (18)` and
+  `Tests  300 passed (300)`. By directory: `tests/` (the two genesis files) 2 files / 6 tests, the figure
+  the first bullet above records at genesis, and `lib/contracts/__tests__/` 16 files / 294 tests.
+  `npm run typecheck` and `npm run build` also exited 0 on that tree. The same four commands were run
+  again on the mark-done branch, which differs from `c3eba1d` only in the two `.genesis/` files this PR
+  edits. These are the mark-done PR author's own runs, not the L4 verifier's.
+- That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
+  judging that was the independent verification's job, and its verdict is in the milestone table above.
+- M1 is the contracts only. M3 to M5 are `todo`, so nothing about folding evidence into extents,
+  propagating bounds, ruling a claim or rechecking a certificate has been built or demonstrated.
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
