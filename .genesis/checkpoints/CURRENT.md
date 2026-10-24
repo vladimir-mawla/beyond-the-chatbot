@@ -59,6 +59,13 @@ by SHA from GitHub's commits API, which still serves them today and may not alwa
   position by position: 19 of 19 have the same tree and the same full message. Only the author and
   committer email differ.
 
+The sibling `autonomous-company-simulator` was rewritten the same way, and one of its SHAs is cited in
+the dependency bullet below: its `next` 16.4.3 PR #1 merge commit, which this repository's dependency
+versions were copied from, was `fc17afd` and is now `ab14763`. Compared through the same API: the same
+tree (`f1255ae`), and messages that are identical except for one `Co-authored-by` line, whose email is
+the attribution fix itself. `fc17afd` has no common ancestor with that repository's current `main`;
+`ab14763` is an ancestor of it.
+
 ## What the scaffold does and does not prove
 
 - **Proves, locally at genesis:** `npm ci` restores with the native bindings intact, `npm run typecheck`
@@ -117,13 +124,15 @@ by SHA from GitHub's commits API, which still serves them today and may not alwa
 - No live URL exists yet. The account's standing rule applies: deploy at milestone 2, never last. M2
   deploys a live skeleton second, not last, so this project does not repeat the previous project's gap.
 - **Dependency versions were copied unchanged from autonomous-company-simulator `origin/main`
-  (`fc17afd`, `next` 16.4.3) and `npm audit` still reports 4 findings (2 high, 2 moderate), none
-  addressed.** `source-map-js` (high) is reachable through `next` -> `postcss`, so it is in the
-  production tree; `vite` (high) and `vitest`/`@vitest/mocker` (moderate) are dev-only. They were not
-  addressed at genesis because the plan says to copy the lockfile rather than regenerate it and a
-  version bump is a stack decision for the coordinator, not for genesis. No assessment was made of
-  whether any advisory is exploitable against this scaffold or against Vercel's runtime. `npm audit`
-  was run read-only; the lockfile hash was identical before and after.
+  (`ab14763`, `next` 16.4.3) and `npm audit` still reports 4 findings (2 high, 2 moderate), none
+  addressed.** `ab14763` was `fc17afd` before that repository's own 2026-10-24 history rewrite (see the
+  note above); `.genesis/PLAN.md` is frozen genesis and still cites the old `fc17afd`, at lines 31, 746,
+  759 and 792, so read those as `ab14763`. `source-map-js` (high) is reachable through `next` ->
+  `postcss`, so it is in the production tree; `vite` (high) and `vitest`/`@vitest/mocker` (moderate)
+  are dev-only. They were not addressed at genesis because the plan says to copy the lockfile rather
+  than regenerate it and a version bump is a stack decision for the coordinator, not for genesis. No
+  assessment was made of whether any advisory is exploitable against this scaffold or against Vercel's
+  runtime. `npm audit` was run read-only; the lockfile hash was identical before and after.
 - **The lockfile must not be rewritten with this machine's npm 11.5.1** (see the measurement above).
   After any lockfile change, compare the count of `os`/`cpu` entries before and after; the lockfile test
   now does that.
