@@ -220,13 +220,13 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
   `raw.hi` are each read once and that the returned copy is made from that single read, and it says what
   pins this: four probes in `lib/extent/__tests__/hostile-input.test.ts`, the one with getters that answer
   differently on a second read being a table over the first read, on each of `lo` and `hi`, with the reads
-  of both sides counted. Read from the file for this revision, the table's first reads are `null`, `0`, `-0`, `1`, `-1`, `5`, `-5`, `2**40` and
-  `-(2**40)`, each followed by any of `"x"`, `NaN`, `7.5`, `2**41`, `undefined`, `{}`, `3` and `null` that
-  differs from it (accepted with the first value); and `1.5`, `NaN`, `Infinity`, `"x"`, `undefined`, `{}`,
-  `2**40 + 1` and `-(2**40 + 1)`, each followed by `null`, `0`, `-0`, `3`, `-3`, `2**40` and `-(2**40)`
-  (stays refused). That matches the ADR's list, with one reading to note: the ADR's "in both signs" is
-  true of `2**40 + 1` in the table, while `1.5` and `Infinity` appear there as positive values only. ADR
-  0003 claims nothing beyond what it lists: the probes are "the ways of observing an input that were
+  of both sides counted. Read from the file for this revision, the table's first reads are `null`, `0`,
+  `-0`, `1`, `-1`, `5`, `-5`, `2**40` and `-(2**40)`, each followed by any of `"x"`, `NaN`, `7.5`, `2**41`,
+  `undefined`, `{}`, `3` and `null` that differs from it (accepted with the first value); and `1.5`, `NaN`,
+  `Infinity`, `"x"`, `undefined`, `{}`, `2**40 + 1` and `-(2**40 + 1)`, each followed by `null`, `0`, `-0`,
+  `3`, `-3`, `2**40` and `-(2**40)` (stays refused). That matches the ADR's list, with one reading to
+  note: the ADR's "in both signs" is true of `2**40 + 1` in the table, while `1.5` and `Infinity` appear
+  there as positive values only. ADR 0003 claims nothing beyond what it lists: the probes are "the ways of observing an input that were
   tried; nothing here claims that they are all of them", and "That read-once covers every way of observing
   an input" is on its "What is not proven" list.
 - **The boundaries.** `checkExtent` accepts `±MAX_MAGNITUDE` and refuses `±(MAX_MAGNITUDE + 1)` on each
@@ -238,8 +238,8 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
   nothing in this layer limits the operand count and that no later layer is shown to (Decision 2).
 - **Nothing calls it yet.** `git grep -nE "extent/|from \"\.\./extent|lib/extent"`, over the tree outside
   `lib/extent/` and `.genesis/`, hits only M1's own tests under `lib/contracts/__tests__/` (synthetic file
-  trees held as strings, a layer table and comments); that is the whole of what the grep covers, and it
-  found no `import` of `lib/extent` in `app/`, `tests/` or any non-test source. By the reasoning in the
+  trees held as strings, a layer table and comments); that is the whole of what the grep covers, and none
+  of its hits is in `app/`, `tests/` or a non-test source. By the reasoning in the
   smoke-test bullet above (not re-measured for M3), `npm run build` therefore does not reach it. ADR 0003
   records that nothing forces a later layer to call `checkExtent`: "M4 and M5 must use it".
 - **Tests:** `npm ci && npm test` on a fresh clone of `main` at `612bdd4` printed `Test Files  28 passed (28)`
@@ -322,8 +322,9 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
   over everything except `lib/extent/`, `.genesis/PLAN.md`, this file, `DONE.html`, ADR 0003 and
   `package-lock.json`, and `not built|not yet|does not exist|nothing built|nothing is built|proposed|NOT
   BUILT` over the same exclusions but with ADR 0003 included. A search is not a proof that nothing else is
-  stale, and neither looked at `.genesis/PLAN.md`, the frozen genesis plan. Nothing is fixed here: the files above belong to
-  M1 and M3, and `README.md` belongs to M9 (`.genesis/PLAN.md` section 6, M9 "Owns").
+  stale, and neither looked at `.genesis/PLAN.md`, the frozen genesis plan. Nothing is fixed here: the
+  files above belong to M1 and M3, and `README.md` belongs to M9 (`.genesis/PLAN.md` section 6, M9
+  "Owns").
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
