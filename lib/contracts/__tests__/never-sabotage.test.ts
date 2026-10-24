@@ -91,8 +91,9 @@ const LITERAL_CODES: readonly number[] = [2322, 2353, 2375];
 
 const results: { id: string; outcome: SabotageOutcome }[] = [];
 afterAll(() => {
-  // Printed only on request, so a normal run stays quiet: `BTC_REPORT=1 npm test -- never-sabotage --reporter=verbose`
-  // (the default reporter does not show output from a hook).
+  // Printed only on request, so a normal run stays quiet: `BTC_REPORT=1 npm test -- never-sabotage`. Where vitest 5
+  // detects an AI agent (for example `AI_AGENT` or `CLAUDECODE` set) it defaults to its `minimal` reporter, which
+  // shows no console output; add `--reporter=verbose` there.
   if (process.env["BTC_REPORT"] === "1") {
     console.log(formatMatrix("17x17: rows = the `?: never` deleted, columns = proof group, cell = routes (of 7) that went red", results, NEVER_FIELDS.map((n) => n.group)));
   }

@@ -97,8 +97,9 @@ const MUTATIONS: readonly Mutation[] = ROWS.map((r) => ({
 
 const results: { id: string; outcome: SabotageOutcome }[] = [];
 afterAll(() => {
-  // Printed only on request: `BTC_REPORT=1 npm test -- required-sabotage --reporter=verbose` (the default reporter
-  // does not show output from a hook).
+  // Printed only on request: `BTC_REPORT=1 npm test -- required-sabotage`. Where vitest 5 detects an AI agent (for
+  // example `AI_AGENT` or `CLAUDECODE` set) it defaults to its `minimal` reporter, which shows no console output;
+  // add `--reporter=verbose` there.
   if (process.env["BTC_REPORT"] === "1") {
     console.log(formatMatrix("required: rows = the declaration loosened, columns = proof group, cell = routes (of 7) that went red", results, ROWS.flatMap((r) => r.groups)));
   }
