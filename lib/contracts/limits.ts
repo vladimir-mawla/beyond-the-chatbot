@@ -2,11 +2,12 @@
  * The ten bounds of the engine (`.genesis/PLAN.md` section 4.1). Every one is INVENTED, not derived from
  * anything, and is disclosed as such; each is a number so a boundary test can probe N and N+1.
  *
- * Nothing in M1 enforces any of them. The plan names the layers that read untrusted input (M3 `checkExtent`,
- * M4 `readSchema` and `ground`, M5 `readClaim` and `answer`) and gives `MAX_MAGNITUDE`, `MAX_FIELDS` and
- * `MAX_OBSERVATIONS`/`MAX_DRAFT_CLAIMS` an obvious home, but it does not say which layer enforces each cap,
- * so this file does not either. `__tests__/limits.test.ts` pins the values and one relation between them
- * (below); it cannot say that a later milestone enforces them.
+ * Nothing in M1 enforces any of them. The plan assigns exactly one cap to a layer by name: M3's `checkExtent`
+ * refuses a bound with `|v| > MAX_MAGNITUDE`, and M3's tests probe N and N+1 for it. For `MAX_FIELDS`,
+ * `MAX_OBSERVATIONS` and `MAX_DRAFT_CLAIMS` it names faults that carry a `max` (`too-many-fields`,
+ * `too-many-observations`, `draft-too-long`) but not the constant, and for `MAX_OPERANDS` and the five length
+ * caps it names no layer, so this file assigns those no layer either. `__tests__/limits.test.ts` pins the
+ * values and the relations between them (below); it cannot say that a later milestone enforces them.
  *
  * THE ONE RELATION THAT MATTERS. Plan section 8F argues that propagation sums at most `MAX_FIELDS` extents
  * whose finite sides are at most `MAX_MAGNITUDE` in absolute value, so every intermediate value stays below
