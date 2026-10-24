@@ -277,7 +277,7 @@ function flipping(side: FlippedSide, first: unknown, later: unknown): { raw: obj
   return { raw, reads: () => ({ side: sideReads, other: otherReads }) };
 }
 
-describe("each side is read once and the copy is that read, whatever the first value is", () => {
+describe("each side is read once and the copy is that read, for each first read in the two tables below", () => {
   // The probes above flip a getter whose first read is one kind of value. A re-read that only happens for another
   // kind (a `null`, a zero, a negative, the cap) is a different edit of `checkExtent` and needs its own first read,
   // so this is a table over the first read, on each side, with the number of reads of BOTH sides counted.
