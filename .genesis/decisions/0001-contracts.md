@@ -158,8 +158,11 @@ red AND fires the assertion (log, section C).
 **Order of checks** (documented on the function and pinned): `unknown-variant`; the variant's required fields in
 table order (`missing-field`, or `empty-array`); its forbidden fields in table order (`unexpected-field`); the
 common fields `field` and `tested` (`missing-field`). The plan's four M2 self-checks are each one cell, so M2
-does not depend on the order. The common fields are checked last so they cannot pre-empt a plan cell if M2's
-cast-built values are minimal.
+does not depend on the order, PROVIDED each cast-built value has that one fault only. A value built from less
+reports its first missing required field instead: `{ kind: "ungrounded", established }` gives `missing-field` /
+`openEnds` and `{ kind: "weakened", unmet: [] }` gives `missing-field` / `established`; only the `conflicted`
+check (a missing `core`) survives a minimal value. The common fields are checked last, so a value that also lacks
+`field` or `tested` still reports its plan cell.
 
 **Present-but-`undefined` forbidden key (the brief asked).** `tsconfig.json` has no `exactOptionalPropertyTypes`,
 so under it `established?: never` ACCEPTS `established: undefined` (row 16). The guard counts the KEY as present:

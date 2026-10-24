@@ -110,7 +110,9 @@ function isPresent(value: unknown): boolean {
  *   3. the variant's FORBIDDEN fields, in table order: `unexpected-field`;
  *   4. the two common fields `field` and `tested`: `missing-field`.
  * The plan's self-checks for M2's health route (a well-formed value, and three cast-built ones) are each one
- * cell of this table, so none depends on the order (plan section 6, M2).
+ * cell of this table, so none depends on the order PROVIDED each cast-built value has that one fault only
+ * (plan section 6, M2): `{ ...wellFormedUngrounded, established }` reports `unexpected-field`, but the bare
+ * `{ kind: "ungrounded", established }` reports `missing-field` / `openEnds`, because the required fields come first.
  *
  * A FORBIDDEN field counts as present if the KEY is there at all: `field in value`, which sees an own
  * property, an inherited one (from the prototype), an accessor, a non-enumerable one and a property whose
