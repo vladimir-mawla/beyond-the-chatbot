@@ -17,28 +17,37 @@ import type { RawField } from "./fixtures.js";
 
 const bad = (value: unknown): string[] => numbersIn(value).filter((n) => !Number.isSafeInteger(n.value) || Object.is(n.value, -0)).map((n) => `${n.path} = ${String(n.value)}`);
 
+const CHUNKS = 12;
+const PER_CHUNK = 250;
+const seen = { structures: 0, numbers: 0 };
+
 describe("every number in every produced structure is a safe integer, and none is -0", () => {
-  it("on 3000 generated instances: the grounding, the refusals, extentOf, supportOf and openEndsOf of every field", () => {
-    let numbers = 0;
-    let structures = 0;
-    for (let seed = 1; seed <= 3000; seed++) {
-      const inst = genInstance(mulberry32(seed));
-      const r = ground(inst.schema, inst.observations);
-      const outputs: unknown[] = [r];
-      if (r.ok) {
-        for (const entry of r.grounding.baseline) {
-          const f = fieldId(entry.field);
-          outputs.push(extentOf(r.grounding, f), supportOf(r.grounding, f), openEndsOf(r.grounding, f, ["lo", "hi"]));
+  for (let chunk = 0; chunk < CHUNKS; chunk++) {
+    const from = chunk * PER_CHUNK + 1;
+    it(`seeds ${from} to ${from + PER_CHUNK - 1}: the grounding, the refusals, extentOf, supportOf and openEndsOf of every field`, () => {
+      for (let seed = from; seed < from + PER_CHUNK; seed++) {
+        const inst = genInstance(mulberry32(seed));
+        const r = ground(inst.schema, inst.observations);
+        const outputs: unknown[] = [r];
+        if (r.ok) {
+          for (const entry of r.grounding.baseline) {
+            const f = fieldId(entry.field);
+            outputs.push(extentOf(r.grounding, f), supportOf(r.grounding, f), openEndsOf(r.grounding, f, ["lo", "hi"]));
+          }
+        }
+        for (const out of outputs) {
+          seen.structures += 1;
+          seen.numbers += numbersIn(out).length;
+          expect(bad(out), `seed ${seed}`).toEqual([]);
         }
       }
-      for (const out of outputs) {
-        structures += 1;
-        numbers += numbersIn(out).length;
-        expect(bad(out), `seed ${seed}`).toEqual([]);
-      }
-    }
-    expect(structures).toBeGreaterThanOrEqual(10000);
-    expect(numbers).toBeGreaterThanOrEqual(30000);
+    });
+  }
+
+  it("enough structures and numbers were walked (needs every chunk above to have run)", () => {
+    console.log(`integer-only: ${seen.structures} structures, ${seen.numbers} numbers, every one a safe integer and none -0`);
+    expect(seen.structures, "all chunks ran: do not filter this file with -t").toBeGreaterThanOrEqual(10000);
+    expect(seen.numbers).toBeGreaterThanOrEqual(30000);
   });
 
   it("the counts in a failure are integers too: too-many-fields, too-many-observations, and a repeated -0 in an input", () => {

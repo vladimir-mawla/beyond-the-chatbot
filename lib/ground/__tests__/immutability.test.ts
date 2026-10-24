@@ -54,8 +54,8 @@ function frozenCopy<T>(value: T): T {
   return copy;
 }
 
-const FROZEN_CHUNKS = 6;
-const FROZEN_PER_CHUNK = 100;
+const FROZEN_CHUNKS = 12;
+const FROZEN_PER_CHUNK = 50;
 const frozenSeen = { instances: 0, nodes: 0, conflicted: 0, refused: 0 };
 
 describe("everything the public functions return is deeply frozen", () => {
