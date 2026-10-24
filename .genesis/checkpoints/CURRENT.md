@@ -41,9 +41,16 @@ the builder flags the mismatch.
 - **`tests/smoke.test.ts`** pins that the `dev`/`build` scripts really pass `--webpack` and that
   `next.config.ts` really declares `experimental.extensionAlias` (it imports the config and reads the
   exported object rather than matching source text, because the config's own comment contains the word).
-  It does **not** prove that a `.js`-suffixed import resolves in a build: that needs `lib/` and is
-  covered by `npm run build` from M1. That Turbopack still cannot resolve such imports on `next@16.4.3`
-  was taken from the hand-off brief and the sibling's comment; it was **not** re-run here.
+  It does **not** prove that a `.js`-suffixed import resolves in a build: that needs a file under `app/`
+  to import `lib/`, and none does (no file under `app/` imports `lib/`; `tsconfig.json` excludes
+  `lib/**/*`). Until one does, `npm run build` does not exercise `lib/` at all, M1 included; M2's health
+  route is the first planned importer. Checked on a throwaway copy of `main` at `c3eba1d`: with no import
+  the build output contained no `lib/contracts` symbol; with one temporary
+  `import * as contracts from "../lib/contracts/index.js"` in `app/page.tsx` the build succeeded and its
+  output contained them. (M1's ADR says the same, in its scratch-build log E and plan observation 6; the
+  earlier sentence here, that the build covers it "from M1", was wrong.) That Turbopack still cannot
+  resolve such imports on `next@16.4.3` was taken from the hand-off brief and the sibling's comment; it
+  was **not** re-run here.
 - **`tests/lockfile.test.ts`** fails if `package-lock.json` has fewer than 80 `os`/`cpu` entries or has
   lost any of the 15 `@rolldown/binding-*`, `fsevents` or 11 `lightningcss-*` entries by name. Measured
   at genesis on a throwaway copy: `npm install --package-lock-only` under npm 11.5.1 exits 0 and takes
