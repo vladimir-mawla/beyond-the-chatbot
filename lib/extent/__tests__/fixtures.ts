@@ -130,3 +130,118 @@ export function oracleUnmetSides(established: Extent, tested: Extent): ("lo" | "
   if (atSmall.join() !== atLarge.join()) throw new Error(`the windows disagree about the unmet sides of ${JSON.stringify(established)} against ${JSON.stringify(tested)}`);
   return atSmall;
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// The sum oracle: a signed sum of integers drawn from extents, by enumerating every assignment.
+// ---------------------------------------------------------------------------------------------------------
+
+/** One term of a signed sum: an integer drawn from `extent`, added (`+1`) or subtracted (`-1`). */
+export interface Term {
+  readonly extent: Extent;
+  readonly sign: 1 | -1;
+}
+
+interface Reached {
+  readonly min: number;
+  readonly max: number;
+  /** How many DIFFERENT values the sum took. */
+  readonly distinct: number;
+}
+
+/**
+ * Every assignment of an integer to every term, each term's integer drawn from its extent inside `[-cap, cap]`
+ * (a `null` side running to the edge), and the least, greatest and number of distinct values of the signed sum.
+ * Plain nested loops, no formula: the sum is built one assignment at a time. The innermost term is a loop and not
+ * a call, which is most of the speed of the 3-operand grid.
+ */
+function enumerateSigned(terms: readonly Term[], cap: number): Reached {
+  const n = terms.length;
+  const lows = new Int32Array(n);
+  const highs = new Int32Array(n);
+  const signs = new Int32Array(n);
+  terms.forEach((term, t) => {
+    const values = integersIn(term.extent, cap); // throws if the window is too small for a finite bound
+    lows[t] = values[0] as number;
+    highs[t] = values[values.length - 1] as number;
+    signs[t] = term.sign;
+  });
+  // Every term's integer is within `cap` in absolute value, so the signed sum is within `n * cap`.
+  const offset = n * cap;
+  const seen = new Uint8Array(2 * offset + 1);
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  let distinct = 0;
+  const last = n - 1;
+  const lastSign = signs[last] as number;
+  const lastLow = lows[last] as number;
+  const lastHigh = highs[last] as number;
+  const visit = (t: number, partial: number): void => {
+    if (t === last) {
+      for (let v = lastLow; v <= lastHigh; v++) {
+        const total = partial + lastSign * v;
+        if (total < min) min = total;
+        if (total > max) max = total;
+        const slot = total + offset;
+        if (seen[slot] === 0) {
+          seen[slot] = 1;
+          distinct += 1;
+        }
+      }
+      return;
+    }
+    const sign = signs[t] as number;
+    for (let v = lows[t] as number; v <= (highs[t] as number); v++) visit(t + 1, partial + sign * v);
+  };
+  visit(0, 0);
+  return { min, max, distinct };
+}
+
+export interface SumOracle {
+  readonly extent: Extent;
+  /** True if the integers the sum can take are NOT every integer between its least and greatest (an interval would then be inexact). */
+  readonly hasHole: boolean;
+}
+
+/**
+ * The extent of a signed sum, by cap widening: each side is `null` iff widening the window moves it. The set of
+ * values is also checked for holes in the small window, so "an interval represents it exactly" is observed here
+ * rather than assumed.
+ */
+export function oracleSum(terms: readonly Term[]): SumOracle {
+  const { small, large } = windowFor(terms.map((t) => t.extent));
+  const atSmall = enumerateSigned(terms, small);
+  const atLarge = enumerateSigned(terms, large);
+  return {
+    extent: { lo: atSmall.min === atLarge.min ? atSmall.min : null, hi: atSmall.max === atLarge.max ? atSmall.max : null },
+    hasHole: atSmall.distinct !== atSmall.max - atSmall.min + 1,
+  };
+}
+
+/** The extent the sum of `operands` must lie in. */
+export function oracleForward(operands: readonly Extent[]): SumOracle {
+  return oracleSum(operands.map((extent) => ({ extent, sign: 1 })));
+}
+
+/** The extent `result` implies for `operands[index]`: the values `result - (the other operands)` can take. */
+export function oracleBackward(result: Extent, operands: readonly Extent[], index: number): SumOracle {
+  const others: Term[] = operands.flatMap((extent, position): Term[] => (position === index ? [] : [{ extent, sign: -1 }]));
+  return oracleSum([{ extent: result, sign: 1 }, ...others]);
+}
+
+/** A running tally for a grid: how many comparisons, and the first few disagreements for the failure message. */
+export class Tally {
+  checks = 0;
+  mismatches = 0;
+  holes = 0;
+  invalid = 0;
+  readonly first: string[] = [];
+  note(where: string, actual: Extent, oracle: SumOracle, valid: boolean): void {
+    this.checks += 1;
+    if (oracle.hasHole) this.holes += 1;
+    if (!valid) this.invalid += 1;
+    if (actual.lo !== oracle.extent.lo || actual.hi !== oracle.extent.hi) {
+      this.mismatches += 1;
+      if (this.first.length < 5) this.first.push(`${where}: got ${JSON.stringify(actual)}, oracle ${JSON.stringify(oracle.extent)}`);
+    }
+  }
+}

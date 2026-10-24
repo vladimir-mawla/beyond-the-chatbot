@@ -1,12 +1,27 @@
 import { describe, expect, it } from "vitest";
 import type { Extent, NonEmptyReadonlyArray } from "../../contracts/index.js";
-import { meet, sumBackward, sumForward } from "../index.js";
-import { ext } from "./fixtures.js";
+import { checkExtent, isSubset, meet, sumBackward, sumForward } from "../index.js";
+import { ext, GRID_VALUES, gridExtents, oracleBackward, oracleForward, REDUCED_VALUES, Tally } from "./fixtures.js";
 
 /**
- * `sumForward` and `sumBackward`, worked out by hand: numbers a reader can check with pencil and paper,
- * including the three the plan's section 7 gives for the order desk, so a bug that a brute-force enumeration
- * and the code happened to share would still meet an answer worked out independently.
+ * `sumForward` and `sumBackward` (`.genesis/PLAN.md` section 6 M3, layer 1: exhaustive, not sampled).
+ *
+ * Two kinds of evidence, in this order:
+ *  - BY HAND: numbers a reader can check with pencil and paper, including the three the plan's section 7 gives for
+ *    the order desk, so a bug that a brute-force enumeration and the code happened to share would still meet an
+ *    answer worked out independently.
+ *  - AGAINST ENUMERATION: every combination of extents on a grid, compared with a brute-force oracle
+ *    (`fixtures.ts`: it lists the integer assignments and builds each sum one assignment at a time; it never calls
+ *    the library). The grids are the plan's. Sides are drawn from {null, -2..3}, which gives 34 valid extents
+ *    (`lo <= hi` whenever both are set), for 2 operands; and from {null, 0..2}, which gives 13, for 3 operands.
+ *    A side is expected `null` exactly when WIDENING the oracle's enumeration window moves its bound (the reason
+ *    is at the top of `fixtures.ts`). The oracle also checks every set of sums for holes: the integers a sum of
+ *    intervals can take must be every integer between the least and the greatest, or an interval would not be an
+ *    exact representation.
+ *
+ * What a grid does not show: nothing about operand counts beyond 3 (`boundaries.test.ts` takes one call to 63
+ * operands, where the claim is about magnitude, not about every extent), and nothing about values outside
+ * -2..3. A grid is exhaustive over ITS values, not over all integers.
  */
 
 const ops = (...extents: Extent[]): NonEmptyReadonlyArray<Extent> => extents as unknown as NonEmptyReadonlyArray<Extent>;
@@ -192,5 +207,144 @@ describe("sumBackward with an index that names no operand implies NOTHING: { lo:
 
   it("an empty operand list is outside the type, and every index is then out of range", () => {
     expect(sumBackward(z, [] as unknown as NonEmptyReadonlyArray<Extent>, 0)).toStrictEqual(NONE);
+  });
+});
+
+
+/** What every grid test adds to, so the last test of the file can state the totals once. */
+const TOTALS = { checks: 0, mismatches: 0, holes: 0, invalid: 0 };
+
+function finish(name: string, tally: Tally, expectedChecks: number): void {
+  TOTALS.checks += tally.checks;
+  TOTALS.mismatches += tally.mismatches;
+  TOTALS.holes += tally.holes;
+  TOTALS.invalid += tally.invalid;
+  console.log(`${name}: ${tally.checks} checks, ${tally.mismatches} mismatches, ${tally.holes} sets with a hole, ${tally.invalid} results that fail checkExtent`);
+  // The count is asserted too: a loop that silently ran fewer cases would otherwise pass with "0 mismatches".
+  expect(tally.checks).toBe(expectedChecks);
+  expect(tally.first).toEqual([]);
+  expect(tally.mismatches).toBe(0);
+  expect(tally.holes).toBe(0);
+  expect(tally.invalid).toBe(0);
+}
+
+const WIDE = gridExtents(GRID_VALUES);
+const REDUCED = gridExtents(REDUCED_VALUES);
+const label = (extents: readonly Extent[]): string => extents.map((e) => JSON.stringify(e)).join(" + ");
+
+describe("the grids have the plan's sizes", () => {
+  it("34 valid extents over {null, -2..3} and 13 over {null, 0..2}", () => {
+    expect(WIDE).toHaveLength(34);
+    expect(REDUCED).toHaveLength(13);
+  });
+});
+
+describe("sumForward equals enumeration, over every combination", () => {
+  it("2 operands over the 34-extent grid: 34^2 = 1,156 checks", () => {
+    const tally = new Tally();
+    for (const a of WIDE) {
+      for (const b of WIDE) {
+        const actual = sumForward(ops(a, b));
+        tally.note(label([a, b]), actual, oracleForward([a, b]), checkExtent(actual).ok);
+      }
+    }
+    finish("sumForward, 2 operands", tally, 34 ** 2);
+  });
+
+  it("3 operands over the 13-extent grid: 13^3 = 2,197 checks", () => {
+    const tally = new Tally();
+    for (const a of REDUCED) {
+      for (const b of REDUCED) {
+        for (const c of REDUCED) {
+          const actual = sumForward(ops(a, b, c));
+          tally.note(label([a, b, c]), actual, oracleForward([a, b, c]), checkExtent(actual).ok);
+        }
+      }
+    }
+    finish("sumForward, 3 operands", tally, 13 ** 3);
+  });
+});
+
+describe("sumBackward equals enumeration, over every result extent, every operand combination and every index", () => {
+  // One test per index, so each stays far below the per-test time limit and a failure names its index.
+  for (const index of [0, 1]) {
+    it(`2 operands, index ${index}: result x operand x operand over the 34-extent grid, 34^3 = 39,304 checks`, () => {
+      const tally = new Tally();
+      for (const z of WIDE) {
+        for (const a of WIDE) {
+          for (const b of WIDE) {
+            const operands = [a, b];
+            const actual = sumBackward(z, ops(a, b), index);
+            tally.note(`result ${JSON.stringify(z)}, ${label(operands)}, index ${index}`, actual, oracleBackward(z, operands, index), checkExtent(actual).ok);
+          }
+        }
+      }
+      finish(`sumBackward, 2 operands, index ${index}`, tally, 34 ** 3);
+    });
+  }
+
+  for (const index of [0, 1, 2]) {
+    it(`3 operands, index ${index}: result x 3 operands over the 13-extent grid, 13^4 = 28,561 checks`, () => {
+      const tally = new Tally();
+      for (const z of REDUCED) {
+        for (const a of REDUCED) {
+          for (const b of REDUCED) {
+            for (const c of REDUCED) {
+              const operands = [a, b, c];
+              const actual = sumBackward(z, ops(a, b, c), index);
+              tally.note(`result ${JSON.stringify(z)}, ${label(operands)}, index ${index}`, actual, oracleBackward(z, operands, index), checkExtent(actual).ok);
+            }
+          }
+        }
+      }
+      finish(`sumBackward, 3 operands, index ${index}`, tally, 13 ** 4);
+    });
+  }
+});
+
+describe("properties that need no oracle, over the same grids", () => {
+  it("the sum implies every operand lies inside what sumBackward says of it (2 operands: 34^2 x 2 cases; 3 operands: 13^3 x 3)", () => {
+    let cases = 0;
+    for (const a of WIDE) {
+      for (const b of WIDE) {
+        const total = sumForward(ops(a, b));
+        for (const [index, operand] of [a, b].entries()) {
+          cases += 1;
+          expect(isSubset(operand, sumBackward(total, ops(a, b), index)), `${label([a, b])} index ${index}`).toBe(true);
+        }
+      }
+    }
+    for (const a of REDUCED) {
+      for (const b of REDUCED) {
+        for (const c of REDUCED) {
+          const total = sumForward(ops(a, b, c));
+          for (const [index, operand] of [a, b, c].entries()) {
+            cases += 1;
+            expect(isSubset(operand, sumBackward(total, ops(a, b, c), index)), `${label([a, b, c])} index ${index}`).toBe(true);
+          }
+        }
+      }
+    }
+    expect(cases).toBe(34 ** 2 * 2 + 13 ** 3 * 3);
+  });
+
+  it("an operand that already fills what the others leave is not narrowed: meeting it with sumBackward(sumForward(...)) gives it back", () => {
+    for (const a of WIDE) {
+      for (const b of WIDE) {
+        const total = sumForward(ops(a, b));
+        const narrowed = meet(a, sumBackward(total, ops(a, b), 0));
+        expect(narrowed, label([a, b])).toStrictEqual(a);
+      }
+    }
+  });
+});
+
+describe("totals", () => {
+  // Vitest runs a file's tests in order, so this one sees what every grid test above added.
+  it("every grid check above is accounted for: no mismatch, no hole, no invalid result", () => {
+    // forward: 34^2 + 13^3.  backward: 2 x 34^3 for two operands + 3 x 13^4 for three.
+    const expected = 34 ** 2 + 13 ** 3 + 2 * 34 ** 3 + 3 * 13 ** 4;
+    console.log(`sum grids in total: ${TOTALS.checks} checks, ${TOTALS.mismatches} mismatches, ${TOTALS.holes} sets with a hole, ${TOTALS.invalid} results that fail checkExtent`);
+    expect(TOTALS).toEqual({ checks: expected, mismatches: 0, holes: 0, invalid: 0 });
   });
 });
