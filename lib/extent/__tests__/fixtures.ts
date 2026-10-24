@@ -141,7 +141,7 @@ export interface Term {
   readonly sign: 1 | -1;
 }
 
-interface Reached {
+export interface Reached {
   readonly min: number;
   readonly max: number;
   /** How many DIFFERENT values the sum took. */
@@ -196,6 +196,15 @@ function enumerateSigned(terms: readonly Term[], cap: number): Reached {
   return { min, max, distinct };
 }
 
+/**
+ * Is a set of `distinct` integers, whose least is `min` and greatest is `max`, NOT every integer from `min` to
+ * `max`? `{0, 2}` (2 values, 0 to 2) has a hole; `{0, 1, 2}` does not. A pure function so that a test can show it
+ * says yes when it should: the grids assert "0 sets with a hole", which a detector that always said no would also pass.
+ */
+export function hasHole(distinct: number, min: number, max: number): boolean {
+  return distinct !== max - min + 1;
+}
+
 export interface SumOracle {
   readonly extent: Extent;
   /** True if the integers the sum can take are NOT every integer between its least and greatest (an interval would then be inexact). */
@@ -206,14 +215,18 @@ export interface SumOracle {
  * The extent of a signed sum, by cap widening: each side is `null` iff widening the window moves it. The set of
  * values is also checked for holes in the small window, so "an interval represents it exactly" is observed here
  * rather than assumed.
+ *
+ * `enumerate` is the enumeration, and is a parameter only so that a test can hand `oracleSum` a set WITH a hole
+ * (a sum of intervals never has one, so no real input can): that is the only way to see the detector fire all the
+ * way through `oracleSum`, call site included.
  */
-export function oracleSum(terms: readonly Term[]): SumOracle {
+export function oracleSum(terms: readonly Term[], enumerate: (terms: readonly Term[], cap: number) => Reached = enumerateSigned): SumOracle {
   const { small, large } = windowFor(terms.map((t) => t.extent));
-  const atSmall = enumerateSigned(terms, small);
-  const atLarge = enumerateSigned(terms, large);
+  const atSmall = enumerate(terms, small);
+  const atLarge = enumerate(terms, large);
   return {
     extent: { lo: atSmall.min === atLarge.min ? atSmall.min : null, hi: atSmall.max === atLarge.max ? atSmall.max : null },
-    hasHole: atSmall.distinct !== atSmall.max - atSmall.min + 1,
+    hasHole: hasHole(atSmall.distinct, atSmall.min, atSmall.max),
   };
 }
 

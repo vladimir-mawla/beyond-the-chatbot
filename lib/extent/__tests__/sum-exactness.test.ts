@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Extent, NonEmptyReadonlyArray } from "../../contracts/index.js";
 import { checkExtent, isSubset, meet, sumBackward, sumForward } from "../index.js";
-import { ext, GRID_VALUES, gridExtents, naiveSum, oracleBackward, oracleForward, REDUCED_VALUES, Tally } from "./fixtures.js";
+import { ext, GRID_VALUES, gridExtents, hasHole, naiveSum, oracleBackward, oracleForward, oracleSum, REDUCED_VALUES, Tally } from "./fixtures.js";
 
 /**
  * `sumForward` and `sumBackward` (`.genesis/PLAN.md` section 6 M3, layer 1: exhaustive, not sampled).
@@ -406,6 +406,44 @@ describe("properties that need no oracle, over the same grids", () => {
         expect(narrowed, label([a, b])).toStrictEqual(a);
       }
     }
+  });
+});
+
+describe("the oracle's own detectors fire: the grids' zeros mean something only if a hole, a mismatch and an invalid result can be counted", () => {
+  it("hasHole says yes for a set with a gap and no for an unbroken one: {0, 2}, {0, 1, 2}, {4}, {0, 2, 4}, {0, 1, 3, 4}", () => {
+    expect(hasHole(2, 0, 2)).toBe(true); // {0, 2}
+    expect(hasHole(3, 0, 2)).toBe(false); // {0, 1, 2}
+    expect(hasHole(1, 4, 4)).toBe(false); // {4}
+    expect(hasHole(3, 0, 4)).toBe(true); // {0, 2, 4}, which is what {0, 2} + {0, 2} would be if sets could have gaps
+    expect(hasHole(4, 0, 4)).toBe(true); // {0, 1, 3, 4}
+    expect(hasHole(5, 0, 4)).toBe(false); // {0, 1, 2, 3, 4}
+  });
+
+  it("oracleSum reports a hole when the enumeration it is given has one, and not when it has none (the call site, not only the predicate)", () => {
+    const terms = [
+      { extent: ext(0, 2), sign: 1 as const },
+      { extent: ext(0, 2), sign: 1 as const },
+    ];
+    expect(oracleSum(terms, () => ({ min: 0, max: 4, distinct: 3 })).hasHole).toBe(true);
+    expect(oracleSum(terms, () => ({ min: 0, max: 4, distinct: 5 })).hasHole).toBe(false);
+    // And the real enumeration of the same terms has none: the sum of two intervals is an interval.
+    expect(oracleSum(terms)).toStrictEqual({ extent: ext(0, 4), hasHole: false });
+  });
+
+  it("a Tally counts a set with a hole, a mismatch (naming it) and a result that fails checkExtent, each separately", () => {
+    const fine = { extent: ext(0, 4), hasHole: false };
+    const tally = new Tally();
+    tally.note("fine", ext(0, 4), fine, true);
+    expect([tally.checks, tally.holes, tally.mismatches, tally.invalid, tally.first]).toEqual([1, 0, 0, 0, []]);
+    tally.note("a hole", ext(0, 4), { ...fine, hasHole: true }, true);
+    expect([tally.checks, tally.holes, tally.mismatches, tally.invalid]).toEqual([2, 1, 0, 0]);
+    tally.note("a mismatch on lo", ext(1, 4), fine, true);
+    tally.note("a mismatch on hi", ext(0, 3), fine, true);
+    tally.note("a mismatch on null", ext(null, 4), fine, true);
+    expect([tally.checks, tally.holes, tally.mismatches, tally.invalid]).toEqual([5, 1, 3, 0]);
+    expect(tally.first.map((line) => line.split(":")[0])).toEqual(["a mismatch on lo", "a mismatch on hi", "a mismatch on null"]);
+    tally.note("an invalid result", ext(0, 4), fine, false);
+    expect([tally.checks, tally.holes, tally.mismatches, tally.invalid]).toEqual([6, 1, 3, 1]);
   });
 });
 
