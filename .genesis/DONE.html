@@ -87,7 +87,7 @@
       <thead><tr><th>#</th><th>Milestone</th><th>Phase</th><th>Demo command (proves it works)</th><th>Loops</th><th>Status</th></tr></thead>
       <tbody>
         <tr><td>M1</td><td>Contracts: Entailment, Claim, Observation, Schema, Brief (<code>lib/contracts</code>)</td><td>BUILD</td><td><code>npm test -- lib/contracts</code> and <code>npm run typecheck</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
-        <tr><td>M2</td><td>Deploy skeleton (deployed now, never last)</td><td>DEPLOY</td><td><code>curl -sf $DEPLOY_URL/api/health</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
+        <tr><td>M2</td><td>Deploy skeleton (deployed now, never last)</td><td>DEPLOY</td><td><code>curl -sf $DEPLOY_URL/api/health</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M3</td><td>Extent algebra (<code>lib/extent</code>)</td><td>BUILD</td><td><code>npm test -- lib/extent</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
         <tr><td>M4</td><td>Ground: schema, observations, propagation, support, core (<code>lib/ground</code>)</td><td>BUILD</td><td><code>npm test -- lib/ground</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
         <tr><td>M5</td><td>Entail: claim, ruling, brief, render, recheck (<code>lib/entail</code>)</td><td>BUILD</td><td><code>npm test -- lib/entail</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
@@ -99,9 +99,10 @@
     </table>
     <p class="note">Total token budget = 9 milestones × 150000. Update <span class="pill wip">wip</span> /
        <span class="pill ok">done</span> as loops complete — a milestone only flips to <code>done</code>
-       after independent (L4) verification, never by the building agent marking its own work. M1 is
-       <code>done</code> (PR #1, independent L4 APPROVE on the fourth review, after three fix rounds); the
-       other eight rows are still <code>todo</code>.
+       after independent (L4) verification, never by the building agent marking its own work. M1 and M2 are
+       <code>done</code> (M1: PR #1, independent L4 APPROVE on the fourth review, after three fix rounds;
+       M2: PR #3, independent L4 APPROVE in round 2, after one fix round); the other seven rows are still
+       <code>todo</code>.
        This table is mirrored in <code>PLAN.md</code> (§6) for the agent to parse.</p>
   </div>
 
