@@ -16,7 +16,7 @@
 
 | | Status | Where |
 |---|---|---|
-| M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged); independent L4 APPROVE on the fourth review, after three fix rounds |
+| M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged; the PR page still shows the pre-rewrite `1a7cf44`, see below); independent L4 APPROVE on the fourth review, after three fix rounds |
 | M2 deploy | `todo` | designed only |
 | M3 extent algebra | `todo` | designed only |
 | M4 ground | `todo` | designed only |
@@ -32,6 +32,32 @@ the `.genesis/` ritual) plus one merged PR: #1, M1 (`lib/contracts/**`, its test
 health route, and no deploy. The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
 `lib/contracts`), not the house-template names; if a brief says otherwise, `.genesis/PLAN.md` wins and
 the builder flags the mismatch.
+
+## `main` history was rewritten on 2026-10-24 (SHAs you may see on PR pages)
+
+`main` was rewritten once, deliberately, to correct commit attribution. The 19 genesis commits carried
+a work email address as author and committer, which GitHub's commits API attributed to a different
+account (`vldmr-mawla`); they now carry `105279249+vladimir-mawla@users.noreply.github.com`, attributed
+to `vladimir-mawla`. Only commit metadata changed, so the SHAs changed and the content did not.
+
+GitHub's PR page for #1 still shows the pre-rewrite merge SHA. To match it against `git log`:
+
+| PR | Merge SHA shown on the PR page (pre-rewrite) | SHA on `main` now |
+|---|---|---|
+| #1 M1 contracts | `1a7cf44` | `c3eba1d` |
+
+The genesis tip moved the same way: `8943493` (the pre-rewrite parent of `1a7cf44`) is now `141f1cd`.
+
+What was compared, and nothing more. The pre-rewrite commits are on no branch any more; they were read
+by SHA from GitHub's commits API, which still serves them today and may not always.
+
+- The PR #1 merge pair, `1a7cf44` and `c3eba1d`: the same tree (`c819130`) and the same message. The
+  parent differs, as it must. The API reports `verified: true` for `1a7cf44` and `verified: false` for
+  `c3eba1d`: GitHub's signature on the squash commit covers its parent SHA, which changed, so it could
+  not carry over.
+- The 19 genesis commits, the pre-rewrite chain from `8943493` against the current chain from `141f1cd`,
+  position by position: 19 of 19 have the same tree and the same full message. Only the author and
+  committer email differ.
 
 ## What the scaffold does and does not prove
 
