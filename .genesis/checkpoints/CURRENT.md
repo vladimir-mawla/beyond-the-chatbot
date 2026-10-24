@@ -1,20 +1,22 @@
 # CURRENT
 
-- **active_loop:** none. This is the G3 genesis repo only: **genesis only, no engine code.**
-  `.genesis/PLAN.md` (G0-G2) is in place, the tooling skeleton is in place, and `app/page.tsx` is a
-  placeholder. No engine code exists: M1 (`lib/contracts/**`) has not started. M1 is a separate
-  milestone with its own branch, its own PR, and its own independent (L4) verifier.
+- **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`) is `done`; M2 to M9 are `todo` in
+  this revision. The engine proper is not built: M1 is types and structural invariants only, and
+  `lib/extent`, `lib/ground` and `lib/entail` do not exist. `.genesis/PLAN.md` (G0-G2) and the tooling
+  skeleton are in place, and `app/page.tsx` is still the genesis placeholder. Each milestone is
+  separate, with its own branch, its own PR, and its own independent (L4) verifier.
 
-- **last updated:** 2026-10-24, immediately after genesis (repo scaffold, `.genesis/` ritual, README,
-  two tests, CI workflow), before any milestone build has begun. Recorded now, honestly, rather than
-  implying progress that does not exist: a checkpoint that overstates status is worse than no
-  checkpoint at all.
+- **last updated:** 2026-10-24, in the `chore(genesis): mark M1 done` bookkeeping PR, after M1 passed
+  independent L4 verification and merged (PR #1). The previous revision was written immediately after
+  genesis (repo scaffold, `.genesis/` ritual, README, two tests, CI workflow), before any milestone
+  build had begun. Recorded honestly rather than implying progress that does not exist: a checkpoint
+  that misstates status in either direction is worse than no checkpoint at all.
 
 ## Milestone state, as of this revision
 
 | | Status | Where |
 |---|---|---|
-| M1 contracts | `todo` | designed only (`.genesis/PLAN.md` §4, §6): no branch, no code |
+| M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged; the PR page still shows the pre-rewrite `1a7cf44`, see below); independent L4 APPROVE on the fourth review, after three fix rounds |
 | M2 deploy | `todo` | designed only |
 | M3 extent algebra | `todo` | designed only |
 | M4 ground | `todo` | designed only |
@@ -24,11 +26,45 @@
 | M8 interactive demo | `todo` | designed only |
 | M9 deliverables | `todo` | designed only |
 
-`main` is the single base history produced by genesis: the plan, tooling config, app shell, two tests,
-a CI workflow, the README and the `.genesis/` ritual. There is no `lib/`, no `domains/`, no health
-route, and no deploy. The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
+`main` is the genesis base (the plan, tooling config, app shell, two tests, a CI workflow, the README and
+the `.genesis/` ritual) plus one merged PR: #1, M1 (`lib/contracts/**`, its tests, and
+`.genesis/decisions/0001-contracts.md`). `lib/` holds only `contracts`; there is no `domains/`, no
+health route, and no deploy. The engine directories are `lib/extent`, `lib/ground`, `lib/entail` (plus
 `lib/contracts`), not the house-template names; if a brief says otherwise, `.genesis/PLAN.md` wins and
 the builder flags the mismatch.
+
+## `main` history was rewritten on 2026-10-24 (SHAs you may see on PR pages)
+
+`main` was rewritten once, deliberately, to correct commit attribution. The 19 genesis commits carried
+a work email address as author and committer, which GitHub's commits API attributed to a different
+account (`vldmr-mawla`); they now carry `105279249+vladimir-mawla@users.noreply.github.com`, attributed
+to `vladimir-mawla`. Only commit metadata changed, so the SHAs changed and the content did not.
+
+GitHub's PR page for #1 still shows the pre-rewrite merge SHA. To match it against `git log`:
+
+| PR | Merge SHA shown on the PR page (pre-rewrite) | SHA on `main` now |
+|---|---|---|
+| #1 M1 contracts | `1a7cf44` | `c3eba1d` |
+
+The genesis tip moved the same way: `8943493` (the pre-rewrite parent of `1a7cf44`) is now `141f1cd`.
+
+What was compared, and nothing more. The pre-rewrite commits are on no branch any more; they were read
+by SHA from GitHub's commits API, which still serves them today and may not always.
+
+- The PR #1 merge pair, `1a7cf44` and `c3eba1d`: the same tree (`c819130`) and the same message. The
+  parent differs, as it must. The API reports `verified: true` for `1a7cf44` and `verified: false` for
+  `c3eba1d`: GitHub's signature on the squash commit covers its parent SHA, which changed, so it could
+  not carry over.
+- The 19 genesis commits, the pre-rewrite chain from `8943493` against the current chain from `141f1cd`,
+  position by position: 19 of 19 have the same tree and the same full message. Only the author and
+  committer email differ.
+
+The sibling `autonomous-company-simulator` was rewritten the same way, and one of its SHAs is cited in
+the dependency bullet below: its `next` 16.4.3 PR #1 merge commit, which this repository's dependency
+versions were copied from, was `fc17afd` and is now `ab14763`. Compared through the same API: the same
+tree (`f1255ae`), and messages that are identical except for one `Co-authored-by` line, whose email is
+the attribution fix itself. `fc17afd` has no common ancestor with that repository's current `main`;
+`ab14763` is an ancestor of it.
 
 ## What the scaffold does and does not prove
 
@@ -38,23 +74,48 @@ the builder flags the mismatch.
 - **`tests/smoke.test.ts`** pins that the `dev`/`build` scripts really pass `--webpack` and that
   `next.config.ts` really declares `experimental.extensionAlias` (it imports the config and reads the
   exported object rather than matching source text, because the config's own comment contains the word).
-  It does **not** prove that a `.js`-suffixed import resolves in a build: that needs `lib/` and is
-  covered by `npm run build` from M1. That Turbopack still cannot resolve such imports on `next@16.4.3`
-  was taken from the hand-off brief and the sibling's comment; it was **not** re-run here.
+  It does **not** prove that a `.js`-suffixed import resolves in a build: that needs a file under `app/`
+  to import `lib/`, and none does (no file under `app/` imports `lib/`; `tsconfig.json` excludes
+  `lib/**/*`). Until one does, `npm run build` does not exercise `lib/` at all, M1 included; M2's health
+  route is the first planned importer. Checked on a throwaway copy of `main` at `c3eba1d`: with no import
+  the build output contained no `lib/contracts` symbol; with one temporary
+  `import * as contracts from "../lib/contracts/index.js"` in `app/page.tsx` the build succeeded and its
+  output contained them. (M1's ADR says the same, in its scratch-build log E and plan observation 6; the
+  earlier sentence here, that the build covers it "from M1", was wrong.) That Turbopack still cannot
+  resolve such imports on `next@16.4.3` was taken from the hand-off brief and the sibling's comment; it
+  was **not** re-run here.
 - **`tests/lockfile.test.ts`** fails if `package-lock.json` has fewer than 80 `os`/`cpu` entries or has
   lost any of the 15 `@rolldown/binding-*`, `fsevents` or 11 `lightningcss-*` entries by name. Measured
   at genesis on a throwaway copy: `npm install --package-lock-only` under npm 11.5.1 exits 0 and takes
   the lockfile from 80 platform entries (215 packages) to 53 (188), removing exactly those 27; npm 10.9.9
   keeps all 80. The test does not detect other kinds of lockfile damage.
-- **Does not prove anything about the engine.** There is none. Every plan claim is a design, not a result.
-  The plan's own section 8 numbers come from a throwaway model that is not in this repository.
+- **Does not prove anything about the engine.** The scaffold has none. The only engine code is M1's
+  contracts (types and structural invariants), covered in the next section; M3 to M5 are `todo`, so the
+  extent algebra, grounding, propagation, ruling and recheck are still designs, not results. The plan's
+  own section 8 numbers come from a throwaway model that is not in this repository.
 - `vercel.json` is committed and pinned to `npm ci` / `npm run build`, but **nothing tests it yet**: M2
   adds that test. Nothing has been deployed and `vercel` has not been run from this repo.
 
+## What M1 adds, and what was run to check it
+
+- `npm ci && npm test` on a fresh clone of `main` at `c3eba1d` printed `Test Files  18 passed (18)` and
+  `Tests  300 passed (300)`. By directory: `tests/` (the two genesis files) 2 files / 6 tests, the figure
+  the first bullet above records at genesis, and `lib/contracts/__tests__/` 16 files / 294 tests.
+  `npm run typecheck` and `npm run build` also exited 0 on that tree. The same four commands were run
+  again on the mark-done branch, which differs from `c3eba1d` only in the two `.genesis/` files this PR
+  edits. These are the mark-done PR author's own runs, not the L4 verifier's.
+- That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
+  judging that was the independent verification's job, and its verdict is in the milestone table above.
+- M1 is the contracts only. M3 to M5 are `todo`, so nothing about folding evidence into extents,
+  propagating bounds, ruling a claim or rechecking a certificate has been built or demonstrated.
+
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
-- No decision record exists yet in `.genesis/decisions/`. The first one (`0001-contracts.md`) is M1's
-  own artifact, not genesis's: an ADR is written by the milestone that made the decisions it records.
+- `.genesis/decisions/` holds one decision record, `0001-contracts.md`, written by M1 (an ADR is written
+  by the milestone that made the decisions it records). M2 to M9 have none yet. Its own `Status` line
+  still reads "proposed ... not yet verified by an independent L4 pass", which is out of date now that
+  M1 has had that pass. It is not edited here: the bookkeeping exception covers only `DONE.html` and
+  this file.
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
@@ -63,13 +124,15 @@ the builder flags the mismatch.
 - No live URL exists yet. The account's standing rule applies: deploy at milestone 2, never last. M2
   deploys a live skeleton second, not last, so this project does not repeat the previous project's gap.
 - **Dependency versions were copied unchanged from autonomous-company-simulator `origin/main`
-  (`fc17afd`, `next` 16.4.3) and `npm audit` still reports 4 findings (2 high, 2 moderate), none
-  addressed.** `source-map-js` (high) is reachable through `next` -> `postcss`, so it is in the
-  production tree; `vite` (high) and `vitest`/`@vitest/mocker` (moderate) are dev-only. They were not
-  addressed at genesis because the plan says to copy the lockfile rather than regenerate it and a
-  version bump is a stack decision for the coordinator, not for genesis. No assessment was made of
-  whether any advisory is exploitable against this scaffold or against Vercel's runtime. `npm audit`
-  was run read-only; the lockfile hash was identical before and after.
+  (`ab14763`, `next` 16.4.3) and `npm audit` still reports 4 findings (2 high, 2 moderate), none
+  addressed.** `ab14763` was `fc17afd` before that repository's own 2026-10-24 history rewrite (see the
+  note above); `.genesis/PLAN.md` is frozen genesis and still cites the old `fc17afd`, at lines 31, 746,
+  759 and 792, so read those as `ab14763`. `source-map-js` (high) is reachable through `next` ->
+  `postcss`, so it is in the production tree; `vite` (high) and `vitest`/`@vitest/mocker` (moderate)
+  are dev-only. They were not addressed at genesis because the plan says to copy the lockfile rather
+  than regenerate it and a version bump is a stack decision for the coordinator, not for genesis. No
+  assessment was made of whether any advisory is exploitable against this scaffold or against Vercel's
+  runtime. `npm audit` was run read-only; the lockfile hash was identical before and after.
 - **The lockfile must not be rewritten with this machine's npm 11.5.1** (see the measurement above).
   After any lockfile change, compare the count of `os`/`cpu` entries before and after; the lockfile test
   now does that.
@@ -89,4 +152,6 @@ exactly two lines (the `"name"` fields). Comment-only edits, with the executable
 `vitest.config.ts`, `.github/workflows/ci.yml`, `scripts/ts-loader-hooks.mjs`, `app/globals.css`
 (the sibling's comments named another project's milestones and decisions). Changed on purpose:
 `package.json` (name, description, `demo:order-desk`), `.env.example`, `app/layout.tsx`, `app/page.tsx`,
-`README.md`. New: `tests/lockfile.test.ts`, `.genesis/`.
+`README.md`. New: `tests/lockfile.test.ts`, `.genesis/`. Added since genesis by M1 (PR #1), all new
+files and none of the files above touched: `lib/contracts/**` (45 files) and
+`.genesis/decisions/0001-contracts.md`.
