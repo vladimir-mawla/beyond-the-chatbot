@@ -403,8 +403,8 @@ resolve in a build; it is not in the repo and the repo's own `npm run build` doe
 4. **`EntailmentIntegrityError` has no way to describe a value of no variant**; a fourth member was added
    (Decision 4). Flagged as a deviation.
 5. **The plan gives `Support` and `OpenEnd` no file**; they are in `claim.ts`.
-6. **The plan's `npm run build` expectation** ("`lib/contracts` sources are the first real test of
-   `extensionAlias`") cannot hold at M1: nothing under `app/` imports `lib/`. M2's health route will be the first
+6. **`npm run build` does not exercise `lib/contracts` at M1.** Nothing under `app/` imports `lib/`, so the build
+   compiles no `lib/` file and `extensionAlias` is not tried against one. M2's health route will be the first
    real import.
 7. **`tsconfig.json` does not compile `lib/`** (its `exclude`), so "under both tsconfigs" is true only of what the
    harness compiles. A `lib/` file is checked under the loose config only when `app/` or `components/` imports it.
