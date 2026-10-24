@@ -205,35 +205,37 @@ describe("the grid: the laws meet and ⊆ must obey, over all 34 valid extents w
   });
 
   it("meet(a, b) is the greatest extent inside both: inside each, and every extent inside both is inside it", () => {
+    // Failures are collected and asserted once: this loop makes 34^3 comparisons, and an `expect` per comparison is the slow part.
+    const failures: string[] = [];
     let triples = 0;
     for (const a of GRID) {
       for (const b of GRID) {
         const ab = meet(a, b);
-        if (ab !== undefined) {
-          expect(isSubset(ab, a)).toBe(true);
-          expect(isSubset(ab, b)).toBe(true);
-        }
+        if (ab !== undefined && !(isSubset(ab, a) && isSubset(ab, b))) failures.push(`meet ${JSON.stringify(a)} ${JSON.stringify(b)} is not inside both`);
         for (const c of GRID) {
           triples += 1;
           const insideBoth = isSubset(c, a) && isSubset(c, b);
           // c is inside both exactly when the meet exists and c is inside it.
-          expect(insideBoth, `${JSON.stringify(c)} in ${JSON.stringify(a)} and ${JSON.stringify(b)}`).toBe(ab !== undefined && isSubset(c, ab));
+          if (insideBoth !== (ab !== undefined && isSubset(c, ab))) failures.push(`${JSON.stringify(c)} in ${JSON.stringify(a)} and ${JSON.stringify(b)}`);
         }
       }
     }
+    expect(failures).toEqual([]);
     expect(triples).toBe(34 ** 3);
   });
 
   it("⊆ is reflexive, transitive, and antisymmetric exactly up to isSameExtent", () => {
+    const failures: string[] = [];
     for (const a of GRID) {
-      expect(isSubset(a, a)).toBe(true);
+      if (!isSubset(a, a)) failures.push(`${JSON.stringify(a)} is not inside itself`);
       for (const b of GRID) {
-        expect(isSubset(a, b) && isSubset(b, a), `${JSON.stringify(a)} ${JSON.stringify(b)}`).toBe(isSameExtent(a, b));
+        if ((isSubset(a, b) && isSubset(b, a)) !== isSameExtent(a, b)) failures.push(`antisymmetry ${JSON.stringify(a)} ${JSON.stringify(b)}`);
         for (const c of GRID) {
-          if (isSubset(a, b) && isSubset(b, c)) expect(isSubset(a, c)).toBe(true);
+          if (isSubset(a, b) && isSubset(b, c) && !isSubset(a, c)) failures.push(`transitivity ${JSON.stringify(a)} ${JSON.stringify(b)} ${JSON.stringify(c)}`);
         }
       }
     }
+    expect(failures).toEqual([]);
   });
 
   it("a is inside b exactly when meet(a, b) is a", () => {
