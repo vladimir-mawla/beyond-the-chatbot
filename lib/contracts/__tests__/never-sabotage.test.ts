@@ -16,7 +16,7 @@ import {
  *
  * For each of the 17 `?: never` fields, a COPY of `lib/contracts` has that one line deleted, and every proof file
  * is run against the copy. The claim, checked mechanically: exactly that field's own proofs go red, every one
- * of its eight routes, and no proof of any other field goes red. A proof that stayed green when its field was
+ * of its seven routes, and no proof of any other field goes red. A proof that stayed green when its field was
  * deleted would be vacuous; none does.
  *
  * Two views of "red", both asserted (see `support/sabotage.ts`):

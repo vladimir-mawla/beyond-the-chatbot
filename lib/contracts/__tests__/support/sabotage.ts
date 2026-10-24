@@ -251,7 +251,7 @@ export function outcomeProblems(mutation: Mutation, outcome: SabotageOutcome): s
 /**
  * A matrix for the report: one row per mutation, one numbered column per proof group in `columns`; a cell is the
  * number of routes of that group that went red under the strict harness (`.` for none). A mutation that does
- * exactly what it should shows one non-`.` cell per own group, equal to 8, and nothing else in its row.
+ * exactly what it should shows one non-`.` cell per own group, equal to 7, and nothing else in its row.
  */
 export function formatMatrix(title: string, rows: readonly { id: string; outcome: SabotageOutcome }[], columns: readonly string[]): string {
   const width = Math.max(...rows.map((r) => r.id.length));
