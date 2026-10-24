@@ -73,9 +73,12 @@ ways of observing an object that were tried; nothing here claims that they are a
 ## Decision 2 — the algebra trusts its inputs, and "total" is claimed for those
 
 `meet`, `isSubset`, `isSameExtent`, `unmetSides`, `sumForward` and `sumBackward` take `Extent`s and do not
-re-validate them; `checkExtent` is the one gate. For arguments of the declared types they contain no operation that
-can throw (property reads, comparisons, arithmetic, `Array.push`); that is from reading the code, and no test gives
-it a counterexample (frozen arguments, every grid case, every bad index of Decision 3). Over the grids no result of
+re-validate them; `checkExtent` is the one gate. For arguments that are plain data, as `checkExtent` returns them (own value properties holding an integer or `null`, in
+ordinary arrays), they contain no operation that can throw (comparisons, arithmetic, `Array.push`); that is from
+reading the code, and no test gives it a counterexample (frozen arguments, every grid case, every bad index of
+Decision 3). It is not claimed for every value the declared types admit: an object that satisfies `Extent` through a
+getter that throws makes each of the six functions throw (tried by hand for each of them; no test pins it), the same
+limit M1's ADR records for `assertEntailmentWellFormed`. Over the grids no result of
 `meet`, `sumForward` or `sumBackward` failed `checkExtent`. For a value `checkExtent` refuses, nothing is claimed,
 and only the two limits below are tested.
 
