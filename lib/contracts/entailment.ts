@@ -16,14 +16,16 @@ import type { NonEmptyReadonlyArray } from "./non-empty-array.js";
  * field, relies on the excess-property check, which only fires on a fresh object literal; a sibling project
  * (adaptive-agent, its ADR 0001 decision 1) made that claim and seven ordinary routes walked past it: an
  * intermediate binding, a spread, a function return, `satisfies`, a generic helper, `Object.assign`, an
- * array element. With `?: never` all seven fail, and so does the fresh literal. They are proved one by
- * one, for each of the 17 `?: never` fields, in `__tests__/proofs/entailment-forbidden.proofs.ts` and
- * `schema-forbidden.proofs.ts`, under both of this repo's tsconfigs, and `__tests__/never-sabotage.test.ts`
- * deletes each field in turn and checks that exactly its own proofs go red.
+ * array element. With `?: never` all seven fail. (A fresh literal fails too, but it fails with or without the
+ * `?: never`, so no proof here relies on it; see the header of `entailment-forbidden.proofs.ts`.) The seven are
+ * proved one by one, for each of the 17 `?: never` fields, in `__tests__/proofs/entailment-forbidden.proofs.ts`
+ * and `schema-forbidden.proofs.ts`, under both of this repo's tsconfigs, and `__tests__/never-sabotage.test.ts`
+ * deletes each field in turn, in a copy, and checks that exactly its own proofs go red.
  *
  * WHAT THIS DOES NOT CLOSE, at full strength (each is a directive-free line in
- * `__tests__/proofs/residuals.proofs.ts`, and each is caught at run time by `assertEntailmentWellFormed`
- * in `integrity.ts`, with the test named there):
+ * `__tests__/proofs/residuals.proofs.ts`; `__tests__/residual-routes.test.ts` states, route by route, what
+ * `assertEntailmentWellFormed` in `integrity.ts` makes of the value that results. It catches every route below
+ * EXCEPT an unrelated extra key, which nothing in M1 catches):
  *  - A value whose STATIC TYPE no longer names the forbidden field. `?: never` refuses every value whose
  *    static type carries one, by every route above. It cannot refuse an object that was first assigned to a
  *    SUPERTYPE that lacks the field (TypeScript allows that for any non-fresh object, through a variable, a

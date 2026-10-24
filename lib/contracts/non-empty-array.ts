@@ -12,9 +12,10 @@
  *
  * WHAT IT DOES NOT. It is a compile-time statement only: at run time this is an ordinary array, so a value
  * that arrives through a cast or from `JSON.parse` can be empty. `assertEntailmentWellFormed` re-checks the
- * three `Entailment` fields typed this way (`weakened.unmet`, `ungrounded.openEnds`, `conflicted.core`);
- * `Operands` is re-checked by M4's `readSchema`, which is not built yet. Operations that return a plain
- * array (`map`, `filter`, `slice`) lose the guarantee; nothing here provides helpers to keep it.
+ * three `Entailment` fields typed this way (`weakened.unmet`, `ungrounded.openEnds`, `conflicted.core`).
+ * `Operands` and `Schema.fields` are NOT re-checked by anything in M1: M4's `readSchema` is the layer the plan
+ * gives the reading of a schema's shape (`malformed`), and it is not built. Operations that return a plain array (`map`,
+ * `filter`, `slice`) lose the guarantee; nothing here provides helpers to keep it.
  */
 export type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
 

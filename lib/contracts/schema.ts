@@ -22,9 +22,11 @@ export type Operands = readonly [FieldId, FieldId, ...FieldId[]];
  * whose static type includes the field. The tempting alternative, simply not declaring `sum`, relies on the
  * excess-property check, which fires only on a fresh object literal; a sibling project made that claim and
  * seven ordinary routes walked past it (an intermediate binding, a spread, a function return, `satisfies`, a
- * generic helper, `Object.assign`, an array element). `?: never` closes all seven and the literal; they are
- * proved one by one in `__tests__/proofs/schema-forbidden.proofs.ts`, and what it still cannot close is
- * listed on `Entailment` (the same limits apply here).
+ * generic helper, `Object.assign`, an array element). `?: never` closes all seven; they are proved one by one
+ * in `__tests__/proofs/schema-forbidden.proofs.ts`. What it still cannot close is listed on `Entailment`, and
+ * the same routes are open here. Unlike `Entailment`, a `FieldDecl` has NO run-time guard in M1: a base field
+ * that carries a `sum` by one of those routes is accepted by everything in this milestone. The plan's M4
+ * `readSchema` re-reads its input and has `malformed` for a bad shape; it is not built.
  */
 export interface BaseField {
   readonly kind: "base";

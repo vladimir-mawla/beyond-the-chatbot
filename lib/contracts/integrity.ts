@@ -109,8 +109,8 @@ function isPresent(value: unknown): boolean {
  *      array field, not an array) or `empty-array` (a non-empty field holding `[]`);
  *   3. the variant's FORBIDDEN fields, in table order: `unexpected-field`;
  *   4. the two common fields `field` and `tested`: `missing-field`.
- * The plan's three self-checks for M2's health route are each one cell of this table, so none depends on
- * the order (plan section 6, M2).
+ * The plan's self-checks for M2's health route (a well-formed value, and three cast-built ones) are each one
+ * cell of this table, so none depends on the order (plan section 6, M2).
  *
  * A FORBIDDEN field counts as present if the KEY is there at all: `field in value`, which sees an own
  * property, an inherited one (from the prototype), an accessor, a non-enumerable one and a property whose
