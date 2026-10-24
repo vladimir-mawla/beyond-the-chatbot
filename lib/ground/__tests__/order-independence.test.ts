@@ -151,7 +151,7 @@ describe("`source` is a display label: relabelling every source moves no answer 
   });
 });
 
-describe("the orders that are fixed: observations and baseline by id, trees by root, fields and extents by field id, refusals by position", () => {
+describe("the orders that are fixed (observations and baseline by id, trees by root, fields and extents by field id, refusals by position), and what a root is", () => {
   const ascending = (xs: readonly string[]): boolean => xs.every((x, i) => i === 0 || (xs[i - 1] as string) < x);
   it("on 800 generated instances every list the grounding keeps is in its stated order (code-unit order, strictly, so no repeats)", () => {
     let trees = 0;
@@ -169,6 +169,9 @@ describe("the orders that are fixed: observations and baseline by id, trees by r
         trees += 1;
         expect(ascending(tree.fields), `seed ${seed}: a tree's fields`).toBe(true);
         expect(tree.fields.includes(tree.root), `seed ${seed}: the root is one of the fields`).toBe(true);
+        // the root is the one field of the tree that is an operand of nothing, read off the raw schema
+        const operands = new Set(inst.schema.fields.flatMap((f) => (f.kind === "derived" ? f.sum : [])));
+        expect(tree.fields.filter((f) => !operands.has(f)), `seed ${seed}: the root`).toEqual([tree.root]);
         if (tree.state.kind === "consistent") expect(tree.state.extents.map((e) => e.field), `seed ${seed}: extents`).toEqual([...tree.fields]);
         else expect(ascending(tree.state.core), `seed ${seed}: a core`).toBe(true);
       }
