@@ -7,3 +7,4 @@ export { checkExtent } from "./check-extent.js";
 export type { ExtentCheck } from "./check-extent.js";
 export { meet } from "./meet.js";
 export { isSameExtent, isSubset } from "./subset.js";
+export { unmetSides } from "./unmet.js";
