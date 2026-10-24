@@ -14,7 +14,7 @@ deliberately narrow claim language and the nine-milestone plan are in
 
 ## Status: in progress, nothing built yet
 
-**Live:** none yet. Nothing is deployed and there is no URL.
+**Live:** https://beyond-the-chatbot-xi.vercel.app (`/api/health` is the only endpoint doing real work; the home page is still the genesis placeholder)
 
 This repository is a **genesis scaffold only**: the tooling skeleton, a placeholder home page, two small
 tests, a CI workflow and the planning documents. There is **no engine code and no domain logic**; all
