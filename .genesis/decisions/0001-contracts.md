@@ -389,9 +389,13 @@ used by a semantics test (`undefined` key, prototype, accessor, the M2 self-chec
 - *`MAX_FIELDS` 64 → 65*: `limits.test.ts` 2 red (the value, and the 2**46 product).
 - *The harness re-weakened to tolerate an extra diagnostic of a code the directive lists*: exactly one test red,
   `proof-harness.test.ts` 5b (the same-code extra).
-- *`assertNeverEntailment` changed to `return value`*: 6 tests red: its 3 run-time tests, and 3 more in
-  `entailment.test.ts` because `entailment.ts` stops compiling (the helper `describe` becomes unused and trips
-  `noUnusedLocals`, TS6133), which the harness reports as a diagnostic in an imported file.
+- *`assertNeverEntailment` changed to `return value`*: 49 tests red under `npm test`. Three are the run-time tests
+  of `entailment.test.ts`, red because the function no longer throws; they are the only ones still red if `describe`
+  is kept in use, so that `entailment.ts` compiles (0 `tsc` errors under either config). The other 46 are red only
+  because `entailment.ts` stops compiling (the helper `describe` becomes unused and trips `noUnusedLocals`, TS6133),
+  which the harness reports as a diagnostic in an imported file: 3 more in `entailment.test.ts`, 7 in
+  `type-proofs.test.ts`, 18 in `never-sabotage.test.ts`, 16 in `required-sabotage.test.ts` and 2 in
+  `residual-routes.test.ts`.
 
 **E. A scratch build** (`git archive HEAD` into a scratch directory, `node_modules` symlinked, an
 `app/api/probe/route.ts` importing `../../../lib/contracts/index.js` and calling the guard): `next build --webpack`
