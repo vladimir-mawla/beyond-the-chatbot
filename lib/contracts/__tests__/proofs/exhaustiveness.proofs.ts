@@ -15,7 +15,7 @@ import { assertNeverEntailment, type Entailment } from "../../entailment.js";
  *     leave out ONE variant fail, each naming the variant left over. That also proves each variant is told
  *     apart by `kind` alone.
  *
- * `exhaustiveness.test.ts` adds a sixth variant to a COPY of the real union and requires these same lines to
+ * `entailment.test.ts` adds a sixth variant to a COPY of the real union and requires these same lines to
  * react: the control and all five "missing" proofs go red, and the stand-in lines do not move.
  *
  * Every declaration is exported so `noUnusedLocals` cannot satisfy a directive.
