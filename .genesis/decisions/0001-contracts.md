@@ -91,7 +91,8 @@ REQUIRES: 12 required fields made optional and 4 non-empty tuples loosened (16 r
 33 mutations. A third guard shows up in them: see Decision 4 ("the table assertion").
 
 **Result, run for real** (log below): 17 of 17 turn exactly their own proofs red, in the test (on copies) and on
-the real tree under plain `tsc`. Printed with `BTC_REPORT=1 npm test -- never-sabotage`, the 17x17 matrix is a
+the real tree under plain `tsc`. Printed with `BTC_REPORT=1 npm test -- never-sabotage --reporter=verbose` (the
+default reporter prints nothing), the 17x17 matrix is a
 diagonal of 7.
 
 **An unavoidable cross-talk, stated.** `public-surface.proofs.ts` imports the barrel, which re-exports
@@ -347,7 +348,8 @@ Weakened, 89 Contradicted, 90 Ungrounded, 91 Conflicted) and none for the 2 `Fie
 | Conflicted.established / support / unmet / openEnds | 7/7 each | none | integrity.ts(91) TS2344 |
 
 The same 17 in the test (on copies, strict and as written): `npm test -- never-sabotage` is 19 passing tests
-(a layout test, a control, 17 deletions); with `BTC_REPORT=1` it prints the 17x17 matrix, a diagonal of 7.
+(a layout test, a control, 17 deletions); with `BTC_REPORT=1` and `--reporter=verbose` it prints the 17x17 matrix,
+a diagonal of 7.
 Under `npm test` the type-proofs test for the real tree shows `entailment-forbidden.proofs.ts` red and, through the
 imported `integrity.ts` diagnostic only, `public-surface.proofs.ts` (Decision 2).
 

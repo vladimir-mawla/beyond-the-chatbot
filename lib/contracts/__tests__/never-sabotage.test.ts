@@ -91,7 +91,8 @@ const LITERAL_CODES: readonly number[] = [2322, 2353, 2375];
 
 const results: { id: string; outcome: SabotageOutcome }[] = [];
 afterAll(() => {
-  // Printed only on request, so a normal run stays quiet: `BTC_REPORT=1 npm test -- never-sabotage`.
+  // Printed only on request, so a normal run stays quiet: `BTC_REPORT=1 npm test -- never-sabotage --reporter=verbose`
+  // (the default reporter does not show output from a hook).
   if (process.env["BTC_REPORT"] === "1") {
     console.log(formatMatrix("17x17: rows = the `?: never` deleted, columns = proof group, cell = routes (of 7) that went red", results, NEVER_FIELDS.map((n) => n.group)));
   }

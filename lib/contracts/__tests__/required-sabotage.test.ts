@@ -97,7 +97,8 @@ const MUTATIONS: readonly Mutation[] = ROWS.map((r) => ({
 
 const results: { id: string; outcome: SabotageOutcome }[] = [];
 afterAll(() => {
-  // Printed only on request: `BTC_REPORT=1 npm test -- required-sabotage`.
+  // Printed only on request: `BTC_REPORT=1 npm test -- required-sabotage --reporter=verbose` (the default reporter
+  // does not show output from a hook).
   if (process.env["BTC_REPORT"] === "1") {
     console.log(formatMatrix("required: rows = the declaration loosened, columns = proof group, cell = routes (of 7) that went red", results, ROWS.flatMap((r) => r.groups)));
   }
