@@ -294,9 +294,13 @@ written in the real types and every ruling passes the guard. It computes nothing
 ## Residual routes and what is not proven
 
 Read Decision 3 first. In short: M1 proves that every value whose STATIC TYPE carries a forbidden field is refused
-by the seven routes, for the 17 fields, under both configs. It does **not** prove, and no test claims, that a
-contaminated value cannot exist: sixteen routes in Decision 3 build one. The run-time guard catches fifteen of those;
-the sixteenth (an unrelated extra key) is caught by nothing, by design of the plan's table.
+by the seven routes, for the 17 fields, under both configs, except where the field is typed `undefined` or `any`
+under `tsconfig.json`: there `?: never` reads as `undefined` (no `exactOptionalPropertyTypes`) and accepts both,
+through all seven routes. `established: undefined` is row 16 of Decision 3; `established: <a value typed any>` is
+the same door and is not a row of its own. Only the run-time guard sees either; for a `FieldDecl` nothing in M1
+does. It does **not** prove, and no test claims, that a contaminated value cannot exist: sixteen routes in Decision 3
+build one. The run-time guard catches fifteen of those; the other one (an unrelated extra key, row 12) is caught by
+nothing, by design of the plan's table.
 
 Also not proven:
 

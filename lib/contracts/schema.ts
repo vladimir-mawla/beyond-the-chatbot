@@ -19,7 +19,9 @@ export type Operands = readonly [FieldId, FieldId, ...FieldId[]];
  *
  * THE TWO VARIANTS OF `FieldDecl` ARE MUTUALLY EXCLUSIVE BY ASSIGNABILITY, NOT BY EXCESS-PROPERTY CHECKING.
  * `sum?: never` is what makes "a base field with a `sum`" a type error at EVERY assignment site for a value
- * whose static type includes the field. The tempting alternative, simply not declaring `sum`, relies on the
+ * whose static type includes the field (under `tsconfig.json`, other than a `sum` typed `undefined` or `any`;
+ * see the last bullet on `Entailment`, which applies here too). The tempting alternative, simply not
+ * declaring `sum`, relies on the
  * excess-property check, which fires only on a fresh object literal; a sibling project made that claim and
  * seven ordinary routes walked past it (an intermediate binding, a spread, a function return, `satisfies`, a
  * generic helper, `Object.assign`, an array element). `?: never` closes all seven; they are proved one by one
@@ -41,7 +43,8 @@ export interface BaseField {
  * A derived quantity: it IS the sum of its operands. It declares NO baseline of its own (plan D4, and the
  * first defect the plan's own model found, section 8 defect 1): a declared floor on a sum can dominate the
  * sum of its operands' floors, leaving a bound that evidence can never move and no leaf to name as the gap.
- * `baseline?: never` makes that unrepresentable for any value whose static type includes the field.
+ * `baseline?: never` makes that unrepresentable for any value whose static type includes the field (under
+ * `tsconfig.json`, other than a `baseline` typed `undefined` or `any`).
  */
 export interface DerivedField {
   readonly kind: "derived";

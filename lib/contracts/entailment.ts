@@ -12,7 +12,8 @@ import type { NonEmptyReadonlyArray } from "./non-empty-array.js";
  * THE VARIANTS ARE MUTUALLY EXCLUSIVE BY ASSIGNABILITY, NOT BY EXCESS-PROPERTY CHECKING. Each variant
  * declares every field that belongs to another variant as `?: never`. That is what makes "an `ungrounded`
  * carrying `established`, or a `weakened` without `unmet`, does not compile" true at EVERY assignment site
- * for any value whose STATIC TYPE includes the field. The tempting alternative, simply not declaring the
+ * for any value whose STATIC TYPE includes the field (under `tsconfig.json`, other than a field typed
+ * `undefined` or `any`: see the last bullet below). The tempting alternative, simply not declaring the
  * field, relies on the excess-property check, which only fires on a fresh object literal; a sibling project
  * (adaptive-agent, its ADR 0001 decision 1) made that claim and seven ordinary routes walked past it: an
  * intermediate binding, a spread, a function return, `satisfies`, a generic helper, `Object.assign`, an
@@ -27,7 +28,8 @@ import type { NonEmptyReadonlyArray } from "./non-empty-array.js";
  * `assertEntailmentWellFormed` in `integrity.ts` makes of the value that results. It catches every route below
  * EXCEPT an unrelated extra key, which nothing in M1 catches):
  *  - A value whose STATIC TYPE no longer names the forbidden field. `?: never` refuses every value whose
- *    static type carries one, by every route above. It cannot refuse an object that was first assigned to a
+ *    static type carries one, by every route above (but see the last bullet for a field typed `undefined` or
+ *    `any` under `tsconfig.json`). It cannot refuse an object that was first assigned to a
  *    SUPERTYPE that lacks the field (TypeScript allows that for any non-fresh object, through a variable, a
  *    function parameter or an explicit type argument), nor one whose type the compiler reduces to such a
  *    supertype (the branches of a conditional expression, the elements of an array literal). The field is
@@ -42,9 +44,11 @@ import type { NonEmptyReadonlyArray } from "./non-empty-array.js";
  *  - A field the variants do not mention at all. `?: never` closes the fields listed here, not every
  *    possible extra property: an object with an unrelated `note` key still reaches `Entailment` through a
  *    non-literal route, and `assertEntailmentWellFormed` does not flag it either.
- *  - A typed `undefined` under `tsconfig.json`, which does not set `exactOptionalPropertyTypes`
- *    (`established?: never` then accepts `established: undefined`; `tsconfig.lib.json` rejects it).
- *    `assertEntailmentWellFormed` treats the KEY being present as present, so it flags this.
+ *  - A forbidden field typed `undefined` or `any`, under `tsconfig.json`, which does not set
+ *    `exactOptionalPropertyTypes`: there `established?: never` reads as `undefined`, so `established: undefined`
+ *    and `established: <a value typed any>` (for instance one read out of a `JSON.parse` result) are both
+ *    accepted, by all seven routes; `tsconfig.lib.json` rejects both.
+ *    `assertEntailmentWellFormed` treats the KEY being present as present, so it flags either.
  *
  * Cross-field facts the plan states are NOT in the types: `unmet` is exactly the sides of `tested` that
  * `established` does not satisfy; `established` is contained in `tested` for `entailed`; a `support` list
