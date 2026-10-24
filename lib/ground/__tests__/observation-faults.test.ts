@@ -214,6 +214,55 @@ describe("digit-containment accepts exactly what the plan's rule accepts, and no
   });
 });
 
+describe("the size boundaries of an observation: the maximum is accepted (one more is the 'too long' rows above)", () => {
+  it("an id of MAX_ID_LENGTH, a quote of MAX_QUOTE_LENGTH and a source of MAX_SOURCE_LENGTH, together, are accepted and kept whole", () => {
+    const quote = `5 ${"x".repeat(MAX_QUOTE_LENGTH - 2)}`;
+    expect(quote).toHaveLength(MAX_QUOTE_LENGTH);
+    const o = { id: "i".repeat(MAX_ID_LENGTH), field: "packDays", extent: { lo: 5, hi: 5 }, quote, source: "s".repeat(MAX_SOURCE_LENGTH) };
+    const r = ground(SCHEMA, [o]);
+    expect(r.ok && r.rejected).toEqual([]);
+    expect(r.ok && r.grounding.observations[0]).toStrictEqual(o);
+  });
+
+  it("a field of MAX_ID_LENGTH is accepted when the schema declares a field of that length", () => {
+    const name = "f".repeat(MAX_ID_LENGTH);
+    const r = ground(schemaOf({ ...base(name), label: "a long id" }), [obs("k", name, 1, 2)]);
+    expect(r.ok && r.rejected).toEqual([]);
+    expect(r.ok && r.grounding.observations[0]?.field).toBe(name);
+  });
+});
+
+describe("digit runs, character by character", () => {
+  const verdict = (lo: number | null, hi: number | null, quote: string): string => {
+    const r = ground(SCHEMA, [obs("k", "deliveryDay", lo, hi, quote)]);
+    return r.ok ? (r.rejected[0]?.fault.kind ?? "accepted") : "failed";
+  };
+
+  it("every ASCII character that is not a digit ends a run: 'three c five' holds 3 and 5 and never 35, for every code unit from 0 to 127 except the ten digits", () => {
+    let tried = 0;
+    const wrong: string[] = [];
+    for (let code = 0; code < 128; code++) {
+      if (code >= 48 && code <= 57) continue;
+      const quote = `3${String.fromCharCode(code)}5`;
+      if (verdict(3, 5, quote) !== "accepted") wrong.push(`code ${code} does not end a run`);
+      if (verdict(35, null, quote) !== "number-not-in-quote") wrong.push(`code ${code} was joined into a run`);
+      tried += 1;
+    }
+    expect({ wrong, tried }).toEqual({ wrong: [], tried: 118 });
+  });
+
+  it("each of the ten ASCII digits is a digit: a quote that holds only it contains exactly it", () => {
+    for (let d = 0; d <= 9; d++) {
+      expect(verdict(d, d, `x${d}y`), `digit ${d}`).toBe("accepted");
+      expect(verdict(d === 9 ? 0 : d + 1, null, `x${d}y`), `digit ${d} is not the next one`).toBe("number-not-in-quote");
+    }
+  });
+
+  it("digits of other scripts are not digits: Arabic-Indic, fullwidth, superscript and Devanagari three do not contain 3", () => {
+    for (const three of ["\u0663", "\uFF13", "\u00B3", "\u0969", "\u2462"]) expect(verdict(3, null, `at least ${three} days`), JSON.stringify(three)).toBe("number-not-in-quote");
+  });
+});
+
 describe("ids that are prototype names are ordinary ids", () => {
   it("an observation id of __proto__, constructor or toString is accepted and sorted like any other, and a repeated __proto__ is a duplicate", () => {
     const names = ["toString", "__proto__", "constructor", "hasOwnProperty"];

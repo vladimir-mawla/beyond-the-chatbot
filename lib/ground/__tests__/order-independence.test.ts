@@ -151,6 +151,35 @@ describe("`source` is a display label: relabelling every source moves no answer 
   });
 });
 
+describe("the orders that are fixed: observations and baseline by id, trees by root, fields and extents by field id, refusals by position", () => {
+  const ascending = (xs: readonly string[]): boolean => xs.every((x, i) => i === 0 || (xs[i - 1] as string) < x);
+  it("on 800 generated instances every list the grounding keeps is in its stated order (code-unit order, strictly, so no repeats)", () => {
+    let trees = 0;
+    let multi = 0;
+    for (let seed = 1; seed <= 800; seed++) {
+      const inst = genInstance(mulberry32(seed));
+      const r = ground(inst.schema, inst.observations);
+      if (!r.ok) throw new Error("failed");
+      const g = r.grounding;
+      expect(ascending(g.observations.map((o) => o.id)), `seed ${seed}: observations`).toBe(true);
+      expect(ascending(g.baseline.map((b) => b.field)), `seed ${seed}: baseline`).toBe(true);
+      expect(ascending(g.trees.map((t) => t.root)), `seed ${seed}: trees by root`).toBe(true);
+      expect(g.baseline.map((b) => b.field).sort(), `seed ${seed}: the baseline has every field`).toEqual(inst.schema.fields.map((f) => f.id).sort());
+      for (const tree of g.trees) {
+        trees += 1;
+        expect(ascending(tree.fields), `seed ${seed}: a tree's fields`).toBe(true);
+        expect(tree.fields.includes(tree.root), `seed ${seed}: the root is one of the fields`).toBe(true);
+        if (tree.state.kind === "consistent") expect(tree.state.extents.map((e) => e.field), `seed ${seed}: extents`).toEqual([...tree.fields]);
+        else expect(ascending(tree.state.core), `seed ${seed}: a core`).toBe(true);
+      }
+      if (g.trees.length > 1) multi += 1;
+      expect(r.rejected.map((x) => x.index), `seed ${seed}: refusals`).toEqual([...r.rejected.map((x) => x.index)].sort((a, b) => a - b));
+    }
+    expect(trees).toBeGreaterThanOrEqual(1200);
+    expect(multi).toBeGreaterThanOrEqual(250);
+  });
+});
+
 describe("ids are ordered by UTF-16 code unit, never by locale", () => {
   it("the fixture is one where the two orders differ", () => {
     const ids = ["B1", "B2", "a1", "a2", "_z", "Z"];
