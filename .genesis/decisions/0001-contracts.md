@@ -269,8 +269,10 @@ admits a repeated field (M4 `readSchema`: `operand-reused`) — the plan's three
 infinite / over-`MAX_MAGNITUDE` bound, a schema with a duplicate id, an unknown operand, a cross-unit sum and a
 cycle, a quote without its digits, an `entailed` whose `established` is outside `tested`, and an incoherent
 `Brief`. **None of M3-M5 is built, so "closed by" is the plan's assignment, not something this repository does.**
-Each closing refusal named is checked to occur in PLAN.md and to be assigned to the layer the test says. The plan
-does not say which layer enforces `MAX_ID_LENGTH`, and the test says that too.
+Each closing refusal named is checked to occur in PLAN.md, and the four functions that raise them are checked
+against the plan's function-ownership table (`checkExtent` M3, `readSchema` and `ground` M4, `readClaim` M5). Which
+refusal belongs to which function is the plan's prose and type comments, and is not checked. The plan does not say
+which layer enforces `MAX_ID_LENGTH`, and the test says that too.
 
 ## Decision 11 — the canonical scenario is typed against the real contracts, as an expressibility check only
 
