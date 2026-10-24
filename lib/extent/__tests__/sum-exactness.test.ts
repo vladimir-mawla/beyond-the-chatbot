@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Extent, NonEmptyReadonlyArray } from "../../contracts/index.js";
 import { checkExtent, isSubset, meet, sumBackward, sumForward } from "../index.js";
-import { ext, GRID_VALUES, gridExtents, oracleBackward, oracleForward, REDUCED_VALUES, Tally } from "./fixtures.js";
+import { ext, GRID_VALUES, gridExtents, naiveSum, oracleBackward, oracleForward, REDUCED_VALUES, Tally } from "./fixtures.js";
 
 /**
  * `sumForward` and `sumBackward` (`.genesis/PLAN.md` section 6 M3, layer 1: exhaustive, not sampled).
@@ -300,6 +300,76 @@ describe("sumBackward equals enumeration, over every result extent, every operan
       finish(`sumBackward, 3 operands, index ${index}`, tally, 13 ** 4);
     });
   }
+});
+
+describe("why the oracle widens its window: the rule it replaced is wrong, and the library agrees with the widening oracle, not with that rule", () => {
+  it("a FINITE bound that lands on the window's edge is not unbounded: forward over [-2, 0] and [-1, 0]", () => {
+    const operands = [ext(-2, 0), ext(-1, 0)];
+    // Window: the largest finite bound is 2, so the small window is [-3, 3], and the least sum, -2 + -1, is -3: exactly its edge.
+    expect(naiveSum(operands.map((extent) => ({ extent, sign: 1 })))).toStrictEqual(ext(null, 0)); // the wrong rule says the lower side is unbounded
+    expect(oracleForward(operands).extent).toStrictEqual(ext(-3, 0)); // widening says -3, and it is
+    expect(sumForward(ops(...operands))).toStrictEqual(ext(-3, 0));
+  });
+
+  it("an UNBOUNDED side that never reaches the window's edge is still unbounded: backward from [null, 5] with the others [0, 0] and [1, 1]", () => {
+    const result = ext(null, 5);
+    const operands = [ext(0, 0), ext(1, 1)];
+    // The values are (a number up to 5) minus 1, so the least value is the window's edge minus 1: past the edge, never on it.
+    expect(naiveSum([{ extent: result, sign: 1 }, { extent: operands[1] as Extent, sign: -1 }])).toStrictEqual(ext(-7, 4)); // the wrong rule says -7 is a finite bound
+    expect(oracleBackward(result, operands, 0).extent).toStrictEqual(ext(null, 4)); // widening says unbounded, and it is
+    expect(sumBackward(result, ops(...operands), 0)).toStrictEqual(ext(null, 4));
+  });
+});
+
+describe("the wrong rule over the same grids as the exactness tests (the number wrong is printed; only that it is not zero is asserted)", () => {
+  // One test per index again, so none of them is slow: the wrong rule and the widening oracle each enumerate every case.
+  const WRONG = { forwardChecks: 0, forwardWrong: 0, backwardChecks: 0, backwardWrong: 0 };
+  const differs = (a: Extent, b: Extent): boolean => a.lo !== b.lo || a.hi !== b.hi;
+  /** Every list of `size` extents drawn from `grid`. */
+  function forEachList(grid: readonly Extent[], size: number, visit: (list: readonly Extent[]) => void, prefix: readonly Extent[] = []): void {
+    if (prefix.length === size) return visit(prefix);
+    for (const extent of grid) forEachList(grid, size, visit, [...prefix, extent]);
+  }
+  function backward(grid: readonly Extent[], size: number, index: number): void {
+    forEachList(grid, size, (operands) => {
+      for (const result of grid) {
+        const terms = [{ extent: result, sign: 1 as const }, ...operands.flatMap((extent, position) => (position === index ? [] : [{ extent, sign: -1 as const }]))];
+        WRONG.backwardChecks += 1;
+        if (differs(naiveSum(terms), oracleBackward(result, operands, index).extent)) WRONG.backwardWrong += 1;
+      }
+    });
+  }
+
+  it("forward, 2 operands over the 34-extent grid and 3 over the 13-extent grid", () => {
+    for (const [grid, size] of [[WIDE, 2], [REDUCED, 3]] as const) {
+      forEachList(grid, size, (operands) => {
+        WRONG.forwardChecks += 1;
+        if (differs(naiveSum(operands.map((extent) => ({ extent, sign: 1 }))), oracleForward(operands).extent)) WRONG.forwardWrong += 1;
+      });
+    }
+    expect(WRONG.forwardChecks).toBe(34 ** 2 + 13 ** 3);
+  });
+
+  for (const index of [0, 1]) {
+    it(`backward, 2 operands, index ${index}`, () => {
+      backward(WIDE, 2, index);
+      expect(WRONG.backwardChecks).toBeGreaterThan(0);
+    });
+  }
+  for (const index of [0, 1, 2]) {
+    it(`backward, 3 operands, index ${index}`, () => {
+      backward(REDUCED, 3, index);
+      expect(WRONG.backwardChecks).toBeGreaterThan(0);
+    });
+  }
+
+  it("totals: the wrong rule is wrong somewhere in each direction, on the very cases the library gets right", () => {
+    console.log(`the wrong rule (bound at the window edge): forward ${WRONG.forwardWrong} of ${WRONG.forwardChecks} wrong, backward ${WRONG.backwardWrong} of ${WRONG.backwardChecks} wrong`);
+    expect(WRONG.forwardChecks).toBe(34 ** 2 + 13 ** 3);
+    expect(WRONG.backwardChecks).toBe(2 * 34 ** 3 + 3 * 13 ** 4);
+    expect(WRONG.forwardWrong).toBeGreaterThan(0);
+    expect(WRONG.backwardWrong).toBeGreaterThan(0);
+  });
 });
 
 describe("properties that need no oracle, over the same grids", () => {

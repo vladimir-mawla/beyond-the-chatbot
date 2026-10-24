@@ -245,3 +245,15 @@ export class Tally {
     }
   }
 }
+
+/**
+ * THE WRONG RULE, kept so a test can show it is wrong: "a side is unbounded when the enumerated bound sits at the
+ * edge of the (small) window". It is here only for `sum-exactness.test.ts`; nothing else may use it. It is not
+ * known to be the rule the plan's first harness used (that harness got 24,276 of 79,764 checks wrong), so its
+ * error count is its own and not a reproduction of that figure.
+ */
+export function naiveSum(terms: readonly Term[]): Extent {
+  const { small } = windowFor(terms.map((t) => t.extent));
+  const reached = enumerateSigned(terms, small);
+  return { lo: reached.min === -small ? null : reached.min, hi: reached.max === small ? null : reached.max };
+}
