@@ -43,13 +43,13 @@ function readBound(value: unknown): BoundRead {
  * THE VALUE IS READ ONCE. `raw.lo` and `raw.hi` are each read exactly one time, in that order, and everything
  * after that works on the two plain values and never touches `raw` again. A getter (or a Proxy `get` trap) that
  * answers differently on a second read therefore cannot make the checked value differ from the returned one:
- * the check and the copy are made from the same single read. Nothing else on `raw` is looked at, so an extra
- * property, a throwing getter on one, or an inherited one is never read.
+ * the check and the copy are made from the same single read. Only `lo` and `hi` are read (an inherited one counts,
+ * as `raw.lo` would); an extra property, even one with a throwing getter, is never touched.
  *
  * Precedence, first match wins: `not-an-object` (not an object, or an array) > `hostile-input` (reading a side
  * threw) > the `lo` bound (`bound-not-an-integer` before `bound-out-of-range`) > the same for `hi` > `inverted`.
- * Both sides are read before either is judged, so a refusal never depends on which side happened to be read
- * last.
+ * Both sides are read before either is judged (unless the first read throws, in which case the second never
+ * happens).
  *
  * An array is refused as `not-an-object`: it is an object in JavaScript but not the `{ lo, hi }` record
  * `Extent` is, and without this it would be reported as a missing `lo`, which blames the wrong thing.

@@ -9,10 +9,11 @@ import type { Bound, Extent, NonEmptyReadonlyArray } from "../contracts/index.js
  * is read as zero: the first operand's `null` makes the result `null` like any other.
  *
  * Exact over the integers: the set of values a sum of integer intervals can take has no holes, so `[lo, hi]`
- * loses nothing (checked against enumeration in `__tests__/sum-exactness.test.ts`). The inputs are trusted to be
- * `checkExtent`-valid; with `MAX_MAGNITUDE` and `MAX_FIELDS` the intermediate values stay far below 2**53, and
- * `__tests__/boundaries.test.ts` checks that against `BigInt`. This function does not re-check its inputs.
- * An empty list is outside the type; the loop then yields `[0, 0]`, the exact sum of no terms.
+ * loses nothing (observed on every case of the grids in `__tests__/sum-exactness.test.ts`, against enumeration).
+ * The inputs are trusted to be `checkExtent`-valid. With `MAX_MAGNITUDE` and `MAX_FIELDS` the values stay far
+ * below 2**53; `__tests__/boundaries.test.ts` checks a call on 63 operands against `BigInt`. This function does
+ * not re-check its inputs. An empty list is outside the type; the loop then yields `[0, 0]`, the exact sum of
+ * no terms.
  */
 export function sumForward(operands: NonEmptyReadonlyArray<Extent>): Extent {
   let lo: Bound = 0;
