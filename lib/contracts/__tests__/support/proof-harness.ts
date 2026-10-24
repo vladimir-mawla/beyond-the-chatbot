@@ -61,8 +61,9 @@ const TSC = join(REPO_ROOT, "node_modules", "typescript", "bin", "tsc");
 export const PROOF_CONFIGS = ["tsconfig.lib.json", "tsconfig.json"] as const;
 export type ProofConfig = (typeof PROOF_CONFIGS)[number];
 
-/** A name no real file in this repo has, so a diagnostic can be attributed to the proof by basename alone. */
-const PROOF_FILE = "__proof_under_test__.ts";
+/** Scratch names no real file in this repo has, so a diagnostic can be attributed to a proof by basename alone. */
+const proofFileName = (index: number): string => `__proof_under_test_${index}__.ts`;
+const PROOF_FILE_PATTERN = /^__proof_under_test_(\d+)__\.ts$/;
 const DIRECTIVE = /^\s*\/\/ @ts-expect-error (TS\d+(?:\|TS\d+)*) (\S.*)$/;
 /** A suppression marker right after a comment opener, wherever the comment sits on the line (mirrors what TypeScript honours). */
 const ANY_SUPPRESSION = /(?:\/\/+|\/\*+|^\s*\*+)\s*@ts-(?:expect-error|ignore|nocheck)/;
@@ -153,14 +154,14 @@ function parseTscOutput(output: string): { diags: Diag[]; unparsed: string[] } {
   return { diags, unparsed };
 }
 
-function compile(config: ProofConfig, scratch: string): { diags: Diag[]; unparsed: string[] } {
+function compile(config: ProofConfig, scratch: string, count: number): { diags: Diag[]; unparsed: string[] } {
   const project = join(scratch, `${config.replace(/\.json$/, "")}.project.json`);
   writeFileSync(
     project,
     JSON.stringify({
       extends: join(REPO_ROOT, config),
       compilerOptions: { noEmit: true, incremental: false },
-      include: [`./${PROOF_FILE}`],
+      include: Array.from({ length: count }, (_, i) => `./${proofFileName(i)}`),
       exclude: [],
     }),
   );
@@ -191,107 +192,149 @@ function absolutise(source: string, baseDir: string): string {
   });
 }
 
+/** One proof file's text, with a caller-chosen name to find its report by. */
+export interface ProofInput {
+  readonly name: string;
+  readonly source: string;
+}
+
 /**
- * Compile the proof source EXACTLY AS WRITTEN (directives left in), under one config, and return what tsc
- * says. This is what `npm run typecheck` sees for the file: a directive that suppresses nothing shows up
- * here as TS2578. The sabotage test uses it to report TS2578 at a proof's own line.
+ * Compile each proof source EXACTLY AS WRITTEN (directives left in), under one config, in ONE tsc run, and
+ * return what tsc says about each (by `name`). This is what `npm run typecheck` sees for the file: a directive
+ * that suppresses nothing shows up here as TS2578 (reported on the directive's own line). The sabotage test
+ * uses it to report TS2578 at a proof's own line. One run for many files is only a speed-up: the files are
+ * independent modules and a diagnostic is attributed to its file by name.
  */
-export function compileAsWritten(source: string, baseDir: string, config: ProofConfig): readonly Diag[] {
+export function compileAllAsWritten(inputs: readonly ProofInput[], baseDir: string, config: ProofConfig): ReadonlyMap<string, readonly Diag[]> {
   const scratch = mkdtempSync(join(tmpdir(), "btc-proof-asis-"));
   try {
-    writeFileSync(join(scratch, PROOF_FILE), absolutise(source, baseDir));
-    return compile(config, scratch).diags.filter((d) => basename(d.file) === PROOF_FILE);
+    inputs.forEach((input, i) => writeFileSync(join(scratch, proofFileName(i)), absolutise(input.source, baseDir)));
+    const { diags } = compile(config, scratch, inputs.length);
+    const byName = new Map<string, Diag[]>(inputs.map((input) => [input.name, []]));
+    for (const diag of diags) {
+      const match = PROOF_FILE_PATTERN.exec(basename(diag.file));
+      if (match !== null) (byName.get((inputs[Number(match[1])] as ProofInput).name) as Diag[]).push(diag);
+    }
+    return byName;
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
 }
 
-/**
- * Check one proof file's text. `baseDir` is the directory its RELATIVE imports are written against.
- */
-export function checkProofSource(source: string, baseDir: string): ProofReport {
-  const failures: ProofFailure[] = [];
-  const lines = source.split("\n");
-  const directives = parseDirectives(lines, failures);
-  const targetLines = new Set(directives.map((d) => d.line + 1));
+export function compileAsWritten(source: string, baseDir: string, config: ProofConfig): readonly Diag[] {
+  return (compileAllAsWritten([{ name: "proof", source }], baseDir, config).get("proof") ?? []) as readonly Diag[];
+}
 
-  const stripped = absolutise(
-    lines.map((text) => (DIRECTIVE.test(text) ? "// (directive removed by the proof harness)" : text)).join("\n"),
-    baseDir,
-  );
+/**
+ * Check several proof files in one tsc run per config (the same checks as `checkProofSource`, file by file).
+ * `baseDir` is the directory their RELATIVE imports are written against.
+ */
+export function checkProofSources(inputs: readonly ProofInput[], baseDir: string): ReadonlyMap<string, ProofReport> {
+  interface Prepared {
+    readonly input: ProofInput;
+    readonly directives: readonly Directive[];
+    readonly failures: ProofFailure[];
+  }
+  const prepared: Prepared[] = inputs.map((input) => {
+    const failures: ProofFailure[] = [];
+    return { input, directives: parseDirectives(input.source.split("\n"), failures), failures };
+  });
 
   const scratch = mkdtempSync(join(tmpdir(), "btc-proof-harness-"));
   try {
-    writeFileSync(join(scratch, PROOF_FILE), stripped);
+    prepared.forEach(({ input }, i) => {
+      const stripped = absolutise(
+        input.source
+          .split("\n")
+          .map((text) => (DIRECTIVE.test(text) ? "// (directive removed by the proof harness)" : text))
+          .join("\n"),
+        baseDir,
+      );
+      writeFileSync(join(scratch, proofFileName(i)), stripped);
+    });
     for (const config of PROOF_CONFIGS) {
-      const { diags, unparsed } = compile(config, scratch);
-      for (const line of unparsed) {
-        failures.push({ config, line: 0, kind: "unparsed-output", message: `[${config}] tsc printed something that is not a diagnostic: ${line}` });
-      }
-      // A diagnostic in a file the proof IMPORTS (a contract source that no longer compiles) is not a proof
+      const { diags, unparsed } = compile(config, scratch, prepared.length);
+      // A diagnostic in a file the proofs IMPORT (a contract source that no longer compiles) is not a proof
       // line; it is reported under its own file name so the cause is not mistaken for a broken proof.
-      const isProof = (d: Diag): boolean => basename(d.file) === PROOF_FILE;
-      const inProof = diags.filter(isProof);
-      for (const other of diags.filter((d) => !isProof(d))) {
-        failures.push({
+      const shared: ProofFailure[] = [];
+      for (const line of unparsed) {
+        shared.push({ config, line: 0, kind: "unparsed-output", message: `[${config}] tsc printed something that is not a diagnostic: ${line}` });
+      }
+      for (const other of diags.filter((d) => !PROOF_FILE_PATTERN.test(basename(d.file)))) {
+        shared.push({
           config,
           line: 0,
           kind: "imported-file",
           message: `[${config}] ${other.file}(${other.line}): TS${other.code} in a file the proof imports, not in the proof`,
         });
       }
-      for (const directive of directives) {
-        const target = directive.line + 1;
-        const here = inProof.filter((d) => d.line === target);
-        const matching = here.find((d) => directive.codes.includes(d.code) && d.text.includes(directive.fragment));
-        if (here.length === 0) {
-          failures.push({
-            config,
-            line: target,
-            kind: "no-diagnostic",
-            message: `[${config}] line ${target}: expected TS${directive.codes.join("|TS")} containing ${JSON.stringify(directive.fragment)}, got no diagnostic at all`,
-          });
-          continue;
+      prepared.forEach((entry, i) => {
+        entry.failures.push(...shared);
+        const inProof = diags.filter((d) => basename(d.file) === proofFileName(i));
+        const targetLines = new Set(entry.directives.map((d) => d.line + 1));
+        for (const directive of entry.directives) {
+          const target = directive.line + 1;
+          const here = inProof.filter((d) => d.line === target);
+          const matching = here.find((d) => directive.codes.includes(d.code) && d.text.includes(directive.fragment));
+          if (here.length === 0) {
+            entry.failures.push({
+              config,
+              line: target,
+              kind: "no-diagnostic",
+              message: `[${config}] line ${target}: expected TS${directive.codes.join("|TS")} containing ${JSON.stringify(directive.fragment)}, got no diagnostic at all`,
+            });
+            continue;
+          }
+          if (matching === undefined) {
+            entry.failures.push({
+              config,
+              line: target,
+              kind: "wrong-diagnostic",
+              message:
+                `[${config}] line ${target}: expected TS${directive.codes.join("|TS")} containing ${JSON.stringify(directive.fragment)}, ` +
+                `got ${here.map((d) => `TS${d.code}`).join(", ")}`,
+            });
+          }
+          // Exactly one diagnostic per proof line: everything that is not THE matching one is extra, whatever its code.
+          for (const extra of here) {
+            if (extra === matching) continue;
+            if (matching === undefined && extra === here[0]) continue; // already reported as the wrong diagnostic
+            entry.failures.push({
+              config,
+              line: target,
+              kind: "extra-diagnostic",
+              message:
+                `[${config}] line ${target}: unexpected extra diagnostic TS${extra.code} ` +
+                "(a proof line must fail for exactly the stated reason, and a variable it declares must be used elsewhere)",
+            });
+          }
         }
-        if (matching === undefined) {
-          failures.push({
-            config,
-            line: target,
-            kind: "wrong-diagnostic",
-            message:
-              `[${config}] line ${target}: expected TS${directive.codes.join("|TS")} containing ${JSON.stringify(directive.fragment)}, ` +
-              `got ${here.map((d) => `TS${d.code}`).join(", ")}`,
-          });
+        for (const diag of inProof) {
+          if (!targetLines.has(diag.line)) {
+            entry.failures.push({
+              config,
+              line: diag.line,
+              kind: "stray-diagnostic",
+              message: `[${config}] line ${diag.line}: unexpected diagnostic TS${diag.code} outside any proof line`,
+            });
+          }
         }
-        // Exactly one diagnostic per proof line: everything that is not THE matching one is extra, whatever its code.
-        for (const extra of here) {
-          if (extra === matching) continue;
-          if (matching === undefined && extra === here[0]) continue; // already reported as the wrong diagnostic
-          failures.push({
-            config,
-            line: target,
-            kind: "extra-diagnostic",
-            message:
-              `[${config}] line ${target}: unexpected extra diagnostic TS${extra.code} ` +
-              "(a proof line must fail for exactly the stated reason, and a variable it declares must be used elsewhere)",
-          });
-        }
-      }
-      for (const diag of inProof) {
-        if (!targetLines.has(diag.line)) {
-          failures.push({
-            config,
-            line: diag.line,
-            kind: "stray-diagnostic",
-            message: `[${config}] line ${diag.line}: unexpected diagnostic TS${diag.code} outside any proof line`,
-          });
-        }
-      }
+      });
     }
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
-  return { directives: directives.length, problems: failures.map((f) => f.message), failures };
+  return new Map(
+    prepared.map((entry) => [
+      entry.input.name,
+      { directives: entry.directives.length, problems: entry.failures.map((f) => f.message), failures: entry.failures },
+    ]),
+  );
+}
+
+/** Check one proof file's text. `baseDir` is the directory its RELATIVE imports are written against. */
+export function checkProofSource(source: string, baseDir: string): ProofReport {
+  return checkProofSources([{ name: "proof", source }], baseDir).get("proof") as ProofReport;
 }
 
 export function checkProofFile(file: string): ProofReport {
