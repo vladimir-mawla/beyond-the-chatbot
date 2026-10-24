@@ -510,29 +510,37 @@ describe("neither function ever throws, whatever it is given", () => {
     return out;
   }
 
-  it("5000 random values as the schema and as the observations: always a typed result, never a throw", () => {
-    let results = 0;
-    const kinds = new Set<string>();
-    for (let seed = 1; seed <= 5000; seed++) {
-      const rng = mulberry32(seed);
-      const raw = junk(rng, 0);
-      const schema = readSchema(raw);
-      expect(typeof schema.ok).toBe("boolean");
-      const out = ground(chance(rng, 0.5) ? raw : ORDER_DESK, junk(rng, 0));
-      expect(typeof out.ok).toBe("boolean");
-      if (!schema.ok) kinds.add(schema.fault.kind);
-      results += 2;
-    }
-    expect(results).toBe(10000);
-    expect(kinds.has("malformed")).toBe(true);
+  const seenJunk = { results: 0, kinds: new Set<string>() };
+  for (let chunk = 0; chunk < 5; chunk++) {
+    const from = chunk * 1000 + 1;
+    it(`seeds ${from} to ${from + 999}: random values as the schema and as the observations: always a typed result, never a throw`, () => {
+      for (let seed = from; seed < from + 1000; seed++) {
+        const rng = mulberry32(seed);
+        const raw = junk(rng, 0);
+        const schema = readSchema(raw);
+        expect(typeof schema.ok).toBe("boolean");
+        const out = ground(chance(rng, 0.5) ? raw : ORDER_DESK, junk(rng, 0));
+        expect(typeof out.ok).toBe("boolean");
+        if (!schema.ok) seenJunk.kinds.add(schema.fault.kind);
+        seenJunk.results += 2;
+      }
+    });
+  }
+
+  it("all 10 000 calls were made, and the junk reached malformed (needs the five tests above to have run)", () => {
+    expect(seenJunk.results, "do not filter this file with -t").toBe(10000);
+    expect(seenJunk.kinds.has("malformed")).toBe(true);
   });
 
-  it("a valid schema with 5000 observation lists of random junk elements: each element is accepted or refused, none throws", () => {
-    for (let seed = 1; seed <= 5000; seed++) {
-      const rng = mulberry32(seed);
-      const list = Array.from({ length: int(rng, 0, 6) }, () => (chance(rng, 0.2) ? obs(`o${int(rng, 0, 3)}`, pick(rng, ["packDays", "ghost"]), int(rng, -2, 4), int(rng, 4, 8)) : junk(rng, 0)));
-      const out = ground(ORDER_DESK, list);
-      if (out.ok) expect(out.rejected.length + out.grounding.observations.length).toBe(list.length);
-    }
-  });
+  for (let chunk = 0; chunk < 5; chunk++) {
+    const from = chunk * 1000 + 1;
+    it(`seeds ${from} to ${from + 999}: a valid schema with random observation lists of junk elements: each element is accepted or refused, none throws`, () => {
+      for (let seed = from; seed < from + 1000; seed++) {
+        const rng = mulberry32(seed);
+        const list = Array.from({ length: int(rng, 0, 6) }, () => (chance(rng, 0.2) ? obs(`o${int(rng, 0, 3)}`, pick(rng, ["packDays", "ghost"]), int(rng, -2, 4), int(rng, 4, 8)) : junk(rng, 0)));
+        const out = ground(ORDER_DESK, list);
+        if (out.ok) expect(out.rejected.length + out.grounding.observations.length).toBe(list.length);
+      }
+    });
+  }
 });

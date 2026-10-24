@@ -30,8 +30,8 @@ import type { Ruling } from "./oracle.js";
  * gets, and an 8-operand sum; and the canonical scenario of plan section 7 at this layer.
  */
 
-const CHUNKS = 40;
-const PER_CHUNK = 200;
+const CHUNKS = 80;
+const PER_CHUNK = 100;
 const TOTAL = CHUNKS * PER_CHUNK;
 
 interface Tally {

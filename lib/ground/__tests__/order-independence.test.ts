@@ -23,8 +23,8 @@ import type { Instance, RawObservation, RawSchema, Rng } from "./fixtures.js";
  * a switch to a locale-aware sort would be seen.
  */
 
-const CHUNKS = 16;
-const PER_CHUNK = 150;
+const CHUNKS = 32;
+const PER_CHUNK = 75;
 
 function permuted(rng: Rng, inst: Instance, how: "reverse" | "shuffle"): { schema: RawSchema; observations: RawObservation[] } {
   const observations = how === "reverse" ? [...inst.observations].reverse() : shuffled(rng, inst.observations);

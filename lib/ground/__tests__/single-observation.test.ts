@@ -22,8 +22,8 @@ import { oracleBaselines, oracleTreeOf } from "./oracle.js";
  * The counts of each side are printed so that neither is vacuous.
  */
 
-const CHUNKS = 20;
-const PER_CHUNK = 100;
+const CHUNKS = 40;
+const PER_CHUNK = 50;
 const seen = { singles: 0, meets: 0, misses: 0, conflictedTrees: 0, smallestCore: Number.POSITIVE_INFINITY, coresChecked: 0 };
 
 describe("one observation never conflicts unless it misses B, and always does if it misses B", () => {

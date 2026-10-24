@@ -24,8 +24,8 @@ import type { OField, OObs } from "./oracle.js";
  * It is "a place and not a promise" (plan case 06, below): naming an end does not say what bounding it will do.
  */
 
-const CHUNKS = 16;
-const PER_CHUNK = 125;
+const CHUNKS = 40;
+const PER_CHUNK = 50;
 const BUDGET = 40_000;
 const SIDE_REQUESTS: readonly (readonly Side[])[] = [["lo"], ["hi"], ["lo", "hi"]];
 const seen = { instances: 0, skipped: 0, requests: 0, nonEmpty: 0, hiEnds: 0, loEnds: 0, sufficiencyChecks: 0, becameConflicted: 0, mostEnds: 0 };

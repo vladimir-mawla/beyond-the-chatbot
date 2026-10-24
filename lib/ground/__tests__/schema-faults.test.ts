@@ -582,6 +582,17 @@ describe("an accepted schema", () => {
     if (result.ok) expect(result.schema.fields.map((f) => f.id)).toEqual([...names, "other"]);
   });
 
+  it("an explicit undefined for the property a kind forbids is read as absent, in both directions", () => {
+    const baseWithSum = { ...base("a"), sum: undefined };
+    const derivedWithBaseline = { ...derived("t", ["a", "b"]), baseline: undefined };
+    const result = readSchema({ fields: [baseWithSum, base("b"), derivedWithBaseline] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect("sum" in (result.schema.fields[0] as object)).toBe(false);
+      expect("baseline" in (result.schema.fields[2] as object)).toBe(false);
+    }
+  });
+
   it("an extra property on the input is neither refused nor copied", () => {
     const field = { ...base("a"), colour: "red" };
     const result = readSchema({ fields: [field], note: "x" });

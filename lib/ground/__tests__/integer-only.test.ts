@@ -17,8 +17,8 @@ import type { RawField } from "./fixtures.js";
 
 const bad = (value: unknown): string[] => numbersIn(value).filter((n) => !Number.isSafeInteger(n.value) || Object.is(n.value, -0)).map((n) => `${n.path} = ${String(n.value)}`);
 
-const CHUNKS = 12;
-const PER_CHUNK = 250;
+const CHUNKS = 24;
+const PER_CHUNK = 125;
 const seen = { structures: 0, numbers: 0 };
 
 describe("every number in every produced structure is a safe integer, and none is -0", () => {
