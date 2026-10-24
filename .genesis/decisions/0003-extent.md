@@ -86,7 +86,12 @@ and only the two limits below are tested.
   `checkExtent` would refuse as out of range (pinned in `boundaries.test.ts`). A later layer must not feed a
   propagated extent back through `checkExtent`.
 - **Past `2**53` an addition silently loses exactness** (`2**53 + 1` is not representable; pinned with `BigInt`).
-  What is meant to keep it out is `checkExtent`'s cap, not anything in the sum functions; that later layers use it is
+  The cap on one bound is not enough to keep a sum below it: a sum of at most 8,192 operands whose bounds are inside
+  `MAX_MAGNITUDE` cannot leave `2**53` (8,192 x `2**40` is `2**53`), but nothing in this layer limits the operand count
+  (`MAX_FIELDS` and `MAX_OPERANDS` are not enforced here). A call on 8,193 operands, every one accepted by `checkExtent`
+  (one `[2**40 - 1, 2**40]` and 8,192 `[2**40, 2**40]`), returned a lower bound of 9008298766368768 where the exact sum is
+  9008298766368767 (checked against `BigInt` in a scratch script, with the odd operand first and last; no test pins it).
+  What is meant to keep it out is the cap together with a bound on the operand count; that later layers use either is
   not shown here (see "What is not proven").
 - **An empty operand list is outside the type.** `sumForward([])` gives `[0, 0]`, which is what the loop's identity
   yields and the exact sum of no terms; `sumBackward` with no operands has no valid index, so it gives "no
