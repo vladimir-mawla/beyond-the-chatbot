@@ -3,7 +3,7 @@ import { MAX_FIELDS, MAX_OBSERVATIONS, compareIds, fieldId } from "../../contrac
 import { extentOf, ground, supportOf } from "../index.js";
 import { CANON, ORDER_DESK, base, canon, derived, genInstance, mulberry32, obs, oracleFields, refIntake, schemaOf } from "./fixtures.js";
 import type { RawField, RawObservation } from "./fixtures.js";
-import { observationsInTreeOf, oracleCost, oracleShrink, oracleTreeOf, oracleTrees } from "./oracle.js";
+import { observationsInTreeOf, oracleWorstCost, oracleShrink, oracleTreeOf, oracleTrees } from "./oracle.js";
 import type { OObs } from "./oracle.js";
 
 /**
@@ -20,13 +20,14 @@ import type { OObs } from "./oracle.js";
  * conflict beside a three-observation one where the three is named (the one whose ids sort last), the plan's case 04,
  * and the largest core the contracts allow.
  *
- * The oracle is expensive, so an instance is asked only if its worlds are cheap to list (`oracleCost`); the number
- * skipped is printed and bounded.
+ * The oracle is expensive, so an instance is asked only if the worlds of any subset of its observations are cheap to
+ * list (`oracleWorstCost`); the number skipped is printed and bounded.
  */
 
 const CHUNKS = 50;
 const PER_CHUNK = 30;
-const BUDGET = 10_000;
+/** Most worlds any subset of an instance's observations may make the oracle list (`oracleWorstCost`); costlier instances are skipped, counted and bounded. */
+const BUDGET = 100_000;
 const seen = { instances: 0, skipped: 0, cores: 0, sizes: new Map<number, number>(), subsetsChecked: 0 };
 
 function subsetsOf<T>(items: readonly T[]): T[][] {
@@ -44,7 +45,7 @@ describe("every core the engine returns is irreducible, unsatisfiable and exactl
         const inst = genInstance(mulberry32(seed));
         const fields = oracleFields(inst.schema);
         const accepted = refIntake(inst.schema, inst.observations, inst.hostile).accepted;
-        if (oracleCost(fields, accepted) > BUDGET) {
+        if (oracleWorstCost(fields, accepted) > BUDGET) {
           seen.skipped += 1;
           continue;
         }

@@ -275,6 +275,31 @@ export function oracleCost(fields: readonly OField[], observations: readonly OOb
   return worst;
 }
 
+/**
+ * An upper bound on the worlds ANY subset of the observations makes the oracle list, before asking: every base field at
+ * the widest its baseline allows inside the widest window any subset can have (the full set's). A subset can be far
+ * costlier than the whole set, because dropping an upper bound on a field widens it to the window's edge while the
+ * window stays wide, so `oracleCost` of the whole set says little about the support and core tests, which ask about
+ * many subsets. The product is over the base fields of the most expensive tree.
+ */
+export function oracleWorstCost(fields: readonly OField[], observations: readonly OObs[]): number {
+  let worst = 0;
+  for (const ids of oracleComponents(fields)) {
+    const defs = ids.map((id) => fields.find((f) => f.id === id) as OField);
+    const mine = observations.filter((o) => ids.includes(o.field));
+    const cap = windowCap(defs, mine) + 2;
+    let worlds = 1;
+    for (const f of defs) {
+      if (f.baseline === undefined) continue;
+      const lo = f.baseline.lo === null ? -cap : Math.max(-cap, f.baseline.lo);
+      const hi = f.baseline.hi === null ? cap : Math.min(cap, f.baseline.hi);
+      worlds *= Math.max(0, hi - lo + 1);
+    }
+    worst = Math.max(worst, worlds);
+  }
+  return worst;
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // The five rulings of plan section 4.2, as set relations between E, B and C. Test-side only: M4 has no `rule`.
 // ---------------------------------------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { ground, supportOf } from "../index.js";
 import { shrink } from "../shrink.js";
 import { base, derived, genInstance, mulberry32, obs, oracleFields, refIntake, schemaOf } from "./fixtures.js";
 import type { RawField, RawObservation } from "./fixtures.js";
-import { observationsInTreeOf, oracleBound, oracleBounds, oracleCost, oracleShrink, oracleTrees } from "./oracle.js";
+import { observationsInTreeOf, oracleBound, oracleBounds, oracleWorstCost, oracleShrink, oracleTrees } from "./oracle.js";
 import type { OObs } from "./oracle.js";
 
 /**
@@ -22,14 +22,17 @@ import type { OObs } from "./oracle.js";
  *     is chosen is checked, not only that it is one;
  * and `[]` is the answer exactly when the oracle's bound with no observation at all is already that bound.
  *
- * The oracle is expensive, so each instance is asked only if listing its worlds is cheap (`oracleCost`), and the
- * number skipped is printed and bounded. Afterwards: the plan's case 05 (a route that sorts last, a route that sorts
+ * The oracle is expensive, so each instance is asked only if listing the worlds of any subset of its observations is
+ * cheap (`oracleWorstCost`), and the number skipped is printed and bounded. The richest instances, whose supports are
+ * longest, are also the costliest, so the longest support this loop reaches is short; the longest the contracts allow
+ * is worked by hand at the end. Afterwards: the plan's case 05 (a route that sorts last, a route that sorts
  * first), `shrink` called directly with a pool in the wrong order, and the longest support the contracts allow.
  */
 
 const CHUNKS = 100;
 const PER_CHUNK = 30;
-const BUDGET = 10_000;
+/** Most worlds any subset of an instance's observations may make the oracle list (`oracleWorstCost`); costlier instances are skipped, counted and bounded. */
+const BUDGET = 100_000;
 const seen = { instances: 0, skipped: 0, bounds: 0, nonEmpty: 0, longest: 0, sizes: new Map<number, number>() };
 
 describe("every support the engine returns is a certificate, checked by the oracle", () => {
@@ -41,7 +44,7 @@ describe("every support the engine returns is a certificate, checked by the orac
         const inst = genInstance(mulberry32(seed));
         const fields = oracleFields(inst.schema);
         const accepted = refIntake(inst.schema, inst.observations, inst.hostile).accepted;
-        if (oracleCost(fields, accepted) > BUDGET) {
+        if (oracleWorstCost(fields, accepted) > BUDGET) {
           seen.skipped += 1;
           continue;
         }
@@ -102,8 +105,8 @@ describe("every support the engine returns is a certificate, checked by the orac
     expect(seen.skipped).toBeLessThanOrEqual(CHUNKS * PER_CHUNK * 0.1);
     expect(seen.bounds).toBeGreaterThanOrEqual(12000);
     expect(seen.nonEmpty).toBeGreaterThanOrEqual(5000);
-    for (const [size, atLeast] of [[1, 1000], [2, 200], [3, 40], [4, 8]] as const) expect(seen.sizes.get(size) ?? 0, `supports of ${size}`).toBeGreaterThanOrEqual(atLeast);
-    expect(seen.longest).toBeGreaterThanOrEqual(4);
+    for (const [size, atLeast] of [[1, 1000], [2, 200], [3, 40], [4, 1]] as const) expect(seen.sizes.get(size) ?? 0, `supports of ${size}`).toBeGreaterThanOrEqual(atLeast);
+    expect(seen.longest, "the longest support the generated instances reached").toBeGreaterThanOrEqual(4);
   });
 });
 

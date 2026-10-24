@@ -4,7 +4,7 @@ import type { Bound, Side } from "../../contracts/index.js";
 import { extentOf, ground, openEndsOf } from "../index.js";
 import { CANON, ORDER_DESK, canon, genInstance, mulberry32, obs, oracleFields, refIntake } from "./fixtures.js";
 import type { RawObservation } from "./fixtures.js";
-import { observationsInTreeOf, oracleBounds, oracleCost, oracleTreeOf, oracleTrees } from "./oracle.js";
+import { observationsInTreeOf, oracleBounds, oracleWorstCost, oracleTreeOf, oracleTrees } from "./oracle.js";
 import type { OField, OObs } from "./oracle.js";
 
 /**
@@ -26,7 +26,8 @@ import type { OField, OObs } from "./oracle.js";
 
 const CHUNKS = 80;
 const PER_CHUNK = 25;
-const BUDGET = 10_000;
+/** Most worlds any subset of an instance's observations may make the oracle list (`oracleWorstCost`); costlier instances are skipped, counted and bounded. */
+const BUDGET = 100_000;
 const SIDE_REQUESTS: readonly (readonly Side[])[] = [["lo"], ["hi"], ["lo", "hi"]];
 const seen = { instances: 0, skipped: 0, requests: 0, nonEmpty: 0, hiEnds: 0, loEnds: 0, sufficiencyChecks: 0, becameConflicted: 0, mostEnds: 0 };
 
@@ -46,7 +47,7 @@ describe("openEndsOf against the definition, with the oracle deciding what has n
         const inst = genInstance(mulberry32(seed));
         const fields = oracleFields(inst.schema);
         const accepted = refIntake(inst.schema, inst.observations, inst.hostile).accepted;
-        if (oracleCost(fields, accepted) > BUDGET) {
+        if (oracleWorstCost(fields, accepted) > BUDGET) {
           seen.skipped += 1;
           continue;
         }

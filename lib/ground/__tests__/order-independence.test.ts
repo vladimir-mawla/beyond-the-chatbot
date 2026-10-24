@@ -186,7 +186,7 @@ describe("the orders that are fixed (observations and baseline by id, trees by r
 describe("ids are ordered by UTF-16 code unit, never by locale", () => {
   it("the fixture is one where the two orders differ", () => {
     const ids = ["B1", "B2", "a1", "a2", "_z", "Z"];
-    expect([...ids].sort()).not.toEqual([...ids].sort((x, y) => x.localeCompare(y)));
+    expect([...ids].sort()).not.toEqual([...ids].sort((x, y) => x.localeCompare(y, "en")));
   });
 
   it("observations: B1 < B2 < a1 < a2 (code units), not a1 < a2 < B1 < B2 (a locale)", () => {
@@ -222,7 +222,7 @@ describe("ids are ordered by UTF-16 code unit, never by locale", () => {
     expect(hiSupport([...route("z-direct")].reverse())).toEqual(["z-direct"]);
     // and code unit, not locale: "B-direct" sorts before "a1" by code unit and after it by locale
     expect(["B-direct", "a1"].sort()).toEqual(["B-direct", "a1"]);
-    expect(["B-direct", "a1"].sort((x, y) => x.localeCompare(y))).toEqual(["a1", "B-direct"]);
+    expect(["B-direct", "a1"].sort((x, y) => x.localeCompare(y, "en"))).toEqual(["a1", "B-direct"]);
     expect(hiSupport(route("B-direct"))).toEqual(["a1", "a2", "a3"]);
   });
 });
