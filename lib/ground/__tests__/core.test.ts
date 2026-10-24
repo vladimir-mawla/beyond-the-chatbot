@@ -24,8 +24,8 @@ import type { OObs } from "./oracle.js";
  * skipped is printed and bounded.
  */
 
-const CHUNKS = 25;
-const PER_CHUNK = 60;
+const CHUNKS = 50;
+const PER_CHUNK = 30;
 const BUDGET = 10_000;
 const seen = { instances: 0, skipped: 0, cores: 0, sizes: new Map<number, number>(), subsetsChecked: 0 };
 

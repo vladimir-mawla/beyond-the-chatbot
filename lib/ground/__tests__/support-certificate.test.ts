@@ -27,8 +27,8 @@ import type { OObs } from "./oracle.js";
  * first), `shrink` called directly with a pool in the wrong order, and the longest support the contracts allow.
  */
 
-const CHUNKS = 50;
-const PER_CHUNK = 60;
+const CHUNKS = 100;
+const PER_CHUNK = 30;
 const BUDGET = 10_000;
 const seen = { instances: 0, skipped: 0, bounds: 0, nonEmpty: 0, longest: 0, sizes: new Map<number, number>() };
 

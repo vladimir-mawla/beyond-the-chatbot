@@ -61,8 +61,8 @@ interface Seen {
   transitions: Map<string, number>;
 }
 const seen: Seen = { steps: 0, repeatedIdSteps: 0, accepted: 0, refusedSteps: 0, narrowed: 0, intoConflict: 0, transitions: new Map() };
-const CHUNKS = 32;
-const PER_CHUNK = 125;
+const CHUNKS = 50;
+const PER_CHUNK = 80;
 
 function check(seed: number): string[] {
   const rng = mulberry32(seed);

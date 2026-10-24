@@ -30,8 +30,8 @@ import type { Ruling } from "./oracle.js";
  * gets, and an 8-operand sum; and the canonical scenario of plan section 7 at this layer.
  */
 
-const CHUNKS = 80;
-const PER_CHUNK = 100;
+const CHUNKS = 160;
+const PER_CHUNK = 50;
 const TOTAL = CHUNKS * PER_CHUNK;
 /**
  * An instance whose worlds the oracle would have to list more than this many times over is not asked: a handful of the

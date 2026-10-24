@@ -22,8 +22,8 @@ import { oracleBaselines, oracleCost, oracleTreeOf } from "./oracle.js";
  * The counts of each side are printed so that neither is vacuous.
  */
 
-const CHUNKS = 40;
-const PER_CHUNK = 50;
+const CHUNKS = 80;
+const PER_CHUNK = 25;
 /** A single observation whose world enumeration would list more than this many worlds is not given to the enumeration (the other two views still judge it). */
 const ORACLE_BUDGET = 200_000;
 const seen = { singles: 0, meets: 0, misses: 0, skippedForCost: 0, conflictedTrees: 0, smallestCore: Number.POSITIVE_INFINITY, coresChecked: 0 };
