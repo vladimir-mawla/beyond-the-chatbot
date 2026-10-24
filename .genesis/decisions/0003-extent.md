@@ -53,7 +53,7 @@ out.
 found ten edits of `checkExtent` that left the whole suite green: five that re-read `hi` and two that re-read `lo`
 only for a first read of another kind (on `hi`: `null`, `0`, a negative, a finite fraction, or `null` together with a
 `null` `lo`; on `lo`: `0`, `NaN` or an infinity), and three that take the returned copy from a second read (`hi` when
-the checked `hi` is `null` or negative, `lo` when the checked `lo` is `null`). The `null` ones are the serious ones: with `{ lo: 1, get hi() {
+the checked `hi` is `null` or negative, `lo` when the checked `lo` is `null`). The two that take the copy from a second read when the checked value is `null` (`hi` and `lo`) are the serious ones: with `{ lo: 1, get hi() {
 null, then "not-a-number" } }` the edited code returned `hi` equal to `"not-a-number"` after two reads of `hi`, a value
 that was never checked. I reproduced all ten green on the previous head (0 failed over the whole suite each) and that
 result for `L4-T01`; the table described above is what closed them, and they are the `L4-` rows of the ledger. A wider
