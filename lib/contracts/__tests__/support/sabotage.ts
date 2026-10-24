@@ -74,7 +74,7 @@ function add(map: Map<string, Set<string>>, group: string, route: string): void 
 }
 
 /** Run `body` against a scratch COPY of `lib/contracts` with `mutation` applied (or none); the copy is removed afterwards. */
-function withCopy<T>(mutation: Mutation | undefined, body: (copy: string) => T): T {
+export function withCopy<T>(mutation: Mutation | undefined, body: (copy: string) => T): T {
   const scratch = mkdtempSync(join(tmpdir(), "btc-sabotage-"));
   try {
     const copy = join(scratch, "contracts");
