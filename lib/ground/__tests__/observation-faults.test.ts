@@ -269,6 +269,33 @@ describe("digit runs, character by character", () => {
     expect({ wrong, tried }).toEqual({ wrong: [], tried: 118 });
   });
 
+  it("a run is maximal at every length: a bound that is a prefix, a suffix or a piece of a longer run is not found, and the whole run is", () => {
+    const refused = "number-not-in-quote";
+    const rows: readonly (readonly [string, number, string])[] = [
+      ["1234567", 123, refused],
+      ["1234567", 4567, refused],
+      ["1234567", 1234567, "accepted"],
+      ["12345678", 1234, refused],
+      ["12345678", 5678, refused],
+      ["12345678", 345, refused],
+      ["12345678", 12345678, "accepted"],
+      ["1234 5678", 1234, "accepted"],
+      ["1234 5678", 5678, "accepted"],
+      ["1234 5678", 12345678, refused],
+      ["123456789012", 1234, refused],
+      ["123456789012", 123456789012, "accepted"],
+      [String(MAX_MAGNITUDE), 109, refused],
+      [String(MAX_MAGNITUDE), 1099, refused],
+      [String(MAX_MAGNITUDE), 10995116277, refused],
+      [String(MAX_MAGNITUDE), 1099511627, refused],
+      [String(MAX_MAGNITUDE), 9511627776, refused],
+      [String(MAX_MAGNITUDE), 99511627776, refused],
+      [String(MAX_MAGNITUDE), MAX_MAGNITUDE, "accepted"],
+    ];
+    const wrong = rows.flatMap(([run, bound, want]) => (verdict(bound, bound, `x${run}y`) === want ? [] : [`${run} holds ${bound}: wanted ${want}`]));
+    expect(wrong).toEqual([]);
+  });
+
   it("each of the ten ASCII digits is a digit: a quote that holds only it contains exactly it", () => {
     for (let d = 0; d <= 9; d++) {
       expect(verdict(d, d, `x${d}y`), `digit ${d}`).toBe("accepted");
