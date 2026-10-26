@@ -224,6 +224,24 @@ describe("the size boundaries of an observation: the maximum is accepted (one mo
     expect(r.ok && r.grounding.observations[0]).toStrictEqual(o);
   });
 
+  it("the lengths are in UTF-16 code units, not characters: half the limit in astral characters is accepted and one more is malformed, for an id, a source and a quote", () => {
+    const astral = "\u{1F600}"; // one character, two code units
+    expect(astral).toHaveLength(2);
+    const run = (patch: Record<string, unknown>): { rejected: unknown[] | undefined } => {
+      const r = ground(SCHEMA, [{ ...obs("k", "packDays", 1, 1), ...patch }]);
+      return { rejected: r.ok ? r.rejected.map((x) => x.fault) : undefined };
+    };
+    // the quote keeps the bound 1 in it, so that only its length can refuse it
+    for (const [key, half, make] of [
+      ["id", MAX_ID_LENGTH / 2, (n: number) => astral.repeat(n)],
+      ["source", MAX_SOURCE_LENGTH / 2, (n: number) => astral.repeat(n)],
+      ["quote", Math.floor((MAX_QUOTE_LENGTH - 1) / 2), (n: number) => `${astral.repeat(n)}1`], // 139 characters and the 1: 279 code units; 140: 281
+    ] as const) {
+      expect(run({ [key]: make(half) }).rejected, `${key}: ${half} characters`).toEqual([]);
+      expect(run({ [key]: make(half + 1) }).rejected, `${key}: ${half + 1} characters`).toEqual([{ kind: "malformed", fields: [key] }]);
+    }
+  });
+
   it("a field of MAX_ID_LENGTH is accepted when the schema declares a field of that length", () => {
     const name = "f".repeat(MAX_ID_LENGTH);
     const r = ground(schemaOf({ ...base(name), label: "a long id" }), [obs("k", name, 1, 2)]);

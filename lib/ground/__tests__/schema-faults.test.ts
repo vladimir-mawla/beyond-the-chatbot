@@ -530,6 +530,21 @@ describe("the size boundaries: N is accepted and N + 1 is refused", () => {
     expect(readSchema(withField({ unit: text(MAX_UNIT_LENGTH + 1) }))).toMatchObject({ ok: false, fault: { kind: "malformed", fields: ["fields[0].unit"] } });
   });
 
+  it("the lengths are in UTF-16 code units, not characters: half the limit in astral characters (two code units each) is accepted and one more is malformed", () => {
+    const astral = "\u{1F600}"; // one character, two code units
+    expect(astral).toHaveLength(2);
+    // `c` (index 2) is an operand of nothing, so a change to it cannot be seen by any structural rule
+    const withC = (patch: Record<string, unknown>): Doc => {
+      const d = valid4();
+      Object.assign(d.fields[2] as object, patch);
+      return d;
+    };
+    for (const [key, limit] of [["id", MAX_ID_LENGTH], ["label", MAX_LABEL_LENGTH], ["unit", MAX_UNIT_LENGTH]] as const) {
+      expect(readSchema(withC({ [key]: astral.repeat(limit / 2) })).ok, `${key}: ${limit / 2} characters`).toBe(true);
+      expect(readSchema(withC({ [key]: astral.repeat(limit / 2 + 1) })), `${key}: ${limit / 2 + 1} characters`).toStrictEqual({ ok: false, fault: malformed(`fields[2].${key}`) });
+    }
+  });
+
   it("a sum of MAX_OPERANDS operands is accepted; one more is malformed at its sum", () => {
     const eight = Array.from({ length: MAX_OPERANDS }, (_, i) => `b${i}`);
     const wide = (names: string[]) => schemaOf(...names.map((n) => base(n)), derived("total", names));
