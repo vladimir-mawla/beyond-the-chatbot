@@ -224,7 +224,8 @@ This is the layer that holds the three refusals the plan says properties miss: r
 **Layer 2, oracle exactness** (`oracle-exactness.test.ts`). `oracle.ts` lists every world of a tree, with unboundedness decided by
 whether widening the window moves the bound (M3's rule; plan section 8, defect 9). The window is one more than the sum, over every
 (field, side), of the absolute value of the tightest finite constant, which bounds any finite bound a read-once tree can
-produce along a path; if it were ever too small a world would exist in one window and not the next and the oracle throws.
+produce along a path (an argument; no test shows it). The oracle throws if the small and the large window disagree on whether a world exists; a window that is too small and still holds a world is not
+caught by that check: with the window halved (row `O1`), 162 `oracle-exactness` tests fail, 107 of them with that throw and 55 without it (53 of those are chunks in which the engine and the oracle disagree).
 The generator (`mulberry32`, 2 to 4 base fields, 0 to 3 sum rules built read-once, 0 to 7 observations plus an evidence-rich
 mode and a conflict-seeding mode, ids from shuffled pools, about 5% of observations corrupted in one of the ways intake
 refuses) was run over 8 000 instances. The coverage test prints, from the final run:
