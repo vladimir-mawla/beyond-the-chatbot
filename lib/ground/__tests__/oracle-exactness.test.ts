@@ -35,7 +35,7 @@ const PER_CHUNK = 50;
 const TOTAL = CHUNKS * PER_CHUNK;
 /**
  * An instance whose worlds the oracle would have to list more than this many times over is not asked: 28 of the
- * 8 000 took about half of the time `oracleTrees` spent on all 8 000 in one run (ADR 0004, "Timing"; `oracleCost` is
+ * 8 000 took about half of the time `oracleTrees` spent on all 8 000 in one run (ADR 0004, Decision 8; `oracleCost` is
  * an upper bound on the worlds listed, before asking). Its intake
  * verdicts are still checked against the reference, and the number skipped is printed and bounded.
  */
