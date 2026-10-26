@@ -196,7 +196,7 @@ repair. For every row four things are checked by code that is not the code under
 fault; the repair is accepted whole (so a second, masked defect would still be refused); an independent reference validator,
 written for the test file with a different algorithm (Kahn's ordering for cycles, `BigInt` digit runs, `B` from the oracle),
 sees exactly the one rule in the broken input and none in the repair; and the two differ in the declared number of places.
-All 128 subsets of the seven structural schema rules are built from disjoint defects, and the engine must name the first of the
+All 128 subsets of the seven schema rules (`malformed` and the six structural ones: the seven of the plan's precedence line, which `hostile-input` is outside) are built from disjoint defects, and the engine must name the first of the
 plan's precedence while the reference sees exactly the subset. A differential fuzz corrupts generated schemas and compares
 the engine's fault, and the malformed places, with the reference; every kind but `hostile-input` was reached (the tally is printed:
 `unknown-operand` the least, 17 against a floor of 15 that the test asserts) and `hostile-input` has its own table in `hostile-input.test.ts`.
