@@ -49,7 +49,7 @@ position. `order-independence.test.ts` checks, on 800 generated instances, that 
 trees, a tree's fields and extents, a core and the positions of the refusals are in the stated order;
 `support-certificate.test.ts` checks that a support is sorted without repeats and `open-ends.test.ts` that the list
 equals the definition in the engine's order. The shuffles of the input in `order-independence.test.ts` compare
-everything but the schema copy and the positions of refusals, and one hand case shows the schema copy keeps the
+everything, the schema copy as a set and the refusals without their positions, and one hand case shows the schema copy keeps the
 author's order. All ids are ordered with M1's `compareIds` (UTF-16
 code unit), never `localeCompare` (M1's determinism guard bans it under `lib/`, and a test builds a core and a
 support that a locale-aware sort would choose differently).
