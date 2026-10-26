@@ -8,7 +8,8 @@ import { CANON, ORDER_DESK, canon, genInstance, jsonCopy, mulberry32, nonPlainPa
  * IMMUTABILITY (plan section 6, M4: "output is deep-frozen, recursively (adaptive-agent has a failure case named
  * `14-freeze-is-one-level-deep`; the builder tests nested arrays, not only the top object)").
  *
- * Four things, over 600 generated instances and some hand-built ones:
+ * Four things (the first on 600 generated instances and some hand-built ones, the third on 300 and 500 generated instances, the second and the
+ * fourth on hand-built instances, one instance per test):
  *  1. DEEPLY FROZEN: no object or array reachable from anything a public function returns is unfrozen, by
  *     `Object.isFrozen` at every node AND by trying to write at every node (an own property, a new key, an array
  *     `push`): each attempt must throw, so a node that merely LOOKS frozen is not enough. This covers refusals as
@@ -58,7 +59,7 @@ const FROZEN_CHUNKS = 24;
 const FROZEN_PER_CHUNK = 25;
 const frozenSeen = { instances: 0, nodes: 0, conflicted: 0, refused: 0 };
 
-describe("everything the public functions return is deeply frozen", () => {
+describe("on the generated instances and the hand-built cases, everything the public functions return is deeply frozen", () => {
   for (let chunk = 0; chunk < FROZEN_CHUNKS; chunk++) {
     const from = chunk * FROZEN_PER_CHUNK + 1;
     it(`seeds ${from} to ${from + FROZEN_PER_CHUNK - 1}: ground, readSchema, and extentOf, supportOf, openEndsOf for every field, by isFrozen and by trying to write`, () => {
@@ -158,7 +159,7 @@ describe("everything the public functions return is deeply frozen", () => {
   });
 });
 
-describe("the input is neither written nor kept", () => {
+describe("the input is neither written nor kept (hand-built instances)", () => {
   it("a deeply frozen schema and observations are accepted, and the answers are the same as for unfrozen ones", () => {
     const schema = frozenCopy(ORDER_DESK);
     const list = frozenCopy(canon("o1", "o2", "o3"));
