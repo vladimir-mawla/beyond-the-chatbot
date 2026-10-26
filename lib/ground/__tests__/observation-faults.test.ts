@@ -269,31 +269,30 @@ describe("digit runs, character by character", () => {
     expect({ wrong, tried }).toEqual({ wrong: [], tried: 118 });
   });
 
-  it("a run is maximal at every length: a bound that is a prefix, a suffix or a piece of a longer run is not found, and the whole run is", () => {
-    const refused = "number-not-in-quote";
-    const rows: readonly (readonly [string, number, string])[] = [
-      ["1234567", 123, refused],
-      ["1234567", 4567, refused],
-      ["1234567", 1234567, "accepted"],
-      ["12345678", 1234, refused],
-      ["12345678", 5678, refused],
-      ["12345678", 345, refused],
-      ["12345678", 12345678, "accepted"],
-      ["1234 5678", 1234, "accepted"],
-      ["1234 5678", 5678, "accepted"],
-      ["1234 5678", 12345678, refused],
-      ["123456789012", 1234, refused],
-      ["123456789012", 123456789012, "accepted"],
-      [String(MAX_MAGNITUDE), 109, refused],
-      [String(MAX_MAGNITUDE), 1099, refused],
-      [String(MAX_MAGNITUDE), 10995116277, refused],
-      [String(MAX_MAGNITUDE), 1099511627, refused],
-      [String(MAX_MAGNITUDE), 9511627776, refused],
-      [String(MAX_MAGNITUDE), 99511627776, refused],
-      [String(MAX_MAGNITUDE), MAX_MAGNITUDE, "accepted"],
-    ];
-    const wrong = rows.flatMap(([run, bound, want]) => (verdict(bound, bound, `x${run}y`) === want ? [] : [`${run} holds ${bound}: wanted ${want}`]));
-    expect(wrong).toEqual([]);
+  it("a run is maximal at every length from 2 to 13 digits: for a run of each length every substring is tried as a bound, and only the whole run is found", () => {
+    // 2 to 12 digits are the first digits of 123456789012; 13 digits are MAX_MAGNITUDE itself (1234567890123 is over the limit and would be malformed)
+    const runs = [...Array.from({ length: 11 }, (_, k) => "123456789012".slice(0, k + 2)), String(MAX_MAGNITUDE)];
+    expect(runs.map((r) => r.length)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    let checked = 0;
+    const wrong: string[] = [];
+    for (const run of runs) {
+      for (let start = 0; start < run.length; start++) {
+        for (let end = start + 1; end <= run.length; end++) {
+          const piece = run.slice(start, end);
+          const want = piece === run ? "accepted" : "number-not-in-quote";
+          const got = verdict(Number(piece), Number(piece), `x${run}y`);
+          checked += 1;
+          if (got !== want) wrong.push(`${run} holds ${piece}: ${got}, wanted ${want}`);
+        }
+      }
+    }
+    expect({ checked, wrong }).toEqual({ checked: 454, wrong: [] });
+  });
+
+  it("a space ends a run: '1234 5678' holds 1234 and 5678 and not 12345678", () => {
+    expect(verdict(1234, 1234, "x1234 5678y")).toBe("accepted");
+    expect(verdict(5678, 5678, "x1234 5678y")).toBe("accepted");
+    expect(verdict(12345678, 12345678, "x1234 5678y")).toBe("number-not-in-quote");
   });
 
   it("each of the ten ASCII digits is a digit: a quote that holds only it contains exactly it", () => {
