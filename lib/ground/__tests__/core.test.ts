@@ -7,17 +7,17 @@ import { observationsInTreeOf, oracleWorstCost, oracleShrink, oracleTreeOf, orac
 import type { OObs } from "./oracle.js";
 
 /**
- * THE CORE OF A CONFLICT (plan D6 and D7; section 6 M4: "core: unsatisfiable by the oracle, and every strict subset
- * satisfiable by the oracle"). For every conflicted tree of every generated instance the engine's core is checked
- * against the brute-force oracle, not against `ground`:
+ * THE CORE OF A CONFLICT (plan D6 and D7; section 6 M4: the core is unsatisfiable by the oracle and every strict
+ * subset of it is satisfiable by the oracle). For every conflicted tree of every generated instance that is asked of
+ * the oracle (see the last paragraph), the engine's core is checked against the brute-force oracle, not against `ground`:
  *  1. it is made of observations the engine accepted, all about that tree, sorted, without repeats, and at least two;
  *  2. the oracle finds NO world for the core alone;
- *  3. the oracle finds a world for EVERY strict subset of the core (all of them, the empty one included; cores have
- *     at most 5 members here, so that is at most 31);
+ *  3. the oracle finds a world for EVERY strict subset of the core (all of them, the empty one included; the cores
+ *     generated here have 2 to 4 members, so that is at most 15 for one core);
  *  4. it is exactly what plan D7 produces, deletion in ascending id order judged by the oracle, so that which core
  *     is named, and not only that it is one, is checked.
  * A core is irreducible and is not the only one and not the smallest: the by-hand cases show a two-observation
- * conflict beside a three-observation one where the three is named (the one whose ids sort last), the plan's case 04,
+ * conflict beside a three-observation one where the three is named (its ids sort after the two's), the plan's case 04,
  * and the largest core the contracts allow.
  *
  * The oracle is expensive, so an instance is asked only if the worlds of any subset of its observations are cheap to
@@ -36,7 +36,7 @@ function subsetsOf<T>(items: readonly T[]): T[][] {
   return out;
 }
 
-describe("every core the engine returns is irreducible, unsatisfiable and exactly D7's, checked by the oracle", () => {
+describe("the cores of the generated instances are irreducible, unsatisfiable and exactly D7's, checked by the oracle", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}`, () => {
@@ -100,7 +100,7 @@ describe("every core the engine returns is irreducible, unsatisfiable and exactl
     });
   }
 
-  it("cores of every size the generator can make were checked (needs every chunk above to have run)", () => {
+  it("cores of sizes 2, 3 and 4 were checked (needs every chunk above to have run)", () => {
     console.log(
       `core: ${seen.instances} instances asked (${seen.skipped} skipped as too costly for the oracle), ${seen.cores} cores, sizes ${[...seen.sizes].sort(([a], [b]) => a - b).map(([k, v]) => `${k}:${v}`).join(" ")}, ${seen.subsetsChecked} strict subsets each given to the oracle`,
     );

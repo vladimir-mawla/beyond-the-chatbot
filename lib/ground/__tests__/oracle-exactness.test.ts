@@ -16,7 +16,7 @@ import type { OField, Reach, Ruling } from "./oracle.js";
  * `oracle.ts`), and each observation's intake verdict equals the reference's (`refIntake`, whose `outside-baseline`
  * comes from the oracle's `B`).
  *
- * THE GENERATOR IS PROVEN ABLE TO REACH WHAT IT IS SAID TO REACH. Every instance adds to one tally, and the last
+ * THE GENERATOR IS SHOWN, ON THESE SEEDS, TO HAVE REACHED WHAT IT IS SAID TO REACH. Every instance adds to one tally, and the last
  * test asserts what the tally holds: trees of one, two and three levels, several trees in one schema, conflicted
  * trees and cores of size 2, 3 and 4, every intake fault, and, for four claims per instance, every precondition of
  * the plan's five rulings (plus the vacuous claim that never reaches them) as the oracle classifies them. It also
@@ -34,8 +34,9 @@ const CHUNKS = 160;
 const PER_CHUNK = 50;
 const TOTAL = CHUNKS * PER_CHUNK;
 /**
- * An instance whose worlds the oracle would have to list more than this many times over is not asked: a handful of the
- * 8 000 cost half of all the oracle time (`oracleCost` is an upper bound on the worlds listed, before asking). Its intake
+ * An instance whose worlds the oracle would have to list more than this many times over is not asked: 28 of the
+ * 8 000 took about half of the time `oracleTrees` spent on all 8 000 in one run (ADR 0004, "Timing"; `oracleCost` is
+ * an upper bound on the worlds listed, before asking). Its intake
  * verdicts are still checked against the reference, and the number skipped is printed and bounded.
  */
 const ORACLE_BUDGET = 200_000;

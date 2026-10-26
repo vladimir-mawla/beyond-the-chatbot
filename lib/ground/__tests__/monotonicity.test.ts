@@ -8,9 +8,9 @@ import { classify, oracleBaselines } from "./oracle.js";
 import type { Ruling } from "./oracle.js";
 
 /**
- * MONOTONICITY (plan section 6, M4, layer 3): "adding an observation either leaves `E` inside the old `E` or makes
+ * MONOTONICITY (plan section 6, M4, layer 3): adding an observation either leaves `E` inside the old `E` or makes
  * the tree conflicted, and never un-conflicts it; `entailed` and `contradicted` rulings never move to a
- * non-conflicted different kind".
+ * non-conflicted different kind.
  *
  * How it is checked: each generated snapshot is grounded as a growing prefix, one observation at a time, and every
  * step is compared with the one before. An observation intake refuses leaves the grounding unchanged, which is
@@ -131,7 +131,7 @@ function check(seed: number): string[] {
   return problems;
 }
 
-describe("adding an observation with a fresh id never widens E, never un-conflicts a tree, and never moves an entailed or contradicted ruling to a different consistent one", () => {
+describe("on the generated instances, adding an observation with a fresh id never widens E, never un-conflicts a tree, and never moves an entailed or contradicted ruling to a different consistent one", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}`, () => {

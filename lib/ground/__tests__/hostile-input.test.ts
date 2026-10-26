@@ -6,18 +6,19 @@ import type { Rng } from "./fixtures.js";
 
 /**
  * `readSchema` and `ground` AGAINST INPUT THAT FIGHTS BACK. The claim under test (plan section 6, M4): "reads each
- * untrusted input exactly once into plain data", and neither function throws.
+ * untrusted input exactly once into plain data", and neither function throws on an input tried here.
  *
  * HOW A READ-ONCE CLAIM IS SHOWN. For every place the engine reads, a getter stands in for the value. Its FIRST read
  * returns a value drawn from every class below (null, 0, -0, a negative, the maximum, one past it, NaN, both
- * infinities, a fraction, strings of every interesting length, a boolean, a bigint, a symbol, a function, an object,
+ * infinities, a fraction, strings of 1, 128 and 129 characters and the empty string, a boolean, a bigint, a symbol, a function, an object,
  * an array, undefined, boxed primitives, an object whose coercions throw, and the valid values for that place); its
  * later reads are hostile: each of several other values, and a throw. Two things are asserted for every pair:
  *  - the getter was read exactly once, and
  *  - the result is the result the engine gives when the FIRST value is simply there (a plain property), so the value
  *    it checked and the value it used are the same one, whatever the second read would have said.
- * ADR 0003 records why the classes are all of them and not some: the M3 table covered only some, and a verifier
- * found ten edits that left it green. The classes were drawn from that list and extended, not from the code.
+ * ADR 0003 records why the table is over many classes and not a few: the M3 table covered only some, and a verifier
+ * found ten edits that left it green. ADR 0003 does not claim its classes are all there are, and neither does this
+ * file. The classes were drawn from that list and extended, not from the code.
  *
  * What it cannot show: that these are all the ways to observe an object. It covers getters, an indexed getter on an
  * array, a Proxy that logs every trap, a revoked Proxy, and coercion hooks. Not: a getter on a prototype that is
@@ -429,7 +430,7 @@ describe("a read that throws, and what the refusal says", () => {
     [["fields", "2", "sum", "1"], "reading fields[2].sum[1] threw"],
   ];
   for (const [path, message] of CASES) {
-    it(`a getter that throws at ${path.join(".")}: hostile-input naming it, and no more of the input is read`, () => {
+    it(`a getter that throws at ${path.join(".")}: hostile-input naming it, with nothing of the thrown value in the result`, () => {
       const result = readSchema(throwing(path, "SECRET-THROWN-VALUE"));
       expect(result).toStrictEqual({ ok: false, fault: { kind: "hostile-input", message } });
       expect(JSON.stringify(result)).not.toContain("SECRET");
@@ -474,7 +475,7 @@ describe("a read that throws, and what the refusal says", () => {
   });
 });
 
-describe("neither function ever throws, whatever it is given", () => {
+describe("neither function threw on any of the junk tried here", () => {
   const JUNK: readonly unknown[] = [undefined, null, 0, -0, 1, -1, 1.5, Number.NaN, Infinity, -Infinity, "", "x", "fields", true, false, 5n, Symbol("s"), () => 1, [], {}, [[]], [{}], { fields: 1 }, { lo: 1 }, coercionBomb];
 
   /** A Proxy whose every trap throws, returns junk, or defers, chosen at random. */
@@ -513,7 +514,7 @@ describe("neither function ever throws, whatever it is given", () => {
   const seenJunk = { results: 0, kinds: new Set<string>() };
   for (let chunk = 0; chunk < 5; chunk++) {
     const from = chunk * 1000 + 1;
-    it(`seeds ${from} to ${from + 999}: random values as the schema and as the observations: always a typed result, never a throw`, () => {
+    it(`seeds ${from} to ${from + 999}: random values as the schema and as the observations: a typed result each time, no throw`, () => {
       for (let seed = from; seed < from + 1000; seed++) {
         const rng = mulberry32(seed);
         const raw = junk(rng, 0);

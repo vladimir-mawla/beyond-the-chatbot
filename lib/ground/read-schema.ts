@@ -31,17 +31,19 @@ function malformed(places: readonly string[]): SchemaFault {
 }
 
 /**
- * Turn an untrusted value into a validated `Schema`, or say why not. Input does not make it throw: every read of
- * the input is guarded, so the only throws left are this package's own internal invariants. (`hostile-input.test.ts`
- * tries the classes of value listed there and 10 000 random ones; that is a sample, not a proof.)
+ * Turn an untrusted value into a validated `Schema`, or say why not. Every read of the input is guarded, so a
+ * hostile value becomes a typed result; the throws I know of in this function are this package's own internal
+ * invariants. (`hostile-input.test.ts` tries the classes of value listed there and 10 000 random calls of the two
+ * functions; that is a sample, not a proof.)
  *
  * EACH UNTRUSTED VALUE IS READ ONCE. `raw.fields`; the `length` of that array; each element up to the bound
  * below; each of an element's six properties, `kind`, `id`, `label`, `unit`, `baseline`, `sum`, in that order and
  * all six whatever the kind (so a base field that carries a `sum` can be refused); a `sum`'s `length` and each of
  * its elements; and, through `checkExtent`, the `lo` and `hi` of a baseline. Everything is then judged from those
  * single reads, never from the input again, so a getter that answers differently the second time cannot make the
- * checked value differ from the copied one. Nothing else is touched: not `Object.keys`, not `in`, not the
- * prototype, and an unknown extra property is never read (so it is neither refused nor copied).
+ * checked value differ from the copied one. Nothing else is touched (the trap-log test in `hostile-input.test.ts`
+ * fails on a `has`, `ownKeys`, `getOwnPropertyDescriptor` or `getPrototypeOf` trap), and an unknown extra property is
+ * neither refused nor copied (`schema-faults.test.ts`).
  *
  * A READ THAT THROWS stops the whole read: `hostile-input`, with a message made only of this package's own
  * words and the path of the read (never the thrown value, which is as untrusted as the input). It outranks
@@ -49,7 +51,7 @@ function malformed(places: readonly string[]): SchemaFault {
  *
  * Shape problems are all collected before anything is refused (D11): `malformed` names every offending place,
  * as a path (`fields[2].unit`, `fields[0].sum[1]`), sorted by code unit and without repeats. The paths name
- * positions in THIS input, so unlike every other fault they move when the fields are reordered. Then the
+ * positions in THIS input, so they move when the fields are reordered. Then the
  * structural rules, first failing one wins, in the plan's precedence: `too-many-fields`, `duplicate-field`,
  * `unknown-operand`, `operand-reused`, `rule-cycle`, `unit-mismatch`. Where a rule fails in several places, the
  * fault names the smallest id (or id pair) in code-unit order, so reordering the fields cannot change which
@@ -226,8 +228,8 @@ function structuralFault(fields: readonly Parsed[]): SchemaFault | undefined {
   for (const [operand, count] of uses) if (count > 1) reused = reused === undefined ? operand : smaller(reused, operand);
   if (reused !== undefined) return { kind: "operand-reused", operand: reused };
 
-  // rule-cycle: with read-once holding, every field has at most one parent, so a field is on a cycle exactly when
-  // walking up from it never reaches a root. `rootOf` is bounded by the field count. The fault names the
+  // rule-cycle: with read-once holding, every field has at most one parent, so walking up from a field never reaches
+  // a root exactly when the field is on a cycle or feeds into one. `rootOf` is bounded by the field count. The fault names the
   // smallest field that is ON a cycle: a field that merely feeds into one (a tail) is not named.
   let cyclic: string | undefined;
   for (const field of fields) {

@@ -154,7 +154,7 @@ describe("every observation fault: the fixture breaks only its own rule, and rep
   });
 });
 
-describe("digit-containment accepts exactly what the plan's rule accepts, and no more", () => {
+describe("digit-containment accepts what the plan's rule accepts, and no more, in every case tried here", () => {
   const accepted = (field: string, lo: number | null, hi: number | null, quote: string) => {
     const r = ground(SCHEMA, [obs("k", field, lo, hi, quote)]);
     return r.ok && r.rejected.length === 0;
@@ -179,7 +179,7 @@ describe("digit-containment accepts exactly what the plan's rule accepts, and no
   it("a bound can be found anywhere in the quote, and each side in its own run", () => {
     expect(accepted("transitDays", 3, 5, "5 or 3 days, the carrier says")).toBe(true);
   });
-  it("MAX_MAGNITUDE (13 digits) is found, and a run longer than that never matches a bound", () => {
+  it("MAX_MAGNITUDE (13 digits) is found, a run one digit longer matches no bound, and a run of 41 digits that starts with 40 zeros holds 7", () => {
     expect(accepted("transitDays", MAX_MAGNITUDE, null, `at least ${MAX_MAGNITUDE} days`)).toBe(true);
     expect(accepted("transitDays", MAX_MAGNITUDE, null, `at least ${MAX_MAGNITUDE}0 days`)).toBe(false);
     expect(accepted("transitDays", 7, null, `at least ${"0".repeat(40)}7 days`)).toBe(true);
@@ -487,7 +487,7 @@ describe("a hostile read stops at the observation it happened in", () => {
     }
   });
 
-  it("hostile-input outranks every other fault of the same observation, and the message never holds the thrown value", () => {
+  it("hostile-input outranks every other fault of the same observation, and the message does not hold the value an id getter threw", () => {
     const o = hostileProperty("quote") as unknown as Record<string, unknown>;
     o["source"] = "";
     o["field"] = "ghost";

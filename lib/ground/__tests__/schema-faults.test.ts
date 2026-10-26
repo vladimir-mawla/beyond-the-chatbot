@@ -22,7 +22,8 @@ import type { RawField, Rng } from "./fixtures.js";
  * Then every one of the 128 subsets of the seven rules is built by injecting disjoint defects, and the engine's
  * answer must be the first rule of the plan's precedence in the subset while the reference sees exactly the
  * subset. Last, a differential fuzz corrupts generated schemas at random and compares the engine with the
- * reference, and counts that every one of the eight fault kinds was reached.
+ * reference, and counts that each of the seven kinds but `hostile-input` was reached (`hostile-input` has its own
+ * tables in `hostile-input.test.ts`).
  *
  * What none of this shows: that the reference is right where the engine is wrong in the same way. They share the
  * plan's text and nothing else.
@@ -446,7 +447,7 @@ describe("every subset of the seven rules: the engine reports the first by the p
   });
 });
 
-describe("where a rule fails in several places the smallest id is named, whatever order the fields are in", () => {
+describe("where a rule fails in several places the smallest id is named, and the same one when the fields are reversed", () => {
   it("duplicate-field: the smallest repeated id", () => {
     const doc = { fields: [base("zeta"), base("alpha"), base("zeta"), base("alpha")] };
     expect(readSchema(doc)).toStrictEqual({ ok: false, fault: { kind: "duplicate-field", field: "alpha" } });
@@ -483,7 +484,7 @@ describe("where a rule fails in several places the smallest id is named, whateve
   });
 });
 
-describe("a hand-built cyclic schema never makes a walk loop", () => {
+describe("a hand-built cyclic schema does not make a walk loop (a self-cycle, a mutual cycle and a ring)", () => {
   it("a self-cycle, a mutual cycle and a ring are refused promptly by readSchema and by ground, which never reads the observations", () => {
     let reads = 0;
     const observations = new Proxy([], {

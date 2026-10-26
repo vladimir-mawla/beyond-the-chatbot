@@ -168,8 +168,7 @@ function genExtent(rng: Rng, scale: number): RawExtent {
 }
 
 /**
- * One random instance: 2 to 4 base fields (sometimes a fifth is never made, so every tree stays cheap for the
- * oracle), 0 to 3 sum rules built read-once, 0 to 7 observations about any field, with 20% of instances seeded to
+ * One random instance: 2 to 4 base fields, 0 to 3 sum rules built read-once, 0 to 7 observations about any field, with 20% of instances seeded to
  * conflict (so cores of size 3 and 4 are not left to chance) and about 5% of observations corrupted in one way.
  * Field and observation ids come from pools in a random order, so id order and structure order are unrelated.
  */

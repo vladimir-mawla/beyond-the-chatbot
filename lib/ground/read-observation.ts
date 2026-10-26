@@ -45,7 +45,7 @@ type Slot =
  *
  * EACH ELEMENT IS READ ONCE: the element itself, then `id`, `field`, `extent`, `quote`, `source`, in that order,
  * all five whatever their values; then `checkExtent` reads the extent's `lo` and `hi` once each, for every
- * observation whose element could be read and that is not a duplicate (a duplicate is refused before its extent
+ * observation whose five properties were read and that is not a duplicate (a duplicate is refused before its extent
  * is looked at). Everything is judged from those single reads. A read that throws makes THAT observation `hostile-input` (the others are
  * unaffected) and its later properties are not read.
  *
@@ -64,11 +64,12 @@ type Slot =
  *     make its tree unsatisfiable on its own; refusing it here is what lets a conflict always be a conflict
  *     BETWEEN observations. A single observation that meets `B` never conflicts alone, in one line: `B` is the set of
  *     values the field takes over all the schema's worlds, so a value in both `B` and the observation has a world.
- *     That `B` is that set is what the oracle tests check; `single-observation.test.ts` checks the theorem itself.
+ *     That `B` is that set is what the oracle tests check on generated instances, and `single-observation.test.ts`
+ *     checks the theorem itself on generated instances; neither is a proof.
  *
  * `source` is read once, checked to be a string of 1 to `MAX_SOURCE_LENGTH` code units (otherwise the observation is `malformed`) and copied.
- * Nothing in this package decides anything from what a valid source says (plan D6); `order-independence.test.ts` relabels every valid source on
- * generated instances and no answer moves.
+ * A valid source is only copied (the reads of it in this directory's sources are the shape check and the copy; plan D6);
+ * `order-independence.test.ts` relabels every valid source on 600 generated instances and no answer moves.
  */
 export function readObservations(raw: unknown, baseline: ReadonlyMap<string, Extent>): ObservationsRead {
   const hostile = (message: string): ObservationsRead => ({ ok: false, failure: { kind: "hostile-input", message } });

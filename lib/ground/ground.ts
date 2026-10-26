@@ -65,9 +65,10 @@ export type ExtentRead =
   | { readonly ok: false; readonly failure: ExtentFailure };
 
 /**
- * Ground a snapshot of untrusted observations against an untrusted schema. Input does not make it throw: every
- * read of the input is guarded (`readSchema`, `readObservations`), so the only throws left are internal
- * invariant violations, such as a propagation that does not settle or a list that has to be non-empty and is not.
+ * Ground a snapshot of untrusted observations against an untrusted schema. Every read of the input is guarded
+ * (`readSchema`, `readObservations`), so a hostile value becomes a typed result; the throws I know of in this
+ * package are internal invariant violations, such as a propagation that does not settle or a list that has to be
+ * non-empty and is not. `hostile-input.test.ts` found no input that made it throw (a sample, not a proof).
  *
  * Both arguments are read exactly once (`readSchema`, `readObservations`: their comments say what each reads).
  * If the schema is refused the observations are never touched. Then, in this order: the schema-only extent `B`
@@ -82,9 +83,10 @@ export type ExtentRead =
  *
  * THE CORE. For a conflicted tree it is found by deletion (`shrink`), asking "is what is left still
  * unsatisfiable?". It is irreducible (drop any one id and the rest is satisfiable) but it is not the only core and
- * not necessarily the smallest: two unrelated conflicts in one tree give one core, the one whose ids sort last
- * (plan case 04), and fixing it can reveal the other. It has at least two members: an observation alone either
- * meets its field's `B`, and then has a world, or does not and was refused at intake as `outside-baseline`.
+ * not necessarily the smallest: two unrelated conflicts in one tree give one core and not both (plan case 04:
+ * `k1 k2` and `m1 m2` give `m1 m2`), and fixing it can reveal the other. It has at least two members: an
+ * observation alone either meets its field's `B`, and then has a world, or does not and was refused at intake as
+ * `outside-baseline` (`single-observation.test.ts` checks this on generated instances; it is not a proof).
  */
 export function ground(rawSchema: unknown, rawObservations: unknown): GroundResult {
   const read = readSchema(rawSchema);

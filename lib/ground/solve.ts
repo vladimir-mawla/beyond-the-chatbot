@@ -89,8 +89,8 @@ export function constraintsOf(observations: readonly Observation[], keep?: Reado
  *
  * ONE PASS visits every derived field of the tree in ascending id order and, for each, narrows the sum to what
  * its operands allow (`sumForward`) and then each operand to what the sum allows (`sumBackward`). Narrowing is
- * monotone, so the order of visits changes how many passes it takes and, for the monotone operators used here, not
- * where it ends. The count is capped at `4 * (fields + 1) + 8`, the plan's bound (section 4.3), where `fields` is
+ * monotone, so the order of visits changes how many passes it takes; the tests found no case where it changed where
+ * it ends (the 64-field schema in three id orders, and the oracle on generated instances). The count is capped at `4 * (fields + 1) + 8`, the plan's bound (section 4.3), where `fields` is
  * the size of the tree being solved. ADR 0004 gives the pass counts measured on the deepest tree the contracts
  * allow, far below the cap. Running past the cap would mean the structure is not a tree, which `readSchema`
  * refuses, so it throws (an internal invariant violation) instead of returning something or looping.

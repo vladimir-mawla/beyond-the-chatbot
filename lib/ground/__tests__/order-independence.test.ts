@@ -7,7 +7,7 @@ import { ORDER_DESK, base, derived, genInstance, mulberry32, obs, schemaOf, shuf
 import type { Instance, RawObservation, RawSchema, Rng } from "./fixtures.js";
 
 /**
- * ORDER INDEPENDENCE (plan section 6, M4, layer 3, and "must refuse: a result that depends on the order of
+ * ORDER INDEPENDENCE (plan section 6, M4, layer 3, and what it says must be refused, "a result that depends on the order of
  * observations, the order of fields, or the order of operands within a sum"; plan D7: support "depends on ids, not
  * on input order"). For every generated instance, the observations are reversed and shuffled, the fields of the
  * schema are shuffled, and the operands inside every sum are shuffled, and the grounding must be the same: the

@@ -21,7 +21,8 @@ import type { Structure } from "./solve.js";
  * Only sides in `sides` are ever listed, and each once, however many times it is repeated or in what order
  * (anything that is not `"lo"` or `"hi"` is ignored). `[]` for a field the schema does not declare and for a
  * field in a conflicted tree (there is no extent to be missing evidence for). The answer is ordered by field id,
- * then `lo` before `hi`. It does not depend on `sides`' order or on the order of anything in the input.
+ * then `lo` before `hi`. `order-independence.test.ts` checks, on generated instances, that it does not depend on
+ * `sides`' order or on the order of anything in the input.
  */
 export function openEndsOf(g: Grounding, field: FieldId, sides: readonly Side[]): readonly OpenEnd[] {
   const tree = treeContaining(g, field);

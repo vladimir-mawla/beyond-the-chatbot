@@ -23,7 +23,7 @@ export function deepFreeze<T>(value: T): T {
 /**
  * Narrows a list this package built to the non-empty tuple type the contract asks for. An empty list here is a
  * bug in this package (a validated schema has at least one field, a conflicted tree at least one observation),
- * never something input can cause, so it throws: the plan's D11 allows a throw only for an internal invariant.
+ * not a result of any input I know of, so it throws: the plan's D11 allows a throw only for an internal invariant.
  */
 export function nonEmpty<T>(items: readonly T[], what: string): NonEmptyReadonlyArray<T> {
   if (!isNonEmptyArray(items)) throw new Error(`lib/ground: internal invariant violated: ${what} is empty`);

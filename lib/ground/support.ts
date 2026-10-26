@@ -22,7 +22,7 @@ export interface Context {
   readonly full: ReadonlyMap<string, Extent>;
 }
 
-/** Re-derive what is needed to solve `tree`. Throws only if the `Grounding` contradicts itself (never for one `ground` built). */
+/** Re-derive what is needed to solve `tree`. Throws if the `Grounding` records a tree as consistent and it is not (an internal invariant; not seen for a `Grounding` that `ground` built). */
 export function contextOf(g: Grounding, tree: Tree): Context {
   const structure = structureOf(g.schema);
   const members: readonly string[] = tree.fields;
@@ -40,7 +40,7 @@ export function contextOf(g: Grounding, tree: Tree): Context {
  * drop when the field's extent, re-solved from what is left, is still inside "this bound and nothing said about
  * the other side" (`isSubset`, so the comparison is the extent algebra's own, not a new one). What survives is a
  * certificate: with only those observations the bound is the same (it is irreducible, so with any one of them
- * missing it is looser). `[]` means no observation is needed: the bound is the schema's own, or it is unbounded.
+ * missing it is looser: checked against the oracle on generated instances, argued in `shrink`). `[]` means no observation is needed: the bound is the schema's own, or it is unbounded.
  * That includes a bound an observation states but the schema already implies: dropping that observation changes
  * nothing, so it is not in the support.
  *

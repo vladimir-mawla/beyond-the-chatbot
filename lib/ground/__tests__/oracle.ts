@@ -2,8 +2,8 @@ import type { Bound, Extent } from "../../contracts/index.js";
 import { oracleIsSubset, oracleMeet } from "../../extent/__tests__/fixtures.js";
 
 /**
- * THE BRUTE-FORCE ORACLE for `lib/ground` (plan section 6, M4: "per tree, `E(f)` and `B(f)` equal a brute-force
- * enumeration of the tree's worlds for every field, including `conflicted` iff no world").
+ * THE BRUTE-FORCE ORACLE for `lib/ground` (plan section 6, M4: per tree, `E(f)` and `B(f)` equal a brute-force
+ * enumeration of the tree's worlds for every field, including `conflicted` exactly when there is no world).
  *
  * It imports nothing from `lib/ground` and nothing from `lib/extent` except M3's own test oracle for set
  * relations between two extents (`oracleMeet`, `oracleIsSubset`, which list integers and call no library code). So an
@@ -21,9 +21,10 @@ import { oracleIsSubset, oracleMeet } from "../../extent/__tests__/fixtures.js";
  * That rule is only right if the small window is wider than every finite bound that can occur, so `cap` is one
  * more than the SUM, over every (field, side), of the absolute value of the tightest finite constant among the
  * baseline and the observations. A finite bound found by propagation along a path of a read-once tree uses each
- * of those constants at most once, so it cannot exceed that sum. If this ever failed, a world would exist in the
- * large window and not in the small one (or the reverse) and `oracleTrees` THROWS rather than answer, so a
- * too-small window is loud and never a quiet wrong answer.
+ * of those constants at most once, so it cannot exceed that sum (an argument; no test shows it). If a window were too
+ * small and lost every world, a world would exist in the large window and not in the small one (or the reverse) and
+ * `oracleTrees` THROWS rather than answer. That check compares only whether a world exists: a window that is too
+ * small and still holds a world is not caught by it.
  */
 
 /** A field as the oracle sees it: a base field has a `baseline`, a derived one a `sum`. */
@@ -194,7 +195,7 @@ function reach(bases: readonly OField[], derived: readonly OField[], order: read
 /**
  * Answer for one tree (a connected component), given every field of the schema and every observation. `enumerate` is the
  * enumeration, and is a parameter only so that a test can hand the oracle a set with a hole and two windows that
- * disagree (no real input makes either happen), which is the only way to see those two checks fire through here.
+ * disagree (no generated input made either happen), which is the only way to see those two checks fire through here.
  */
 function oracleTree(all: readonly OField[], ids: readonly string[], observations: readonly OObs[], enumerate: typeof reach = reach): OracleTree {
   const defs = ids.map((id) => all.find((f) => f.id === id) as OField);

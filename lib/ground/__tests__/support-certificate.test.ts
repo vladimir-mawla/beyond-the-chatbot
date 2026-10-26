@@ -12,8 +12,8 @@ import type { OObs } from "./oracle.js";
  * THE SUPPORT CERTIFICATE (plan D7, section 6 M4: "for every bound, re-grounding with ONLY that bound's support
  * reproduces it, and dropping any one element does not -- checked with the oracle, not with `ground`").
  *
- * For every consistent tree of every generated instance, every field and each side, the engine's `supportOf` is
- * checked four ways, none of them by calling `ground`:
+ * For every consistent tree of every generated instance that is asked of the oracle (see the second paragraph), every
+ * field and each side, the engine's `supportOf` is checked four ways, none of them by calling `ground`:
  *  1. it is made of observations the engine accepted, about that field's tree, sorted, without repeats;
  *  2. REPRODUCES: the brute-force oracle, given only those observations, finds the same bound as with all of them;
  *  3. IRREDUCIBLE: for each element, the oracle without it finds a looser bound (it cannot find a tighter one);
@@ -23,9 +23,8 @@ import type { OObs } from "./oracle.js";
  * and `[]` is the answer exactly when the oracle's bound with no observation at all is already that bound.
  *
  * The oracle is expensive, so each instance is asked only if listing the worlds of any subset of its observations is
- * cheap (`oracleWorstCost`), and the number skipped is printed and bounded. The richest instances, whose supports are
- * longest, are also the costliest, so the longest support this loop reaches is short; the longest the contracts allow
- * is worked by hand at the end. Afterwards: the plan's case 05 (a route that sorts last, a route that sorts
+ * cheap (`oracleWorstCost`), and the number skipped is printed and bounded. The longest support this loop reaches is
+ * short (the printed sizes show how short); the longest the contracts allow is worked by hand at the end. Afterwards: the plan's case 05 (a route that sorts last, a route that sorts
  * first), `shrink` called directly with a pool in the wrong order, and the longest support the contracts allow.
  */
 
@@ -35,7 +34,7 @@ const PER_CHUNK = 30;
 const BUDGET = 100_000;
 const seen = { instances: 0, skipped: 0, bounds: 0, nonEmpty: 0, longest: 0, sizes: new Map<number, number>() };
 
-describe("every support the engine returns is a certificate, checked by the oracle", () => {
+describe("the supports of the generated instances are certificates, checked by the oracle", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}`, () => {
@@ -110,7 +109,7 @@ describe("every support the engine returns is a certificate, checked by the orac
   });
 });
 
-describe("plan case 05 by hand: the certificate is irreducible, not minimum, and depends on ids and never on input order", () => {
+describe("plan case 05 by hand: the certificate is irreducible, not minimum, and depends on ids; reversing the input changes nothing", () => {
   const schema = schemaOf(base("p"), base("q"), base("r"), derived("total", ["p", "q", "r"]));
   const route = (direct: string): RawObservation[] => [obs(direct, "total", null, 9), obs("a1", "p", null, 2), obs("a2", "q", null, 5), obs("a3", "r", null, 2)];
   const hi = (list: RawObservation[]): readonly string[] => {

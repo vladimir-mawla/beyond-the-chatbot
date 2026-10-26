@@ -9,8 +9,8 @@ import { oracleBaselines, oracleCost, oracleTreeOf } from "./oracle.js";
 
 /**
  * THE SINGLE-OBSERVATION THEOREM (plan section 4.3: "a single observation that meets its field's computed
- * baseline never conflicts by itself"; section 6, M4: "an observation that meets its field's `B` never conflicts
- * alone; one that does not always does"). It is what lets `outside-baseline` be refused at intake with no
+ * baseline never conflicts by itself"; section 6, M4: an observation that meets its field's `B` never conflicts
+ * alone, and one that does not always does). It is what lets `outside-baseline` be refused at intake with no
  * conflict machinery, and what makes every core at least two observations.
  *
  * Three views of it, over generated schemas and random extents, with the oracle as the judge of "meets `B`":
@@ -28,7 +28,7 @@ const PER_CHUNK = 25;
 const ORACLE_BUDGET = 200_000;
 const seen = { singles: 0, meets: 0, misses: 0, skippedForCost: 0, conflictedTrees: 0, smallestCore: Number.POSITIVE_INFINITY, coresChecked: 0 };
 
-describe("one observation never conflicts unless it misses B, and always does if it misses B", () => {
+describe("on generated instances, one observation never conflicts unless it misses B, and always does if it misses B", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}: solve, the oracle and ground agree on whether one observation conflicts`, () => {

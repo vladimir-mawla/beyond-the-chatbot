@@ -14,9 +14,8 @@ import { oracleBaselines, oracleComponents } from "./oracle.js";
  *  1. INDEPENDENCE: each tree's answers inside the full schema are byte-identical to the answers of a schema made
  *     of that tree's fields alone with only the observations about them: its tree record, the baseline and the
  *     extent, support and open ends of every one of its fields, its accepted observations and the faults of the
- *     ones refused. Instances where two observations share an id are left out (intake is the one place a
- *     repeated id can cross a tree: `duplicate-id` refuses both, wherever they are), and the count left out is
- *     printed.
+ *     ones refused. Instances where two observations share an id are left out (intake looks at every id of the
+ *     snapshot at once, so `duplicate-id` refuses both, wherever they are), and the count left out is printed.
  *  2. PERTURBATION: pin two disjoint points on one base field of tree T, so that T is conflicted, and every answer
  *     about every other tree is byte-identical to what it was before.
  * Then the plan's case 03 by hand: the order desk's step-5 conflict beside a refund tree.
@@ -42,7 +41,7 @@ function treeAnswers(g: Grounding, treeFields: readonly string[]): string {
 
 const tally = { instances: 0, skippedForRepeatedIds: 0, comparedTrees: 0, conflictedAmongThem: 0, perturbed: 0, perturbedOthers: 0 };
 
-describe("a tree's answers do not depend on any other tree", () => {
+describe("on the generated instances, a tree's answers do not depend on any other tree", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}: independence, and perturbation by a conflict in one tree`, () => {

@@ -45,7 +45,7 @@ import { base, derived, obs, ORDER_DESK } from "./fixtures.js";
  *     compared with the plan's text, and the engine's types and function signatures are proved identical to it at
  *     compile time (`npm run typecheck`; a mismatch is a compile error, not a failed test).
  *  7. M1's closed-module-graph scan, determinism guard and file inventory see these files, so their silence is not an empty scan.
- *  8. The walks and the pass count are bounded, on structures `readSchema` would never let through.
+ *  8. The walks and the pass count are bounded, on structures `readSchema` refuses.
  * Synthetic trees live under the OS temp directory.
  */
 useTrees();

@@ -21,7 +21,7 @@ const CHUNKS = 24;
 const PER_CHUNK = 125;
 const seen = { structures: 0, numbers: 0 };
 
-describe("every number in every produced structure is a safe integer, and none is -0", () => {
+describe("every number in every structure walked here is a safe integer, and none is -0", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}: the grounding, the refusals, extentOf, supportOf and openEndsOf of every field`, () => {
