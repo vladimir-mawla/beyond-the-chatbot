@@ -529,6 +529,16 @@ describe("the walk is bounded by the field count, and so is the number of passes
     expect(() => solve(many, members, [{ field: "loop", extent: { lo: 0, hi: null } }])).toThrow(/over 63 fields did not settle in 264 passes/);
   }, 2000);
 
+  it("the last pass the plan allows is run: a conflict found on pass 20 of 20 is returned, and one that needs a 21st pass throws", () => {
+    // x = x + y with y fixed at 1 and x at least 0: every pass raises x's lower bound by one, and x <= K turns that into a conflict
+    // once the bound passes K. Measured on the code as shipped: K = 36 and 37 conflict on pass 19, K = 38 and 39 on pass 20, K = 40 does not settle.
+    const two = structureOf({ fields: [base("y", 1, 1), derived("x", ["x", "y"])] } as unknown as Schema);
+    const constraint = (hi: number) => [{ field: "x", extent: { lo: 0, hi } }];
+    for (const hi of [36, 37]) expect(solve(two, ["x", "y"], constraint(hi)), `hi ${hi}`).toStrictEqual({ kind: "conflicted", passes: 19 });
+    for (const hi of [38, 39]) expect(solve(two, ["x", "y"], constraint(hi)), `hi ${hi}`).toStrictEqual({ kind: "conflicted", passes: 20 });
+    for (const hi of [40, 41]) expect(() => solve(two, ["x", "y"], constraint(hi)), `hi ${hi}`).toThrow(/over 2 fields did not settle in 20 passes/);
+  }, 2000);
+
   it("a hand-built Grounding with a cyclic schema, given to extentOf, supportOf and openEndsOf, ends the call promptly (a value or a throw, never a loop)", () => {
     const cyclic = { fields: [base("a"), derived("x", ["y", "a"]), derived("y", ["x", "a"])] } as unknown as Schema;
     const zero = { lo: 0, hi: null };
