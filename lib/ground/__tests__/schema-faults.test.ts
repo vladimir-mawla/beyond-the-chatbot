@@ -447,7 +447,7 @@ describe("every subset of the seven rules: the engine reports the first by the p
   });
 });
 
-describe("where a rule fails in several places the smallest id is named, and the same one when the fields are reversed", () => {
+describe("where a rule fails in several places the smallest id is named (the duplicate-field and unknown-operand tests also reverse the fields)", () => {
   it("duplicate-field: the smallest repeated id", () => {
     const doc = { fields: [base("zeta"), base("alpha"), base("zeta"), base("alpha")] };
     expect(readSchema(doc)).toStrictEqual({ ok: false, fault: { kind: "duplicate-field", field: "alpha" } });
