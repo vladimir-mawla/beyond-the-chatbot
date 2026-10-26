@@ -118,8 +118,10 @@ Precedence per observation, first failing rule wins: `duplicate-id` > `malformed
   converted. This is the only fidelity check there is (plan D8); the plan's case 01 shows what it lets through.
 - **`outside-baseline`**: the extent and the field's computed `B` share no integer. It is refused at intake so that a conflict
   is always between observations.
-- `source` is read once, checked as a string and copied; nothing in this package decides anything from it (plan D6).
-  `order-independence.test.ts` relabels every valid source on generated instances and no answer moves.
+- `source` is read once, checked to be a string of 1 to `MAX_SOURCE_LENGTH` code units (an observation whose source is not one is refused as
+  `malformed`, so the shape of a source decides whether an observation is accepted), and copied. Its value is read for nothing else, so nothing
+  decides anything from what a valid source says (plan D6). `order-independence.test.ts` relabels every valid source on generated instances and no
+  answer moves.
 
 ## Decision 4 — propagation, and the pass bound
 
@@ -439,8 +441,10 @@ schema measured twice, not a bound.
    the strings are its property names, for a schema they are paths.
 5. **"All offending fields"** is all of them among the elements read, up to `MAX_FIELDS + 1` (Decision 2).
 6. **`GroundFailure`** has no kind for "the observations are not an array"; `hostile-input` is used (Decision 3).
-7. **`Observation.source`** is documented as "never read by the engine"; it is read once, checked as a string and copied, and nothing decides
-   anything from it (Decision 3; plan case 08 is the metamorphic test at M7).
+7. **`Observation.source`** is documented as "never read by the engine"; it is read once, checked to be a string of 1 to `MAX_SOURCE_LENGTH` code
+   units and copied (the copy is needed: `Observation` carries it into the `Grounding` and, at M5, into the `Brief`). An observation whose source is
+   not such a string is refused as `malformed`, so renaming a source to an invalid string changes the answer and renaming it to another valid string
+   changes none (Decision 3; plan case 08, the metamorphic test at M7, has to rename to valid strings).
 8. **Open ends and floors.** By the definition in section 4.3 a schema floor is an open end of the lower side. Plan section 7 step 1 lists
    "lower and upper of `customsDays`" as the open ends of the ungrounded claim, which is the same reading (the lower bound there is the floor of 0).
 9. **The order of open ends, trees, fields and cores** is not specified; Decision 1 states the order chosen.

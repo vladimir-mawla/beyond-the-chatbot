@@ -126,7 +126,7 @@ describe("the grounding does not depend on the order of observations, fields, or
   });
 });
 
-describe("`source` is a display label: relabelling every source moves no answer (plan D6)", () => {
+describe("`source` is a display label: relabelling every valid source moves no answer (plan D6)", () => {
   it("on 600 generated instances, every source replaced by another valid string: the same trees, baseline, support and open ends, and the same refusals", () => {
     let compared = 0;
     for (let seed = 1; seed <= 600; seed++) {

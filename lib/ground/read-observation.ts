@@ -66,8 +66,9 @@ type Slot =
  *     values the field takes over all the schema's worlds, so a value in both `B` and the observation has a world.
  *     That `B` is that set is what the oracle tests check; `single-observation.test.ts` checks the theorem itself.
  *
- * `source` is read once, checked as a string and copied. Nothing in this package decides anything from it (plan D6);
- * `order-independence.test.ts` relabels every source on generated instances and no answer moves.
+ * `source` is read once, checked to be a string of 1 to `MAX_SOURCE_LENGTH` code units (otherwise the observation is `malformed`) and copied.
+ * Nothing in this package decides anything from what a valid source says (plan D6); `order-independence.test.ts` relabels every valid source on
+ * generated instances and no answer moves.
  */
 export function readObservations(raw: unknown, baseline: ReadonlyMap<string, Extent>): ObservationsRead {
   const hostile = (message: string): ObservationsRead => ({ ok: false, failure: { kind: "hostile-input", message } });
