@@ -80,7 +80,7 @@ twice.
 **Structural rules**, first failing one wins, in the plan's order: `too-many-fields`, `duplicate-field`,
 `unknown-operand`, `operand-reused`, `rule-cycle`, `unit-mismatch`. Where a rule fails in several places the fault
 names the smallest id (or the smallest pair, result first), so reordering the fields cannot change which place is
-reported; each of the five is pinned (rows `M27` and `M28` for `unknown-operand` and `rule-cycle`, rows `M57` to `M59`
+reported (the tests reverse the fields for `duplicate-field` and `unknown-operand` only); each of the five is pinned (rows `M27` and `M28` for `unknown-operand` and `rule-cycle`, rows `M57` to `M59`
 for `duplicate-field`, `operand-reused` and `unit-mismatch`). A cycle is named by a field ON it, not by one that merely feeds it (a row has
 a tail that sorts first and is not named).
 
@@ -200,9 +200,9 @@ the oracle's supports); the "unless the tree turns conflicted" exception of the 
 ## Decision 7 — what the functions return
 
 `immutability.test.ts` checks, on 600 generated instances and some hand-built ones, that what the public functions return is
-deep-frozen, refusals included, by trying to write at every node (a new key, an overwrite, a push) rather than trusting `Object.isFrozen`. The `Grounding` is plain data: it survives JSON
-unchanged, and a copy that has been through JSON gives identical answers from `extentOf`, `supportOf` and `openEndsOf`. `extentOf`
-returns fresh frozen copies (not objects inside the grounding), so a caller holding one holds nothing of the grounding. `declOf` is a
+deep-frozen, refusals included, by trying to write at every node (a new key, an overwrite, a push) rather than trusting `Object.isFrozen`. The `Grounding` is plain data: on 300 generated instances it survives JSON
+unchanged, and on 500 a copy that has been through JSON gives identical answers from `extentOf`, `supportOf` and `openEndsOf`. `extentOf`
+returns copies, not objects inside the grounding (one test, on the order desk with two observations, shows that the extent and the baseline it returns are not the stored ones and that a second call returns another). `declOf` is a
 lookup: it returns the declaration object in the schema it was given. The raw objects are read property by property into
 primitives or fresh copies; the aliasing test checks by identity, on one hand-built instance (the order desk with three observations), that no object of the input is in an output and that
 editing the input afterwards changes nothing, and a second test checks that two fields and a `sum` array of `readSchema`'s copy are not the input's.
@@ -298,7 +298,7 @@ was `lib/ground` and M1's closed-module-graph, determinism and file-inventory te
 M3's `architecture.test.ts` runs the same three scans over `lib/` but keeps only the findings under `lib/extent/` and asserts only about extent files); the other earlier
 tests, M3's among them, were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
 the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `724f5f5`
-(the ADR is the only later change); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the third full run: it was repeated after each fix round that touched a test or a source file, so every count below is from the final tests. Counts
+(the later commits change the ADR and, in the last round, comments and test titles under `lib/ground`, not code; the ledger was not re-run for them, and each find string in it was counted again against the final files and occurs as often as its row says); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the third full run: it was repeated after each fix round that touched a test or a source file, so every count below is from the final tests. Counts
 are tests that failed, by file; the two control rows are an edit that changes nothing, at the start and at the end of the run. `P` rows are the
 plan's ten (item 10 is three rows), `M` rows are mine and edit the library, `O` rows edit the test support (the oracle, the reference
 intake, the generator, a table's edit counter) instead of the library, `T` rows edit the library in a way that breaks the plan's types, and `V` rows
@@ -517,7 +517,7 @@ test (not in the repository) with the machine at a 1-minute load average of 10.6
 ## What is not proven
 
 - That the oracle's window rule is right for every tree: it is sound by an argument about read-once trees (the sum of the tightest constants bounds any
-  finite bound) and guarded by a throw if two windows disagree on whether a world exists; no test shows the argument.
+  finite bound), and the oracle throws if two windows disagree on whether a world exists, which does not catch every window that is too small (Decision 8); no test shows the argument.
 - That the generator reaches what a real snapshot would: 2 to 4 base fields, small constants (see `BASELINES` and `genExtent` in `fixtures.ts`), trees up to 7 fields; the
   largest sizes are hand-worked, not generated, and in between nothing is claimed.
 - That 28 instances not given to the oracle (and 5 to 6% of the support, core and open-ends instances) would have passed.
