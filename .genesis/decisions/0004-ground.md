@@ -75,8 +75,8 @@ a tail that sorts first and is not named).
 
 **The element bound.** A length is trusted only as far as `MAX_FIELDS + 1` reads: more elements than that are never
 read, however many the array claims (a Proxy can claim `2**32 - 1`; a test counts 65 index reads). This keeps
-`malformed` above `too-many-fields` exactly for an array of up to 65 elements, the first length that is too many;
-past that, a malformed element beyond index 64 is not looked for (both sides pinned). The plan says "all offending
+`malformed` above `too-many-fields` for every array of up to 65 elements, the first length that is too many, and for a longer array whenever the
+malformed element is among the first 65; a malformed element at index 65 or later is not looked for (index 64 of 65 elements and index 65 of 66 are pinned). The plan says "all offending
 fields"; that is all of them among the elements read.
 
 **Choices the plan does not make**, each pinned by a boundary test (N accepted, N + 1 refused):

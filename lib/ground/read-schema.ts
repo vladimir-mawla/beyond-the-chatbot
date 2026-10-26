@@ -57,8 +57,9 @@ function malformed(places: readonly string[]): SchemaFault {
  *
  * THE ELEMENT BOUND. A length is trusted only as far as `MAX_FIELDS + 1` reads: more elements than that are
  * never read, however many the array claims (a Proxy can claim 2**32 - 1). That keeps `malformed` outranking
- * `too-many-fields` exactly for an array of up to `MAX_FIELDS + 1` elements, the first length that is too many;
- * past that, a malformed element beyond index `MAX_FIELDS` is not looked for.
+ * `too-many-fields` for every array of up to `MAX_FIELDS + 1` elements, the first length that is too many, and for a longer
+ * array whenever the malformed element is among the first `MAX_FIELDS + 1`; a malformed element at index `MAX_FIELDS + 1` or later
+ * is not looked for.
  *
  * Choices the plan does not make, made here and pinned by tests: an id, a label and a unit are each 1 to
  * `MAX_ID_LENGTH`, `MAX_LABEL_LENGTH`, `MAX_UNIT_LENGTH` code units; a sum has 2 to `MAX_OPERANDS` operands (a
