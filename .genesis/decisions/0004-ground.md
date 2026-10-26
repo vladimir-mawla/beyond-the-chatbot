@@ -103,7 +103,7 @@ Precedence per observation, first failing rule wins: `duplicate-id` > `malformed
 
 - **`duplicate-id`** refuses every occurrence of a repeated id (a valid-looking one), including two that agree, because
   keeping one would let the input order choose which. A consequence the plan does not state: adding an observation whose id
-  repeats an earlier one removes the earlier one from the snapshot and can WIDEN `E` (the first run of `monotonicity.test.ts` found
+  repeats an earlier one removes the earlier one from the snapshot and can WIDEN `E` or turn a conflicted tree consistent (the first run of `monotonicity.test.ts` found
   it, on a generated instance). Monotonicity holds for observations with a fresh id; `monotonicity.test.ts` states the property that way, counts the
   repeated-id steps without comparing them, and pins one by hand.
 - **`malformed`** names every offending property among `id` `field` `extent` `quote` `source`; an element that is not a record
@@ -431,8 +431,9 @@ schema measured twice, not a bound.
 ## Plan wording and neighbours, flagged (the plan was not edited)
 
 1. **Monotonicity** (section 2.3, section 6 M4, section 8B) is stated without an exception, and it has one: an observation whose id repeats an
-   earlier one removes the earlier one from the snapshot (D6's "every occurrence", written to keep input order from choosing a winner) and can
-   widen `E`. Found by the first run of `monotonicity.test.ts`. The property holds for a fresh id (Decision 3). The DoD gate "adding evidence never
+   earlier one removes the earlier one from the snapshot (D6's "every occurrence", written to keep input order from choosing a winner), so it can
+   widen `E` and can turn a conflicted tree consistent (o1 in [3, 3] and o2 in [5, 5] on one field conflict; a second observation named o1 removes
+   the first, and the field is [5, 5]). Found by the first run of `monotonicity.test.ts`. The property holds for a fresh id (Decision 3). The DoD gate "adding evidence never
    widens an established extent" in section 16 should say "an observation with a fresh id".
 2. **Caps with no layer.** `MAX_OPERANDS` and the five length caps are declared and assigned to no layer (M1's `limits.ts` says so). `readSchema` and
    `ground` enforce them as `malformed` (Decisions 2 and 3); the minimum of 1 is mine.

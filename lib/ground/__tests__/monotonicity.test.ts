@@ -3,7 +3,7 @@ import { fieldId } from "../../contracts/index.js";
 import type { Extent } from "../../contracts/index.js";
 import { gridExtents, GRID_VALUES, oracleIsSubset } from "../../extent/__tests__/fixtures.js";
 import { extentOf, ground } from "../index.js";
-import { CANON, ORDER_DESK, canon, genClaims, genInstance, mulberry32, oracleFields } from "./fixtures.js";
+import { CANON, ORDER_DESK, canon, genClaims, genInstance, mulberry32, obs, oracleFields } from "./fixtures.js";
 import { classify, oracleBaselines } from "./oracle.js";
 import type { Ruling } from "./oracle.js";
 
@@ -19,7 +19,7 @@ import type { Ruling } from "./oracle.js";
  *
  * THE PROPERTY IS ABOUT OBSERVATIONS WITH A FRESH ID. Adding an observation whose id is already on an earlier one
  * does NOT narrow anything: intake refuses EVERY occurrence of a repeated id (so that input order cannot choose a
- * winner), which takes the earlier observation out of the snapshot and can widen `E`. The plan states
+ * winner), which takes the earlier observation out of the snapshot and can widen `E` or turn a conflicted tree consistent. The plan states
  * monotonicity without that exception (section 2.3: "more observations only narrow `established`, or turn the
  * tree `conflicted` -- never widen it"); the first run of this file found it, on a generated instance (the generator
  * has changed since, so no seed number is quoted). Those steps are counted, not compared, and the last describe block
@@ -131,7 +131,7 @@ function check(seed: number): string[] {
   return problems;
 }
 
-describe("adding an observation never widens E, never un-conflicts a tree, and never moves an entailed or contradicted ruling to a different consistent one", () => {
+describe("adding an observation with a fresh id never widens E, never un-conflicts a tree, and never moves an entailed or contradicted ruling to a different consistent one", () => {
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     const from = chunk * PER_CHUNK + 1;
     it(`seeds ${from} to ${from + PER_CHUNK - 1}`, () => {
@@ -193,12 +193,23 @@ describe("hand-worked on the order desk: each added document narrows, then the f
   });
 });
 
-describe("the exception, pinned: an observation whose id repeats an earlier one takes the earlier one out, and E widens", () => {
+describe("the exception, pinned: an observation whose id repeats an earlier one takes the earlier one out, so E widens or a conflict goes", () => {
   it("o1 and o2 give delivery [4, inf); a second observation named o1 (about customs) refuses both, and delivery is [3, inf)", () => {
     const r = ground(ORDER_DESK, [...canon("o1", "o2"), { ...CANON.o3, id: "o1" }]);
     if (!r.ok) throw new Error("failed");
     expect(r.rejected.map((x) => [x.index, x.fault.kind])).toEqual([[0, "duplicate-id"], [2, "duplicate-id"]]);
     expect(extentOf(r.grounding, fieldId("packDays"))).toMatchObject({ ok: true, extent: { lo: 0, hi: null } });
     expect(extentOf(r.grounding, fieldId("deliveryDay"))).toMatchObject({ ok: true, extent: { lo: 3, hi: null } });
+  });
+
+  it("and it can un-conflict a tree: packDays in [3, 3] and [5, 5] conflict (core o1, o2); a second observation named o1 refuses both o1s and packDays is [5, 5]", () => {
+    const first = ground(ORDER_DESK, [obs("o1", "packDays", 3, 3), obs("o2", "packDays", 5, 5)]);
+    if (!first.ok) throw new Error("failed");
+    expect(first.grounding.trees.find((t) => t.fields.includes(fieldId("packDays")))?.state).toStrictEqual({ kind: "conflicted", core: ["o1", "o2"] });
+
+    const again = ground(ORDER_DESK, [obs("o1", "packDays", 3, 3), obs("o2", "packDays", 5, 5), obs("o1", "transitDays", 0, 9)]);
+    if (!again.ok) throw new Error("failed");
+    expect(again.rejected.map((x) => [x.index, x.fault.kind])).toEqual([[0, "duplicate-id"], [2, "duplicate-id"]]);
+    expect(extentOf(again.grounding, fieldId("packDays"))).toMatchObject({ ok: true, extent: { lo: 5, hi: 5 } });
   });
 });
