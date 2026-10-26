@@ -21,8 +21,9 @@ import type { Ruling } from "./oracle.js";
  * does NOT narrow anything: intake refuses EVERY occurrence of a repeated id (so that input order cannot choose a
  * winner), which takes the earlier observation out of the snapshot and can widen `E`. The plan states
  * monotonicity without that exception (section 2.3: "more observations only narrow `established`, or turn the
- * tree `conflicted` -- never widen it"); the first run of this file found it on seed 19. Those steps are
- * counted, not compared, and the last describe block below pins one by hand.
+ * tree `conflicted` -- never widen it"); the first run of this file found it, on a generated instance (the generator
+ * has changed since, so no seed number is quoted). Those steps are counted, not compared, and the last describe block
+ * below pins one by hand.
  *
  * What is not shown: monotonicity over every order of adding (a prefix chain is one order per instance, and
  * `order-independence.test.ts` shows the final answer does not depend on the order).
