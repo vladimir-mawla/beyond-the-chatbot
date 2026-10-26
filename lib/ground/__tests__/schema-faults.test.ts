@@ -485,7 +485,7 @@ describe("where a rule fails in several places the smallest id is named (the dup
 });
 
 describe("a hand-built cyclic schema does not make a walk loop (a self-cycle, a mutual cycle and a ring)", () => {
-  it("a self-cycle, a mutual cycle and a ring are refused promptly by readSchema and by ground, which never reads the observations", () => {
+  it("a self-cycle, a mutual cycle and a ring are refused promptly by readSchema and by ground, which did not read the observations", () => {
     let reads = 0;
     const observations = new Proxy([], {
       get(target, key, receiver) {
