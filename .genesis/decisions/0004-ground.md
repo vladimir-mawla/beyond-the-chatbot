@@ -106,9 +106,8 @@ fields"; that is all of them among the elements read.
 Each observation is read once (the element, then `id` `field` `extent` `quote` `source`, all five whatever their
 values), then `checkExtent` reads the extent's `lo` and `hi` once each for every observation whose five properties were read
 and that is not a duplicate. A read that throws makes that one observation `hostile-input` and the others carry on. Once
-the schema is accepted, the whole call fails only in the four `ok: false` returns of `readObservations`: the
-observations are not an array or have no usable length (`hostile-input`), or there are more than `MAX_OBSERVATIONS`
-(`too-many-observations`, from the length alone, no element read). The plan's `GroundFailure` has no
+the schema is accepted, the whole call fails only in the five `ok: false` returns of `readObservations`: four are `hostile-input` (the observations are not an array, or have no usable length, or
+reading either threw) and one is `too-many-observations` (more than `MAX_OBSERVATIONS`, from the length alone, no element read). The plan's `GroundFailure` has no
 kind for "not an array" other than `hostile-input`, so that is what it is.
 
 Precedence per observation, first failing rule wins: `duplicate-id` > `malformed` > `unknown-field` >
