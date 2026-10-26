@@ -282,13 +282,13 @@ Each edit below was applied as an exact-match replacement that the script first 
 suite was run, and the file was written back byte for byte; `git status --porcelain -- lib` was empty after every row. The suite run per edit
 was `lib/ground` and M1's closed-module-graph, determinism and file-inventory tests (the earlier tests that read `lib/ground`); the earlier
 tests that do not read it were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
-the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `3650995`
-(the ADR is the only later change); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the second full run: it was repeated after the fix round that added tests, so every count below is from the final tests. Counts
+the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `724f5f5`
+(the ADR is the only later change); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the third full run: it was repeated after each fix round that touched a test or a source file, so every count below is from the final tests. Counts
 are tests that failed, by file; the two control rows are an edit that changes nothing, at the start and at the end of the run. `P` rows are the
 plan's ten (item 10 is three rows), `M` rows are mine and edit the library, `O` rows edit the test support (the oracle, the reference
 intake, the generator, a table's edit counter) instead of the library, `T` rows edit the library in a way that breaks the plan's types, and `V` rows
-are four edits the L4 verifier found green in review (the pass bound, the unit of the length limits, and two ways a long digit run stops being maximal),
-whose tests were added in the fix round.
+are seven edits the L4 verifier found green in review (the pass bound, the unit of the length limits, and five ways a digit run stops being maximal),
+whose tests were added in the fix rounds.
 
 The plan's `††` figures count failing INSTANCES out of 2 000 on its throwaway model; the counts here are failing TESTS in this repository.
 They are not comparable and neither confirms the other. What does compare is the shape: items 1 to 9 are caught by the properties and
@@ -312,7 +312,7 @@ them table-driven; no property test and no oracle test goes red for them.
 | P10a | delete the operand-reused refusal | **7 failed**: observation-faults 1, schema-faults 6 |
 | P10b | delete the rule-cycle refusal | **10 failed**: observation-faults 1, schema-faults 9 |
 | P10c | delete the unit-mismatch refusal | **6 failed**: observation-faults 1, schema-faults 5 |
-| M01 | digit-containment off: every bound counts as found | **231 failed**: core 10, observation-faults 15, open-ends 21, oracle-exactness 145, support-certificate 40 |
+| M01 | digit-containment off: every bound counts as found | **232 failed**: core 10, observation-faults 16, open-ends 21, oracle-exactness 145, support-certificate 40 |
 | M02 | digit-containment compares the signed bound | **437 failed**: core 21, locality 6, observation-faults 5, open-ends 77, oracle-exactness 160, single-observation 80, support-certificate 88 |
 | M03 | repeated id: the later occurrence wins (the earlier is refused, the last is kept) | **223 failed**: core 8, hostile-input 1, monotonicity 2, observation-faults 8, open-ends 18, oracle-exactness 117, order-independence 39, support-certificate 30 |
 | M04 | repeated id is not refused at all | **238 failed**: core 10, hostile-input 1, monotonicity 2, observation-faults 8, open-ends 25, oracle-exactness 117, order-independence 36, support-certificate 39 |
@@ -323,7 +323,7 @@ them table-driven; no property test and no oracle test goes red for them.
 | M09 | an observation's id is read twice and the second read is kept | **14 failed**: hostile-input 14 |
 | M10 | deepFreeze freezes only the top object | **27 failed**: immutability 26, schema-faults 1 |
 | M11 | deepFreeze skips arrays' elements (objects inside arrays stay writable) | **27 failed**: immutability 26, schema-faults 1 |
-| M12 | localeCompare in shrink's sort | **121 failed**: determinism 5, architecture 1, core 47, order-independence 3, support-certificate 65 |
+| M12 | localeCompare in shrink's sort | **121 failed**: architecture 1, core 47, order-independence 3, support-certificate 65, determinism 5 |
 | M13 | the parent walk's bound is one short: rootOf gives up one step early | **10 failed**: architecture 1, locality 7, observation-faults 2 |
 | M14 | the cycle test gives up after 2 steps | **4 failed**: schema-faults 4 |
 | M15 | the pass bound is 4 passes | **9 failed**: architecture 3, core 2, oracle-exactness 3, support-certificate 1 |
@@ -369,6 +369,10 @@ them table-driven; no property test and no oracle test goes red for them.
 | M54 | the validated schema is sorted by id instead of kept in the author's order | **4 failed**: immutability 1, order-independence 1, schema-faults 2 |
 | M55 | Tree.root is the smallest member instead of the field that is an operand of nothing | **1 failed**: order-independence 1 |
 | M56 | baseline entries in schema order, not by id | **50 failed**: order-independence 50 |
+| M57 | duplicate-field names the largest repeated id, not the smallest | **1 failed**: schema-faults 1 |
+| M58 | operand-reused names the largest reused operand, not the smallest | **1 failed**: schema-faults 1 |
+| M59 | unit-mismatch names the largest (result, operand) pair, not the smallest | **2 failed**: schema-faults 2 |
+| M60 | the malformed places are not deduplicated, in readSchema and in readObservations (two edits) | **0 failed** |
 | O1 | the oracle's window is half the sum of the constants (too small) | **474 failed**: core 49, open-ends 81, oracle-exactness 162, single-observation 81, support-certificate 101 |
 | O2 | the oracle never reports a value set with a hole (call site removed) | **1 failed**: oracle-exactness 1 |
 | O3 | the hole predicate always says no | **2 failed**: oracle-exactness 2 |
@@ -387,6 +391,9 @@ them table-driven; no property test and no oracle test goes red for them.
 | V2 | the length limits count characters, not code units (`[...value].length`) | **2 failed**: observation-faults 1, schema-faults 1 |
 | V3 | a run of more than six digits also yields its first three as a run | **1 failed**: observation-faults 1 |
 | V4 | every run is also split into pieces of four digits | **1 failed**: observation-faults 1 |
+| V5 | runs of exactly 5 digits also yield their first three | **1 failed**: observation-faults 1 |
+| V6 | runs of 9 to 11 digits also yield their first four | **1 failed**: observation-faults 1 |
+| V7 | runs of 3 to 6 digits also yield their last two | **1 failed**: observation-faults 1 |
 | C1 | CONTROL again, at the end of the run | **0 failed** |
 
 Two rows are not "N failed".
@@ -511,7 +518,7 @@ four wording defects. Each was reproduced before it was applied. Everything belo
 | R1 | "nothing in this package decides anything from `source`" is false: a source that is not a string of 1 to 64 code units makes the observation malformed | with one base field and one observation `[3, 3]`, the sources `""`, 65 x's and the number 5 each turn E(a) from `[3, 3]` into `[0, inf)`; "memo" and 64 x's leave it | the ADR (Decision 3, plan-wording item 7) and the comment on `readObservations` say so; the relabelling test's title says "valid" |
 | R2 | the pass bound is pinned only by the number in the error text | `pass < bound` in `solve.ts` left all 990 `lib/ground` tests green; on `x = x + y`, `x <= 38` and `x <= 39` conflict on pass 20 and `x <= 40` throws | a test for those three facts; row `V1`: **1 failed** (architecture 1) |
 | R3 | "code units" is not pinned: every boundary test uses one ASCII character | `[...value].length <= max` in `isText` left the suite green and accepted 65 astral characters (130 code units) as an id | a test per side with astral characters (half the limit accepted, one more malformed, for an id, label and unit, and an observation's id, source and quote); row `V2`: **2 failed** (observation-faults 1, schema-faults 1) |
-| R4 | "maximal run" is pinned only for two-digit runs | adding the first three digits of a run longer than six digits as a run of its own, and splitting every run into pieces of four, each left the suite green | rows for runs of 7, 8, 12 and 13 digits (the whole run accepted, every prefix, suffix and piece refused); rows `V3` and `V4`: **1 failed** each (observation-faults 1) |
+| R4 | "maximal run" is pinned only for two-digit runs | adding the first three digits of a run longer than six digits as a run of its own, and splitting every run into pieces of four, each left the suite green | rows for runs of 7, 8, 12 and 13 digits (the whole run accepted; the prefixes, suffixes and pieces tried were refused: a sample, which the second pass found too small, see S2 below); rows `V3` and `V4`: **1 failed** each (observation-faults 1) |
 | R5 | "seven structural schema rules" | the test has `malformed` and six structural rules, seven in the plan's precedence line | reworded (the verifier's text said "the plan's precedence without `hostile-input`"; the plan's line has no `hostile-input` in it, so the sentence says that `hostile-input` is outside it) |
 | R6 | "exactly for an array of up to 65 elements" | a malformed label at index i of n elements: malformed for (65, 64), (66, 64), (200, 0), (200, 64), (4000, 10); too-many-fields for (66, 65), (200, 65) | the ADR and the comment on `readSchema` say the cutoff is the index |
 | R7 | the PR body says cores of size 2 to 5 are asserted | the test asserts 2, 3 and 4 and a largest core of at least 4; 5 is printed | the PR body |
@@ -522,6 +529,19 @@ Rows `V1` to `V4` were also run against the tests as they were at `a5d2cd3`: **0
 A consequence the verifier did not list, found while re-running the ledger: row `M32` was green in the first full run and is red in this one, because the
 pass-bound test of R2 reaches the branch through a self-referential structure (Decision 4 now says so). The counts of every row involving a touched file
 were measured again by running the whole ledger on the final tests.
+
+## Revision after the second L4 pass
+
+The verifier again could not break the engine; it rejected `296f3c6` for two items, one about the timing text (S1) and one about the coverage of
+the digit-run tests (S2), and asked for an audit of every factual sentence.
+
+**S2, the R4 rows were a sample.** "Every prefix, suffix and piece refused" and "maximal at every length" described a few runs, and the verifier's three
+edits (rows `V5`, `V6`, `V7`: a run of exactly 5 digits also yields its first three; a run of 9 to 11 digits also yields its first four; a run of 3 to 6
+digits also yields its last two) each left every test green. The fix is one test (`a run is maximal at every length from 2 to 13 digits`) that
+enumerates, for one run of each length from 2 to 13 digits (the first n digits of `123456789012`, and `String(MAX_MAGNITUDE)` for 13), every
+substring of it: 454 checks, in which the whole run must be accepted as a bound and every other substring refused. What that covers: every substring of
+those twelve runs. What it does not cover: other runs of the same lengths. Rows `V3` to `V7` against the tests at `296f3c6`:
+`V5`, `V6` and `V7` **0 failed** each, `V3` and `V4` **1 failed** each (the rows of R4); with the enumeration: **1 failed** each (observation-faults 1).
 
 ## Falsifiability log
 
