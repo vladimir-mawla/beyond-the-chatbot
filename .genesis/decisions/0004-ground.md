@@ -1,7 +1,8 @@
 # ADR 0004 — M4 ground: reading an untrusted schema and snapshot once, solving each tree on its own, and what was and was not checked
 
 - **Date:** 2026-10-26
-- **Status:** proposed — written by the builder, not yet verified by an independent L4 pass
+- **Status:** proposed — written by the builder; revised after the first independent L4 pass rejected `a5d2cd3` (one false sentence about `source`,
+  three tests that pinned less than the sentences around them, four wording defects; see "Revision after the first L4 pass"); this version has not been re-verified
 - **Phase / milestone:** M4 (BUILD, GROUND) — `lib/ground/**` and this file
 
 Every number below was produced by a run in this session. Sabotage results are quoted as "N failed" plus the files,
@@ -135,12 +136,17 @@ M4 composes M3's algebra and does not repeat it: `architecture.test.ts` scans th
 `<=` `>` `>=` `+` `-` applied directly to a property named `lo` or `hi`, and on an import of any extent function other than the six
 used. That scan does not see an extent compared through a local variable.
 
-One branch of `solve` is never taken and, I believe, cannot be: the empty `meet` in the backward step (row `M32` below left
-the suite green). The argument, which no test shows: the forward step has just narrowed the sum to something inside what its
-operands allow, and then an operand's backward bound is `sum.lo - (others' hi)` to `sum.hi - (others' lo)`, which can only miss that
-operand if the sum already lay outside `sumForward`; the same holds after earlier operands narrow, because each narrowing keeps the
-bound it was narrowed from. It is kept as the plan's rule ("an empty domain anywhere makes that tree conflicted") rather than
-deleted.
+The empty `meet` in the backward step is not reached by any tree I could build, and I believe it cannot be. The argument, which no test
+shows: the forward step has just narrowed the sum to something inside what its operands allow, and then an operand's backward bound is
+`sum.lo - (others' hi)` to `sum.hi - (others' lo)`, which can only miss that operand if the sum already lay outside `sumForward`; the same
+holds after earlier operands narrow, because each narrowing keeps the bound it was narrowed from. Editing the branch away (row `M32` below)
+changes no result on any generated or hand-built TREE in the suite. It does change one test: the pass-bound test in `architecture.test.ts`,
+whose structure is the self-referential rule `x = x + y`, which `readSchema` refuses as `rule-cycle` and `ground` therefore never builds. There
+the operand and the sum are the same field and the operand extents are a snapshot taken before the sum was narrowed, so the argument does not
+apply, and the branch does fire (traced: on pass 19 the sum is [19, 19], the snapshot of the operand `x` is [18, 19], its backward bound is [18, 18]
+and `x` itself is now [19, 19]; with the branch ignored, `x <= 37`, which the shipped code finds on pass 19, is found on pass 20, and `x <= 39`, found
+on pass 20, is not found). The branch is kept as the plan's rule ("an empty domain anywhere makes that tree conflicted"); for a tree, that it cannot fire is an
+argument and a null result, not a proof.
 
 ## Decision 5 — support and core by deletion, and why the survivors are the later ids
 
@@ -276,11 +282,13 @@ Each edit below was applied as an exact-match replacement that the script first 
 suite was run, and the file was written back byte for byte; `git status --porcelain -- lib` was empty after every row. The suite run per edit
 was `lib/ground` and M1's closed-module-graph, determinism and file-inventory tests (the earlier tests that read `lib/ground`); the earlier
 tests that do not read it were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
-the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `6ddfdca`
-(the later commits are this ADR and the wording of one comment in `monotonicity.test.ts`); the scripts that built and applied them are in the session's scratch directory, not in the repository. Counts
+the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `3650995`
+(the ADR is the only later change); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the second full run: it was repeated after the fix round that added tests, so every count below is from the final tests. Counts
 are tests that failed, by file; the two control rows are an edit that changes nothing, at the start and at the end of the run. `P` rows are the
 plan's ten (item 10 is three rows), `M` rows are mine and edit the library, `O` rows edit the test support (the oracle, the reference
-intake, the generator, a table's edit counter) instead of the library, and `T` rows edit the library in a way that breaks the plan's types.
+intake, the generator, a table's edit counter) instead of the library, `T` rows edit the library in a way that breaks the plan's types, and `V` rows
+are four edits the L4 verifier found green in review (the pass bound, the unit of the length limits, and two ways a long digit run stops being maximal),
+whose tests were added in the fix round.
 
 The plan's `††` figures count failing INSTANCES out of 2 000 on its throwaway model; the counts here are failing TESTS in this repository.
 They are not comparable and neither confirms the other. What does compare is the shape: items 1 to 9 are caught by the properties and
@@ -291,8 +299,8 @@ them table-driven; no property test and no oracle test goes red for them.
 | # | Edit | Result |
 |---|---|---|
 | C0 | CONTROL: an edit that changes nothing | **0 failed** |
-| P1 | drop backward propagation (sumBackward replaced by 'no information') | **344 failed**: open-ends 80, oracle-exactness 164, support-certificate 100 |
-| P2 | drop forward propagation (sumForward replaced by 'no information') | **436 failed**: architecture 2, core 25, integer-only 2, locality 1, monotonicity 3, observation-faults 2, open-ends 83, oracle-exactness 165, order-independence 1, single-observation 48, support-certificate 104 |
+| P1 | drop backward propagation (sumBackward replaced by 'no information') | **345 failed**: architecture 1, open-ends 80, oracle-exactness 164, support-certificate 100 |
+| P2 | drop forward propagation (sumForward replaced by 'no information') | **437 failed**: architecture 3, core 25, integer-only 2, locality 1, monotonicity 3, observation-faults 2, open-ends 83, oracle-exactness 165, order-independence 1, single-observation 48, support-certificate 104 |
 | P3 | no deletion-shrink: return the full pool | **253 failed**: core 54, immutability 1, open-ends 83, oracle-exactness 6, order-independence 2, support-certificate 107 |
 | P4 | core = the first two ids of the tree's observations | **62 failed**: core 57, locality 1, oracle-exactness 3, order-independence 1 |
 | P5 | support computed for the wrong side | **190 failed**: open-ends 83, oracle-exactness 2, order-independence 1, support-certificate 104 |
@@ -304,13 +312,13 @@ them table-driven; no property test and no oracle test goes red for them.
 | P10a | delete the operand-reused refusal | **7 failed**: observation-faults 1, schema-faults 6 |
 | P10b | delete the rule-cycle refusal | **10 failed**: observation-faults 1, schema-faults 9 |
 | P10c | delete the unit-mismatch refusal | **6 failed**: observation-faults 1, schema-faults 5 |
-| M01 | digit-containment off: every bound counts as found | **230 failed**: core 10, observation-faults 14, open-ends 21, oracle-exactness 145, support-certificate 40 |
+| M01 | digit-containment off: every bound counts as found | **231 failed**: core 10, observation-faults 15, open-ends 21, oracle-exactness 145, support-certificate 40 |
 | M02 | digit-containment compares the signed bound | **437 failed**: core 21, locality 6, observation-faults 5, open-ends 77, oracle-exactness 160, single-observation 80, support-certificate 88 |
-| M03 | repeated id: the later occurrence wins (the earlier is refused, the last is kept) | **222 failed**: core 8, hostile-input 1, monotonicity 1, observation-faults 8, open-ends 18, oracle-exactness 117, order-independence 39, support-certificate 30 |
-| M04 | repeated id is not refused at all | **237 failed**: core 10, hostile-input 1, monotonicity 1, observation-faults 8, open-ends 25, oracle-exactness 117, order-independence 36, support-certificate 39 |
+| M03 | repeated id: the later occurrence wins (the earlier is refused, the last is kept) | **223 failed**: core 8, hostile-input 1, monotonicity 2, observation-faults 8, open-ends 18, oracle-exactness 117, order-independence 39, support-certificate 30 |
+| M04 | repeated id is not refused at all | **238 failed**: core 10, hostile-input 1, monotonicity 2, observation-faults 8, open-ends 25, oracle-exactness 117, order-independence 36, support-certificate 39 |
 | M05 | precedence: malformed is checked before duplicate-id | **5 failed**: hostile-input 1, observation-faults 1, oracle-exactness 3 |
 | M06 | outside-baseline refusal removed | **476 failed**: core 50, monotonicity 1, observation-faults 5, open-ends 78, oracle-exactness 160, single-observation 82, support-certificate 100 |
-| M07 | deletion order descending instead of ascending | **173 failed**: core 57, locality 1, oracle-exactness 5, order-independence 3, single-observation 1, support-certificate 106 |
+| M07 | deletion order descending instead of ascending | **174 failed**: core 57, locality 1, monotonicity 1, oracle-exactness 5, order-independence 3, single-observation 1, support-certificate 106 |
 | M08 | an id is read twice in readSchema and the second read is the one copied | **3 failed**: hostile-input 3 |
 | M09 | an observation's id is read twice and the second read is kept | **14 failed**: hostile-input 14 |
 | M10 | deepFreeze freezes only the top object | **27 failed**: immutability 26, schema-faults 1 |
@@ -318,28 +326,28 @@ them table-driven; no property test and no oracle test goes red for them.
 | M12 | localeCompare in shrink's sort | **121 failed**: determinism 5, architecture 1, core 47, order-independence 3, support-certificate 65 |
 | M13 | the parent walk's bound is one short: rootOf gives up one step early | **10 failed**: architecture 1, locality 7, observation-faults 2 |
 | M14 | the cycle test gives up after 2 steps | **4 failed**: schema-faults 4 |
-| M15 | the pass bound is 4 passes | **8 failed**: architecture 2, core 2, oracle-exactness 3, support-certificate 1 |
-| M16 | rejected index off by one | **229 failed**: locality 6, monotonicity 1, observation-faults 61, oracle-exactness 160, single-observation 1 |
-| M17 | extentOf returns the schema-only extent as the extent | **177 failed**: immutability 1, integer-only 2, locality 1, monotonicity 4, open-ends 2, oracle-exactness 167 |
+| M15 | the pass bound is 4 passes | **9 failed**: architecture 3, core 2, oracle-exactness 3, support-certificate 1 |
+| M16 | rejected index off by one | **230 failed**: locality 6, monotonicity 2, observation-faults 61, oracle-exactness 160, single-observation 1 |
+| M17 | extentOf returns the schema-only extent as the extent | **178 failed**: immutability 1, integer-only 2, locality 1, monotonicity 5, open-ends 2, oracle-exactness 167 |
 | M18 | supportOf swaps the two sides | **107 failed**: oracle-exactness 2, order-independence 1, support-certificate 104 |
 | M19 | open ends sorted by side only, not by field | **78 failed**: open-ends 78 |
 | M20 | open ends listed for a conflicted tree | **192 failed**: immutability 26, integer-only 25, locality 8, open-ends 82, oracle-exactness 1, order-independence 50 |
 | M21 | too-many-observations off by one (>= instead of >) | **6 failed**: core 1, observation-faults 1, oracle-exactness 3, support-certificate 1 |
 | M22 | too-many-fields off by one (>= instead of >) | **14 failed**: core 2, integer-only 2, oracle-exactness 4, schema-faults 4, support-certificate 2 |
 | M23 | a sum may have MAX_OPERANDS - 1 operands only | **3 failed**: oracle-exactness 2, schema-faults 1 |
-| M24 | a text of exactly the maximum length is refused | **3 failed**: observation-faults 2, schema-faults 1 |
+| M24 | a text of exactly the maximum length is refused | **5 failed**: observation-faults 3, schema-faults 2 |
 | M25 | an empty text is accepted | **171 failed**: core 2, locality 1, observation-faults 8, open-ends 14, oracle-exactness 116, schema-faults 8, support-certificate 22 |
-| M26 | readSchema rethrows everything it catches, its own abort token included, so hostile-input is never returned | **37 failed**: hostile-input 36, observation-faults 1 |
+| M26 | readSchema rethrows what is not its own abort token and also what is | **37 failed**: hostile-input 36, observation-faults 1 |
 | M27 | unknown-operand names the largest pair, not the smallest | **1 failed**: schema-faults 1 |
 | M28 | rule-cycle names the first field found on a cycle, not the smallest | **2 failed**: schema-faults 2 |
 | M29 | rule-cycle names a field that merely feeds a cycle (the tail) as well | **7 failed**: observation-faults 1, schema-faults 6 |
-| M30 | propagation ignores an empty meet when an observation is applied | **511 failed**: core 44, immutability 20, integer-only 25, locality 7, monotonicity 51, open-ends 78, oracle-exactness 160, order-independence 45, single-observation 81 |
-| M31 | propagation ignores an empty meet in the forward step | **372 failed**: core 46, immutability 1, locality 1, monotonicity 53, open-ends 63, oracle-exactness 162, single-observation 46 |
-| M32 | propagation ignores an empty meet in the backward step | **0 failed** |
+| M30 | propagation ignores an empty meet when an observation is applied | **512 failed**: core 44, immutability 20, integer-only 25, locality 7, monotonicity 52, open-ends 78, oracle-exactness 160, order-independence 45, single-observation 81 |
+| M31 | propagation ignores an empty meet in the forward step | **373 failed**: architecture 1, core 46, immutability 1, locality 1, monotonicity 53, open-ends 63, oracle-exactness 162, single-observation 46 |
+| M32 | propagation ignores an empty meet in the backward step | **1 failed**: architecture 1 |
 | M33 | support: every drop is accepted (isSubset replaced by true) | **197 failed**: locality 1, open-ends 83, oracle-exactness 6, order-independence 2, support-certificate 105 |
 | M34 | observations that are not an array are an empty snapshot | **6 failed**: observation-faults 6 |
-| M35 | a source is not checked | **163 failed**: core 6, hostile-input 1, observation-faults 7, open-ends 13, oracle-exactness 116, support-certificate 20 |
-| M36 | a quote of any length is accepted | **1 failed**: observation-faults 1 |
+| M35 | a source is not checked | **164 failed**: core 6, hostile-input 1, observation-faults 8, open-ends 13, oracle-exactness 116, support-certificate 20 |
+| M36 | a quote of any length is accepted | **2 failed**: observation-faults 2 |
 | M37 | a run of digits is not stripped of leading zeros before its length is judged | **1 failed**: observation-faults 1 |
 | M38 | any character from '/' to '9' counts as a digit | **1 failed**: observation-faults 1 |
 | M41 | an accepted observation keeps the raw extent object it was read from | **6 failed**: hostile-input 4, immutability 1, integer-only 1 |
@@ -357,7 +365,7 @@ them table-driven; no property test and no oracle test goes red for them.
 | M50 | trees ordered by root descending | **2 failed**: locality 1, order-independence 1 |
 | M51 | field ids in descending order | **161 failed**: oracle-exactness 160, order-independence 1 |
 | M52 | rootOf answers the start field when it cannot find a root | **12 failed**: architecture 2, observation-faults 1, schema-faults 9 |
-| M53 | shrink returns its survivors in descending order | **171 failed**: core 57, locality 1, oracle-exactness 5, order-independence 3, single-observation 1, support-certificate 104 |
+| M53 | shrink returns its survivors in descending order | **172 failed**: core 57, locality 1, monotonicity 1, oracle-exactness 5, order-independence 3, single-observation 1, support-certificate 104 |
 | M54 | the validated schema is sorted by id instead of kept in the author's order | **4 failed**: immutability 1, order-independence 1, schema-faults 2 |
 | M55 | Tree.root is the smallest member instead of the field that is an operand of nothing | **1 failed**: order-independence 1 |
 | M56 | baseline entries in schema order, not by id | **50 failed**: order-independence 50 |
@@ -375,13 +383,14 @@ them table-driven; no property test and no oracle test goes red for them.
 | O12 | the generator corrupts no observation | **2 failed**: monotonicity 1, oracle-exactness 1 |
 | O13 | the generator seeds no conflict | **1 failed**: core 1 |
 | O14 | the exactness test's extent comparison always says equal | **0 failed** |
+| V1 | the pass loop runs one pass fewer than the plan's bound (`pass < bound`) | **1 failed**: architecture 1 |
+| V2 | the length limits count characters, not code units (`[...value].length`) | **2 failed**: observation-faults 1, schema-faults 1 |
+| V3 | a run of more than six digits also yields its first three as a run | **1 failed**: observation-faults 1 |
+| V4 | every run is also split into pieces of four digits | **1 failed**: observation-faults 1 |
 | C1 | CONTROL again, at the end of the run | **0 failed** |
 
-Three rows are not "N failed".
+Two rows are not "N failed".
 
-- **`M32` left the suite green.** It makes the propagation ignore an empty `meet` in the backward step. Decision 4 argues that branch cannot be
-  reached, and disabling it changes no test result, so I count it as an equivalent edit and not as a test I failed to write; that is an
-  argument and a null result, not a proof.
 - **`M43` crashed the test worker** with an out-of-memory error rather than failing an assertion: reading the observation list's length again in
   the loop lets a Proxy that claims `2**32 - 1` elements run the loop for ever. It is red, and it is red because the hostile-input tests feed
   exactly that.
@@ -390,33 +399,41 @@ Three rows are not "N failed".
   test's several checks (the extent comparison, the classification of claims, the intake verdicts) each of those rows goes red through. I ran
   `O14` to see, and it is in the table so that it is not a row I left out.
 
+`M32` was green in the first full run and is red in this one: the pass-bound test added in the fix round reaches it (Decision 4).
+
 The `O` rows are the answer to M3's finding that an oracle check had never been shown to fire: the hole detector and the two-window check are
 killed by tests that feed them a value that makes them fire (`O2`, `O3`), and the table of rulings (`O4`) by its own fourteen rows.
 
 ## Timing
 
-Measured with `vitest run --reporter=json` (per-test durations), `AI_AGENT` and `CLAUDECODE` unset, after the last test was added. **The machine
-was never idle**: other sessions were running work on it throughout (its load average, 1 minute on 10 cores, was between 7 and 25 at the start of
-the runs below and above 60 at other times in the session), so the figures say more about the load than about the tests. The default timeout (5 s)
-applies to one test, the project's rule is no more than about 40% of it (2 s) at CI load, and CI's runners are about 2 times slower than a quiet
-local run.
+Measured with `vitest run --reporter=json` (per-test durations), `AI_AGENT` and `CLAUDECODE` unset, after the last test was added (the fix round
+after the first L4 pass added five tests and these figures were taken again). **The machine was never idle**: other sessions were running work on it
+throughout, and it was busier for this set than for the first (load average, 1 minute on 10 cores: 19 to 22 at the start of the ambient runs, 41 to 46
+at the start of the runs with 20 `yes` added, one ambient run started at 45), so the figures say more about the load than about the tests. The default
+timeout (5 s) applies to one test, the project's rule is no more than about 40% of it (2 s) at CI load, and CI's runners are about 2 times slower than a
+quiet local run.
 
 | Run | Load at start | Wall | Slowest `lib/ground` test |
 |---|---|---|---|
-| `lib/ground` alone, ambient, run 1 | 7.7 | 6.4 s | 235 ms (M1's module-graph scan, run over these files) |
-| `lib/ground` alone, ambient, run 2 | 7.3 | 6.1 s | 284 ms (the same) |
-| `oracle-exactness.test.ts` alone, ambient | 9.8 | 4.6 s | 91 ms |
-| whole suite, ambient, run 1 | 9.1 | 13.9 s | 332 ms |
-| whole suite, ambient, run 2 | 11.7 | 14.9 s | 526 ms |
-| `lib/ground` alone, 20 `yes` added | 13.1 | 20.6 s | 634 ms |
-| `oracle-exactness.test.ts` alone, 20 `yes` added | 16.0 | 32.7 s | 591 ms |
-| whole suite, 20 `yes` added | 24.8 | 39.8 s | 1090 ms |
+| `lib/ground` alone, ambient, run 1 | 18.7 | 11.8 s | 574 ms (`oracle-exactness`, seeds 151 to 200) |
+| `lib/ground` alone, ambient, run 2 | 19.1 | 6.9 s | 291 ms (`immutability`, the JSON round trip) |
+| `oracle-exactness.test.ts` alone, ambient | 21.6 | 4.6 s | 79 ms |
+| whole suite, ambient, run 1 | 20.1 | 42.2 s | 1295 ms (M1's module-graph scan run over these files) |
+| whole suite, ambient, run 2 | 45.4 | 32.9 s | 1244 ms (`order-independence`, seeds 51 to 100) |
+| `lib/ground` alone, 20 `yes` added | 41.6 | 61.5 s | **2600 ms** (M1's module-graph scan run over these files) |
+| `oracle-exactness.test.ts` alone, 20 `yes` added | 45.9 | 22.8 s | 664 ms |
+| whole suite, 20 `yes` added | 42.2 | 58.1 s | 1731 ms (`immutability`, the JSON round trip) |
 
 The 20 `yes > /dev/null` processes were started by the same shell command and killed by `pkill -x yes` afterwards; `pgrep -x yes` found none
-before and none after. The slowest `lib/ground` test in any of these runs is 1090 ms, 22% of the timeout. The slowest test in the whole suite in earlier
-runs on a busy machine was M1's `never-sabotage.test.ts` (about 2 s), not one of these. **No timeout was raised anywhere** (`vitest.config.ts` is the
-scaffold's and was not touched, and no test passes a timeout of its own except six tests in `schema-faults.test.ts` and `architecture.test.ts`
-that pass 2 s as a guard against a loop and take a few milliseconds).
+before and none after. **The slowest `lib/ground` test in this set is 2600 ms, 52% of the timeout, which is over the project's 40%**, at a load average
+of 42 to 46 (20 `yes` on top of a machine already at 20 or more, about 4 times oversubscribed). It is not a generated-instance loop: it is the one
+test that runs M1's closed-module-graph scan over the whole of `lib/` (the same kind of test is in M3's architecture test), and the TypeScript
+parser it drives is what slows down. The same test took 235 and 284 ms at a load of about 7 to 8 in the previous set of runs. I did not change it; what I can
+say is that a quiet run is about a twentieth of the timeout and that CI's 2 times is not 10 times. The slowest generated-instance test in this set is
+664 ms under 20 `yes` (13% of the timeout). In the previous set, before the five tests were added, the slowest `lib/ground` test with 20 `yes` added
+was 1090 ms at a load of 13 to 25; the earlier runs on a busy machine had M1's `never-sabotage.test.ts` (about 2 s) as the slowest test of the whole
+suite. **No timeout was raised anywhere** (`vitest.config.ts` is the scaffold's and was not touched, and no test passes a timeout of its own except
+seven tests in `schema-faults.test.ts` and `architecture.test.ts` that pass 2 s as a guard against a loop and take a few milliseconds).
 
 How it got there: the first timing run, on the first version of the tests (load 13 to 17), had a generated-instance test at 1.5 s, because 500
 instances were one test. Every such loop was cut into smaller tests with the same totals and seeds (about 25 to 125 instances each), and the
@@ -477,12 +494,34 @@ schema measured twice, not a bound.
 - That the read-once classes are all the ways to observe an input (Decision 8), or that an inherited property read through a polluted `Object.prototype`
   is handled (it is read, as `record["id"]` would; not tested).
 - That propagation is exact outside read-once trees: the schema refuses everything else, so it is not asked.
-- That the empty-`meet` branch of the backward step is unreachable (Decision 4): an argument.
+- That the empty-`meet` branch of the backward step cannot fire for a tree (Decision 4): an argument and a null result. It fires for a self-referential rule that `readSchema` refuses.
 - That the `hostile-input` message cannot carry untrusted text beyond what the tests probe: it is built from fixed words and the path of a read.
 - That anything forces a later layer to call `readSchema` or `ground` rather than build a `Grounding` by hand: M5's `recheck` is specified to re-ground
   the carried evidence; a hand-built `Grounding` is outside what `extentOf`, `supportOf` and `openEndsOf` claim, and one with a cycle is shown only to end the call.
-- That the sabotage ledger covers every possible edit: it shows these edits go red (and one does not, `M32`), not that no edit goes green.
+- That the sabotage ledger covers every possible edit: it shows these edits go red (the exceptions, `M43` and `O14`, are explained above), not that no edit goes green.
 - That timing holds on another machine or under another load; that CI passes on the pushed branch (see the pull request).
+
+## Revision after the first L4 pass
+
+The verifier could not break the engine; it rejected `a5d2cd3` for one false sentence, three tests that pinned less than the sentences around them, and
+four wording defects. Each was reproduced before it was applied. Everything below is in its own commit.
+
+| # | Finding | Reproduced | What changed |
+|---|---|---|---|
+| R1 | "nothing in this package decides anything from `source`" is false: a source that is not a string of 1 to 64 code units makes the observation malformed | with one base field and one observation `[3, 3]`, the sources `""`, 65 x's and the number 5 each turn E(a) from `[3, 3]` into `[0, inf)`; "memo" and 64 x's leave it | the ADR (Decision 3, plan-wording item 7) and the comment on `readObservations` say so; the relabelling test's title says "valid" |
+| R2 | the pass bound is pinned only by the number in the error text | `pass < bound` in `solve.ts` left all 990 `lib/ground` tests green; on `x = x + y`, `x <= 38` and `x <= 39` conflict on pass 20 and `x <= 40` throws | a test for those three facts; row `V1`: **1 failed** (architecture 1) |
+| R3 | "code units" is not pinned: every boundary test uses one ASCII character | `[...value].length <= max` in `isText` left the suite green and accepted 65 astral characters (130 code units) as an id | a test per side with astral characters (half the limit accepted, one more malformed, for an id, label and unit, and an observation's id, source and quote); row `V2`: **2 failed** (observation-faults 1, schema-faults 1) |
+| R4 | "maximal run" is pinned only for two-digit runs | adding the first three digits of a run longer than six digits as a run of its own, and splitting every run into pieces of four, each left the suite green | rows for runs of 7, 8, 12 and 13 digits (the whole run accepted, every prefix, suffix and piece refused); rows `V3` and `V4`: **1 failed** each (observation-faults 1) |
+| R5 | "seven structural schema rules" | the test has `malformed` and six structural rules, seven in the plan's precedence line | reworded (the verifier's text said "the plan's precedence without `hostile-input`"; the plan's line has no `hostile-input` in it, so the sentence says that `hostile-input` is outside it) |
+| R6 | "exactly for an array of up to 65 elements" | a malformed label at index i of n elements: malformed for (65, 64), (66, 64), (200, 0), (200, 64), (4000, 10); too-many-fields for (66, 65), (200, 65) | the ADR and the comment on `readSchema` say the cutoff is the index |
+| R7 | the PR body says cores of size 2 to 5 are asserted | the test asserts 2, 3 and 4 and a largest core of at least 4; 5 is printed | the PR body |
+| R8 | a repeated id can also turn a conflicted tree consistent | `o1` `[3, 3]` and `o2` `[5, 5]`: conflicted, core `o1 o2`; add a second `o1`: both refused, the field is `[5, 5]` | the ADR (plan-wording item 1 and the Decision 3 bullet), the monotonicity test's header and the title of its property say both; a test pins the second case |
+
+Rows `V1` to `V4` were also run against the tests as they were at `a5d2cd3`: **0 failed** each (exit 0), so the new tests are what turns them red.
+
+A consequence the verifier did not list, found while re-running the ledger: row `M32` was green in the first full run and is red in this one, because the
+pass-bound test of R2 reaches the branch through a self-referential structure (Decision 4 now says so). The counts of every row involving a touched file
+were measured again by running the whole ledger on the final tests.
 
 ## Falsifiability log
 
