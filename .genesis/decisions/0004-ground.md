@@ -205,7 +205,8 @@ deep-frozen, refusals included, by trying to write at every node (a new key, an 
 unchanged, and a copy that has been through JSON gives identical answers from `extentOf`, `supportOf` and `openEndsOf`. `extentOf`
 returns fresh frozen copies (not objects inside the grounding), so a caller holding one holds nothing of the grounding. `declOf` is a
 lookup: it returns the declaration object in the schema it was given. The raw objects are read property by property into
-primitives or fresh copies; the aliasing test checks by identity, on generated and hand-built instances, that no object of the input is in an output.
+primitives or fresh copies; the aliasing test checks by identity, on one hand-built instance (the order desk with three observations), that no object of the input is in an output and that
+editing the input afterwards changes nothing, and a second test checks that two fields and a `sum` array of `readSchema`'s copy are not the input's.
 
 ## Decision 8 — the three test layers, the generator, and what each shows
 
