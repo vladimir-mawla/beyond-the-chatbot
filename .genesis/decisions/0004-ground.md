@@ -9,8 +9,8 @@
 
 The measured numbers below come from runs in this session; a few are arithmetic on the contracts' constants (the pass
 bound 264, `2**45`, a core of 33) and are not measurements. Sabotage results are quoted as "N failed" plus the files,
-with no "passed" denominator, so adding a test later does not make a sentence stale. Counts of tests are deliberately
-not quoted. What is quoted are the constants a test is built on (seeds, instances, sizes) and the tallies the
+with no "passed" denominator, so adding a test later does not make a sentence stale. The total number of tests is quoted only in "Timing" (the final tests and two CI runs), where it says which runs
+are meant, and it goes stale when a test is added. What is quoted are the constants a test is built on (seeds, instances, sizes) and the tallies the
 coverage tests print. The tallies come from fixed seeds: two runs of `lib/ground` that I compared, one before and one
 after the last test was added, printed the same tallies.
 
@@ -581,7 +581,7 @@ the tests show (audit)", and in this file in the commit that added this paragrap
 five import it); a list presented as complete ("the whole call fails only when ..." left out `invalid-schema`; the order tests do not check "each list");
 a universal over all inputs where the tests are a sample ("never read", "never throws, whatever it is given"); a cause nobody measured (the parser, "the
 richest instances", why `M43` ran out of memory); a quotation marked as the plan's words that was not verbatim, or attributed to the wrong plan item (D6);
-a test count the file says it does not quote ("all 990 tests"); and a sentence that contradicted the next one (`O14`, the oracle's window).
+a test count in a place where the file quoted none ("all 990 tests"); and a sentence that contradicted the next one (`O14`, the oracle's window).
 
 ## Falsifiability log
 
