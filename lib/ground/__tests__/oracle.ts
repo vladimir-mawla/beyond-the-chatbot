@@ -195,7 +195,8 @@ function reach(bases: readonly OField[], derived: readonly OField[], order: read
 /**
  * Answer for one tree (a connected component), given every field of the schema and every observation. `enumerate` is the
  * enumeration, and is a parameter only so that a test can hand the oracle a set with a hole and two windows that
- * disagree (no generated input made either happen), which is the only way to see those two checks fire through here.
+ * disagree (no generated input made either happen); that is how those two checks are made to fire without editing the
+ * oracle.
  */
 function oracleTree(all: readonly OField[], ids: readonly string[], observations: readonly OObs[], enumerate: typeof reach = reach): OracleTree {
   const defs = ids.map((id) => all.find((f) => f.id === id) as OField);
