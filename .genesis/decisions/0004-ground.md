@@ -4,7 +4,8 @@
 - **Status:** proposed — written by the builder; revised after the first independent L4 pass rejected `a5d2cd3` (one false sentence about `source`,
   three tests that pinned less than the sentences around them, four wording defects; see "Revision after the first L4 pass"), and again after the second
   pass rejected `296f3c6` (the timing text, and digit-run tests that were a sample; see "Revision after the second L4 pass"), with an audit of every
-  factual sentence; this version has not been re-verified
+  factual sentence, and a third time after the third pass rejected `e94cb97` (seven sentences and titles that the audit wrote or left; see
+  "Revision after the third L4 pass"); this version has not been re-verified
 - **Phase / milestone:** M4 (BUILD, GROUND) — `lib/ground/**` and this file
 
 The measured numbers below come from runs in this session; a few are arithmetic on the contracts' constants (the pass
@@ -582,6 +583,29 @@ five import it); a list presented as complete ("the whole call fails only when .
 a universal over all inputs where the tests are a sample ("never read", "never throws, whatever it is given"); a cause nobody measured (the parser, "the
 richest instances", why `M43` ran out of memory); a quotation marked as the plan's words that was not verbatim, or attributed to the wrong plan item (D6);
 a test count in a place where the file quoted none ("all 990 tests"); and a sentence that contradicted the next one (`O14`, the oracle's window).
+
+## Revision after the third L4 pass
+
+The verifier again could not break the engine: the emit of the ten sources with comments removed, and of their declarations, is identical to `296f3c6`.
+It rejected `e94cb97` for seven sentences or titles, all in prose that the audit wrote or left, and asked for a sweep for twins.
+
+- **U1**: Decision 7 said the aliasing test runs "on generated and hand-built instances"; `immutability.test.ts:171` runs on one hand-built instance (the
+  order desk with three observations) and a second test (line 208) checks `readSchema`'s copy.
+- **U2**: Decision 8 said a too-small oracle window makes the oracle throw; it throws only if the two windows disagree on whether a world exists. With the window halved,
+  162 `oracle-exactness` tests fail, 107 with the throw and 55 without it.
+- **U3**: the ledger scope sentence said no other earlier test reads `lib/ground`; M3's `architecture.test.ts` runs the same three scans over `lib/` and keeps only
+  the findings under `lib/extent/`.
+- **U4**: "four `ok: false` returns" of `readObservations` is five (four `hostile-input`, one `too-many-observations`).
+- **U5**: a describe title said the smallest id is named "and the same one when the fields are reversed" for all five structural rules; two of the five tests reverse the fields.
+- **U6**: the introduction said counts of tests are not quoted; Timing quotes the total and two CI totals.
+- **U7**: a comment pointed at Timing for figures that are in Decision 8.
+
+The sweep, for the same kinds of defect (aliasing, window, scope, count, cross-reference): `extentOf`'s "fresh frozen copies ... holds nothing of the grounding" and the JSON sentence
+in Decision 7, and the header and two describe titles of `immutability.test.ts` (U1's twins); "guarded by a throw" for the window in "What is not proven", and
+`oracle.ts`'s "the only way to see those two checks fire" (U2's twins); the ledger scope's "the ADR is the only later change" (U3's neighbour); "reordering the fields cannot
+change which place is reported" (U5's neighbour); the shuffle tests "compare everything but the schema copy" (they compare it as a set); and a
+title that said `ground` "never reads the observations" (it asserts zero reads for three schemas). Every pointer from a comment or a test title to the ADR, and every
+pointer inside the ADR, was read against its target; U7 was the only wrong one.
 
 ## Falsifiability log
 
