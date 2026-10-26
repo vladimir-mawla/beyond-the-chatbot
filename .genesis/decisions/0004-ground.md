@@ -295,9 +295,9 @@ to observe an object; it covers getters, an indexed getter, Proxy traps, a revok
 
 Each edit below was applied as an exact-match replacement that the script first counted to occur once (or the stated number of times), the
 suite was run, and the file was written back byte for byte; `git status --porcelain -- lib` was empty after every row. The suite run per edit
-was `lib/ground` and M1's closed-module-graph, determinism and file-inventory tests (the three earlier tests that scan all of `lib/`; a grep
-for earlier tests that touch the file system found no other that reads `lib/ground`); the other earlier
-tests were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
+was `lib/ground` and M1's closed-module-graph, determinism and file-inventory tests (the three earlier tests that scan and report on all of `lib/`;
+M3's `architecture.test.ts` runs the same three scans over `lib/` but keeps only the findings under `lib/extent/` and asserts only about extent files); the other earlier
+tests, M3's among them, were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
 the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `724f5f5`
 (the ADR is the only later change); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the third full run: it was repeated after each fix round that touched a test or a source file, so every count below is from the final tests. Counts
 are tests that failed, by file; the two control rows are an edit that changes nothing, at the start and at the end of the run. `P` rows are the
