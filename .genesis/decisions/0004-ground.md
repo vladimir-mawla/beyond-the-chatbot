@@ -2,14 +2,17 @@
 
 - **Date:** 2026-10-26
 - **Status:** proposed — written by the builder; revised after the first independent L4 pass rejected `a5d2cd3` (one false sentence about `source`,
-  three tests that pinned less than the sentences around them, four wording defects; see "Revision after the first L4 pass"); this version has not been re-verified
+  three tests that pinned less than the sentences around them, four wording defects; see "Revision after the first L4 pass"), and again after the second
+  pass rejected `296f3c6` (the timing text, and digit-run tests that were a sample; see "Revision after the second L4 pass"), with an audit of every
+  factual sentence; this version has not been re-verified
 - **Phase / milestone:** M4 (BUILD, GROUND) — `lib/ground/**` and this file
 
-Every number below was produced by a run in this session. Sabotage results are quoted as "N failed" plus the files,
+The measured numbers below come from runs in this session; a few are arithmetic on the contracts' constants (the pass
+bound 264, `2**45`, a core of 33) and are not measurements. Sabotage results are quoted as "N failed" plus the files,
 with no "passed" denominator, so adding a test later does not make a sentence stale. Counts of tests are deliberately
 not quoted. What is quoted are the constants a test is built on (seeds, instances, sizes) and the tallies the
-coverage tests print; they come from fixed seeds, so they are the same on every run until the generator or a
-seed count changes, and they were re-measured after the last test was added.
+coverage tests print. The tallies come from fixed seeds: two runs of `lib/ground` that I compared, one before and one
+after the last test was added, printed the same tallies.
 
 ## Context
 
@@ -25,7 +28,7 @@ written (`npm ci` only).
 ## Decision 1 — files, public surface, and the order of everything the grounding keeps
 
 **Files.** The nine sources the plan lists (`read-schema read-observation solve shrink support open-ends decl ground
-index`), and one more, `plain.ts`, because the plan's list has no home for what three modules share: `deepFreeze`,
+index`), and one more, `plain.ts`, because the plan's list has no home for what several modules share (five of the sources import it): `deepFreeze`,
 the narrowing of a built list to the non-empty tuple type the contract wants (it throws on an empty one, an internal
 invariant), and the three shape predicates (`isText`, `isRecord`, `isCount`). The tests are the plan's fourteen
 files plus `fixtures.ts` and `oracle.ts`. `architecture.test.ts` pins the inventory and states that `plain.ts` is
@@ -42,8 +45,12 @@ below) each turn `tsc` red.
 Everything else is in an order that does not depend on the order of anything in the input: `observations` by id,
 `baseline` by field id, `trees` by root id, each tree's `fields` and extents by field id, a core by id, a support by
 id, open ends by field id then `lo` before `hi`; `rejected` is by position in the input, because its `index` is that
-position. `order-independence.test.ts` checks each list against its stated order on generated instances, and checks
-that the schema copy is the one place the input order survives. All ids are ordered with M1's `compareIds` (UTF-16
+position. `order-independence.test.ts` checks, on 800 generated instances, that the observations, the baseline, the
+trees, a tree's fields and extents, a core and the positions of the refusals are in the stated order;
+`support-certificate.test.ts` checks that a support is sorted without repeats and `open-ends.test.ts` that the list
+equals the definition in the engine's order. The shuffles of the input in `order-independence.test.ts` compare
+everything but the schema copy and the positions of refusals, and one hand case shows the schema copy keeps the
+author's order. All ids are ordered with M1's `compareIds` (UTF-16
 code unit), never `localeCompare` (M1's determinism guard bans it under `lib/`, and a test builds a core and a
 support that a locale-aware sort would choose differently).
 
@@ -53,9 +60,10 @@ support that a locale-aware sort would choose differently).
 is a record, six properties, `kind` `id` `label` `unit` `baseline` `sum`, in that order and all six whatever the
 kind (a base field that carries a `sum` has to be seen to be refused); a `sum`'s `length` and its elements; and,
 through M3's `checkExtent`, a baseline's `lo` and `hi`. Each is read once into a local and judged from that read.
-Nothing else is touched: `hostile-input.test.ts` wraps a schema in a Proxy that logs every trap and asserts the log
-is exactly those `get`s, in that order, and that a refusal reads the same keys once each. An extra property on the
-input is never read, so it is neither refused nor copied. An inherited property is read (it is what `record["id"]`
+`hostile-input.test.ts` wraps a schema in a Proxy that logs every trap and asserts, for the schema it builds,
+that the log is exactly those `get`s, in that order (a `has`, `ownKeys`, `getOwnPropertyDescriptor` or
+`getPrototypeOf` trap fails the test); for one refused schema it asserts that every trap is a `get` and that no key
+is read twice. An extra property on a schema is neither refused nor copied (`schema-faults.test.ts`). An inherited property is read (it is what `record["id"]`
 reads); that is not tested with a mutated `Object.prototype`, because it would mutate a global.
 
 **A read that throws** stops the whole read: `hostile-input`, with `reading <path> threw`, a message made only of
@@ -65,13 +73,15 @@ result). It outranks `malformed`: reads happen in a fixed order, so the same inp
 **Shape problems** are all collected: `malformed.fields` is the list of offending places as paths
 (`fields[2].unit`, `fields[0].sum[1]`), sorted by code unit (so `fields[10]` comes before `fields[2]`, pinned) and
 without repeats. The plan says "sorted, deduped" and does not say what the strings are; these are mine. The
-paths name positions in this input, so unlike every other fault they move when fields are reordered. The dedupe cannot
-be observed: no input produces the same path twice, so removing it is an equivalent edit and no test guards it.
+paths name positions in this input, so they move when fields are reordered. Removing the dedupe (here and in
+the observation intake, row `M60`) left every `lib/ground` test green, and I found no input that produces the same path
+twice.
 
 **Structural rules**, first failing one wins, in the plan's order: `too-many-fields`, `duplicate-field`,
 `unknown-operand`, `operand-reused`, `rule-cycle`, `unit-mismatch`. Where a rule fails in several places the fault
 names the smallest id (or the smallest pair, result first), so reordering the fields cannot change which place is
-reported; each of the five is pinned. A cycle is named by a field ON it, not by one that merely feeds it (a row has
+reported; each of the five is pinned (rows `M27` and `M28` for `unknown-operand` and `rule-cycle`, rows `M57` to `M59`
+for `duplicate-field`, `operand-reused` and `unit-mismatch`). A cycle is named by a field ON it, not by one that merely feeds it (a row has
 a tail that sorts first and is not named).
 
 **The element bound.** A length is trusted only as far as `MAX_FIELDS + 1` reads: more elements than that are never
@@ -87,16 +97,18 @@ fields"; that is all of them among the elements read.
   because accepting it is a case nobody asked for;
 - a sum has 2 to `MAX_OPERANDS` operands, and a count outside that is `malformed` at `fields[i].sum`, the elements
   then unread. The plan declares `MAX_OPERANDS` and assigns it to no layer, and M3's ADR notes that M3 does not
-  enforce it and tests 63 operands directly; nothing in this layer lets a sum that long through;
-- an id is any such string, `__proto__` and `constructor` included: nothing here keys a plain object by an id.
+  enforce it and tests 63 operands directly; a sum of more than `MAX_OPERANDS` is refused (a boundary test, row `M23`);
+- an id is any such string, `__proto__` and `constructor` included (tested): the sources keep ids in `Map`s and `Set`s,
+  and a grep for a plain object indexed by an id found none.
 
 ## Decision 3 — intake: the plan's precedence, every occurrence of a repeated id, digit-containment
 
 Each observation is read once (the element, then `id` `field` `extent` `quote` `source`, all five whatever their
-values), then `checkExtent` reads the extent's `lo` and `hi` once each for every observation whose element could be read
-and that is not a duplicate. A read that throws makes that one observation `hostile-input` and the others carry on. The
-whole call fails only when the observations are not an array or have no usable length (`hostile-input`) or there are more
-than `MAX_OBSERVATIONS` (`too-many-observations`, from the length alone, no element read). The plan's `GroundFailure` has no
+values), then `checkExtent` reads the extent's `lo` and `hi` once each for every observation whose five properties were read
+and that is not a duplicate. A read that throws makes that one observation `hostile-input` and the others carry on. Once
+the schema is accepted, the whole call fails only in the four `ok: false` returns of `readObservations`: the
+observations are not an array or have no usable length (`hostile-input`), or there are more than `MAX_OBSERVATIONS`
+(`too-many-observations`, from the length alone, no element read). The plan's `GroundFailure` has no
 kind for "not an array" other than `hostile-input`, so that is what it is.
 
 Precedence per observation, first failing rule wins: `duplicate-id` > `malformed` > `unknown-field` >
@@ -120,9 +132,9 @@ Precedence per observation, first failing rule wins: `duplicate-id` > `malformed
 - **`outside-baseline`**: the extent and the field's computed `B` share no integer. It is refused at intake so that a conflict
   is always between observations.
 - `source` is read once, checked to be a string of 1 to `MAX_SOURCE_LENGTH` code units (an observation whose source is not one is refused as
-  `malformed`, so the shape of a source decides whether an observation is accepted), and copied. Its value is read for nothing else, so nothing
-  decides anything from what a valid source says (plan D6). `order-independence.test.ts` relabels every valid source on generated instances and no
-  answer moves.
+  `malformed`, so the shape of a source decides whether an observation is accepted), and copied. Its value is read for nothing else (the reads of `source` in the sources are the shape check
+  and the copy), so nothing decides anything from what a valid source says (plan D6). `order-independence.test.ts` relabels every valid source on 600
+  generated instances and no answer moves.
 
 ## Decision 4 — propagation, and the pass bound
 
@@ -163,7 +175,7 @@ extent that says only the full bound on that side" (M3's `isSubset`, so the comp
   one-observation route whose id sorts last and a three-observation route whose ids sort first, the three-observation route
   survives (plan case 05; a test with both id schemes, and the same evidence with the input reversed, and a core where a
   conflict of two observations sits beside one of three and the three is named). The tests do not lean on the monotonicity
-  argument: every support and core they generate is checked against the brute-force oracle.
+  argument: every support and core of an instance they give to the oracle is checked against it.
 - **A bound the schema already gives needs no evidence.** The support of `customsDays`' lower side with an observation that
   says `0` is `[]`, because dropping that observation changes nothing. So a floor is an open end on the lower side though the
   number is known (Decision 6).
@@ -182,18 +194,18 @@ extent that says only the full bound on that side" (M3's `isSubset`, so the comp
 "Empty support" means no observation is needed for that bound: it is the schema's own or it is unbounded. So a schema floor
 counts as an open end (the plan's step 4 has `customsDays` `[0, 2]` with a lower support of `[]`), and naming an end says where
 evidence is missing, not what it will say (plan case 06, three outcomes of filling one gap, worked by hand). Only requested sides
-appear, each once, in field then `lo`-before-`hi` order, whatever the order or repeats of `sides`. The plan does not fix that order.
+appear, each once, in field then `lo`-before-`hi` order, and `sides` shuffled and repeated changes nothing on the generated instances. The plan does not fix that order.
 `open-ends.test.ts` checks soundness, completeness, sufficiency on `hi` and exactness (the list equals the definition computed from
 the oracle's supports); the "unless the tree turns conflicted" exception of the sufficiency property was reached in two checks.
 
 ## Decision 7 — what the functions return
 
-Everything a public function returns is deep-frozen, refusals included, and `immutability.test.ts` tries to write at every node
-(a new key, an overwrite, a push) rather than trusting `Object.isFrozen`. The `Grounding` is plain data: it survives JSON
+`immutability.test.ts` checks, on 600 generated instances and some hand-built ones, that what the public functions return is
+deep-frozen, refusals included, by trying to write at every node (a new key, an overwrite, a push) rather than trusting `Object.isFrozen`. The `Grounding` is plain data: it survives JSON
 unchanged, and a copy that has been through JSON gives identical answers from `extentOf`, `supportOf` and `openEndsOf`. `extentOf`
 returns fresh frozen copies (not objects inside the grounding), so a caller holding one holds nothing of the grounding. `declOf` is a
-lookup: it returns the declaration object in the schema it was given. Every raw object is only read property by property into
-primitives or fresh copies, so nothing the input owns can end up in an output; the test shows it by identity.
+lookup: it returns the declaration object in the schema it was given. The raw objects are read property by property into
+primitives or fresh copies; the aliasing test checks by identity, on generated and hand-built instances, that no object of the input is in an output.
 
 ## Decision 8 — the three test layers, the generator, and what each shows
 
@@ -224,8 +236,9 @@ refuses) was run over 8 000 instances. The coverage test prints, from the final 
 - 31 888 claims (four per instance) classified by the plan's table from the oracle's extents: conflicted 9798, contradicted
   2377, entailed 3465, ungrounded 4724, weakened 3199, and 8325 vacuous (`B` already inside the claim), and the engine's extents
   classify every one the same way;
-- 28 of the 8 000 instances were not given to the oracle because listing their worlds was too costly (they were half of its
-  time); their intake is still checked. The most worlds one tree listed in its larger window was 136 458.
+- 28 of the 8 000 instances were not given to the oracle because listing their worlds was too costly (in one run, on a
+  machine at load average 1.5, `oracleTrees` took 592 ms on the 7 972 it was given and 607 ms on these 28); their intake
+  is still checked. The most worlds one tree listed in its larger window was 136 458.
 
 Mismatches: none. **That is a measurement on this generator, with two to four base fields and small constants; the oracle cannot
 list 2**32 worlds.** What it cannot show is covered by the next paragraph and by "What is not proven".
@@ -238,7 +251,7 @@ settled in 18, 27 and 17 passes against the bound of 264; a sum of `MAX_OPERANDS
 (32 upper bounds and the root's lower bound, every one needed) in a 64-field, 64-observation schema; and the longest support, 32
 (the root's upper bound needs all 32 base observations; its lower bound needs 31, because `b00`'s lower bound is the schema's own
 floor of 0, which I got wrong when I first wrote the expectation and the test showed). Also the canonical scenario of plan section 7
-at this layer (E, support, open ends and core of steps 1, 4, 5 and 6, and "every pair and every triple of the four documents is consistent"
+at this layer (E, support, open ends and core of steps 1, 4, 5 and 6, and that every pair and every triple of the four documents is consistent,
 by the oracle and by the engine).
 
 **Layer 3, properties**, each over generated instances with the oracle as judge where the plan says so:
@@ -247,15 +260,15 @@ by the oracle and by the engine).
   not move, and an entailed or contradicted ruling moves only to itself or conflicted (every such move was reached). The 108
   steps that repeated an earlier id are counted and not compared (Decision 3);
 - *order independence*: 2 400 instances reversed and shuffled twice; observations, fields and operands; supports and open ends
-  too, with `sides` shuffled and repeated; `source` relabelled on 600 more;
+  too, with `sides` shuffled and repeated; `source` relabelled on 600 instances (seeds 1 to 600) in a separate test;
 - *locality*: 757 instances with more than one tree; each tree's answers equal that tree grounded alone (1 845 trees, 296 of them
   conflicted) and a forced conflict in one tree leaves every other tree byte-identical (1 413 conflicts forced). Instances where two
-  observations share an id across trees were left out and counted (20): `duplicate-id` is the one place an id crosses a tree;
+  observations share an id across trees were left out and counted (20): intake looks at every id of the snapshot at once, so `duplicate-id` refuses both, wherever they are;
 - *single observation*: 6 000 single observations, 5 328 that meet `B` (never conflicted) and 672 that miss it (always refused),
   36 not given to the enumeration for cost; the smallest of 1 284 cores has 2 members;
 - *support certificate*: 14 932 bounds on 2 827 instances (173 skipped as too costly for the oracle), 6 645 with a non-empty support,
-  each checked four ways against the oracle; sizes 0: 8287, 1: 5750, 2: 809, 3: 83, 4: 3. **The longest support the generated instances
-  reach is 4**, because the richest instances are the costliest for the oracle; the longest the contracts allow is the hand-worked 32;
+  each checked four ways (the first by structure, the other three against the oracle); sizes 0: 8287, 1: 5750, 2: 809, 3: 83, 4: 3. **The longest support the generated instances
+  reach is 4**; the longest the contracts allow is the hand-worked 32;
 - *core*: 612 cores on 1 420 instances (80 skipped), sizes 2: 506, 3: 86, 4: 20, 2 420 strict subsets given to the oracle, each core also
   compared with D7's deletion run by the oracle; the largest core tested is the hand-worked 33;
 - *open ends*: 15 147 requests on 1 899 instances (101 skipped), 9 030 with at least one end, 6 912 `lo` and 6 892 `hi` ends listed, soundness,
@@ -280,8 +293,9 @@ to observe an object; it covers getters, an indexed getter, Proxy traps, a revok
 
 Each edit below was applied as an exact-match replacement that the script first counted to occur once (or the stated number of times), the
 suite was run, and the file was written back byte for byte; `git status --porcelain -- lib` was empty after every row. The suite run per edit
-was `lib/ground` and M1's closed-module-graph, determinism and file-inventory tests (the earlier tests that read `lib/ground`); the earlier
-tests that do not read it were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
+was `lib/ground` and M1's closed-module-graph, determinism and file-inventory tests (the three earlier tests that scan all of `lib/`; a grep
+for earlier tests that touch the file system found no other that reads `lib/ground`); the other earlier
+tests were not run per edit, and the whole suite, M1 to M3 included, was run clean on the final code (see "Timing" and
 the pull request). The edits ran in a scratch copy of the working tree whose `lib/` was identical (`diff -r`) to the branch at `724f5f5`
 (the ADR is the only later change); the scripts that built and applied them are in the session's scratch directory, not in the repository. This is the third full run: it was repeated after each fix round that touched a test or a source file, so every count below is from the final tests. Counts
 are tests that failed, by file; the two control rows are an edit that changes nothing, at the start and at the end of the run. `P` rows are the
@@ -291,10 +305,10 @@ are seven edits the L4 verifier found green in review (the pass bound, the unit 
 whose tests were added in the fix rounds.
 
 The plan's `††` figures count failing INSTANCES out of 2 000 on its throwaway model; the counts here are failing TESTS in this repository.
-They are not comparable and neither confirms the other. What does compare is the shape: items 1 to 9 are caught by the properties and
-the oracle layer in many files, and deleting `operand-reused`, `rule-cycle` or `unit-mismatch` (rows `P10a` to `P10c`) is caught only by
-`schema-faults.test.ts`, with one test in `observation-faults.test.ts` (that `ground` carries a schema fault as `invalid-schema`), both of
-them table-driven; no property test and no oracle test goes red for them.
+They are not comparable and neither confirms the other. What does compare is the shape: items 1 to 9 are each caught by at least one property or oracle test
+(`P6b` by `support-certificate` alone, `P8` by `open-ends` alone), and in rows `P10a` to `P10c` (deleting `operand-reused`, `rule-cycle` or `unit-mismatch`) the tests that go red are
+in `schema-faults.test.ts` and one in `observation-faults.test.ts` (that `ground` carries a schema fault as `invalid-schema`); no
+property test and no oracle test goes red in those runs.
 
 | # | Edit | Result |
 |---|---|---|
@@ -396,20 +410,23 @@ them table-driven; no property test and no oracle test goes red for them.
 | V7 | runs of 3 to 6 digits also yield their last two | **1 failed**: observation-faults 1 |
 | C1 | CONTROL again, at the end of the run | **0 failed** |
 
-Two rows are not "N failed".
+Three rows are not "N failed".
 
-- **`M43` crashed the test worker** with an out-of-memory error rather than failing an assertion: reading the observation list's length again in
-  the loop lets a Proxy that claims `2**32 - 1` elements run the loop for ever. It is red, and it is red because the hostile-input tests feed
-  exactly that.
-- **`O14` is green by construction.** With a correct engine, a comparison that always says "equal" changes nothing. Whether the comparison fires is
-  shown by the rows that break the engine and turn the exactness tests red (`P1`, `P2`, `M17`), not by this one. I did not separate which of that
-  test's several checks (the extent comparison, the classification of claims, the intake verdicts) each of those rows goes red through. I ran
-  `O14` to see, and it is in the table so that it is not a row I left out.
+- **`M43` crashed the test worker** with an out-of-memory error rather than failing an assertion (the harness records
+  exit 1 and no failed assertion). I did not isolate which test ran out of memory; the hostile-input tests give a
+  Proxy a length of `2**32 - 1`.
+- **`O14` is green by construction.** With a correct engine, a comparison that always says "equal" changes nothing. I did not separate which of
+  the exactness test's several checks (the extent comparison, the classification of claims, the intake verdicts) goes red in rows `P1`, `P2`
+  and `M17`, so this row does not show that the extent comparison itself fires. I ran `O14` to see, and it is in the table so that it is not a
+  row I left out.
+- **`M60` is green.** Removing the deduplication of the malformed places, in `readSchema` and in `readObservations`, left every test green. I
+  found no input that produces a repeated place, so I believe the edit changes nothing observable; that is a belief, not something a test shows.
 
 `M32` was green in the first full run and is red in this one: the pass-bound test added in the fix round reaches it (Decision 4).
 
-The `O` rows are the answer to M3's finding that an oracle check had never been shown to fire: the hole detector and the two-window check are
-killed by tests that feed them a value that makes them fire (`O2`, `O3`), and the table of rulings (`O4`) by its own fourteen rows.
+The `O` rows are the answer to M3's finding that an oracle check had never been shown to fire: the hole detector is
+killed by tests that feed it a set with a hole (`O2`, `O3`), and the table of rulings (`O4`) by the five of its fourteen rows that rule `weakened` or
+`contradicted`. The check that two windows disagree has a test that makes it throw (`oracle-exactness.test.ts`), but no row removes the check.
 
 ## Timing
 
@@ -460,14 +477,14 @@ test (not in the repository) with the machine at a 1-minute load average of 10.6
 ## Plan wording and neighbours, flagged (the plan was not edited)
 
 1. **Monotonicity** (section 2.3, section 6 M4, section 8B) is stated without an exception, and it has one: an observation whose id repeats an
-   earlier one removes the earlier one from the snapshot (D6's "every occurrence", written to keep input order from choosing a winner), so it can
+   earlier one removes the earlier one from the snapshot (the plan's "every occurrence" in section 4.1 and section 6 M4, written so that input order cannot choose a winner), so it can
    widen `E` and can turn a conflicted tree consistent (o1 in [3, 3] and o2 in [5, 5] on one field conflict; a second observation named o1 removes
    the first, and the field is [5, 5]). Found by the first run of `monotonicity.test.ts`. The property holds for a fresh id (Decision 3). The DoD gate "adding evidence never
    widens an established extent" in section 16 should say "an observation with a fresh id".
 2. **Caps with no layer.** `MAX_OPERANDS` and the five length caps are declared and assigned to no layer (M1's `limits.ts` says so). `readSchema` and
    `ground` enforce them as `malformed` (Decisions 2 and 3); the minimum of 1 is mine.
 3. **`4 * (fields + 1) + 8`**: "fields" is not said to be the tree's or the schema's; the tree's is used (Decision 4).
-4. **"Sorted, deduped"** `malformed.fields` names no vocabulary for the strings and the dedupe is unobservable (Decision 2); for an observation
+4. **"Sorted, deduped"** `malformed.fields` names no vocabulary for the strings and removing the dedupe changes no test result (row `M60`); for an observation
    the strings are its property names, for a schema they are paths.
 5. **"All offending fields"** is all of them among the elements read, up to `MAX_FIELDS + 1` (Decision 2).
 6. **`GroundFailure`** has no kind for "the observations are not an array"; `hostile-input` is used (Decision 3).
@@ -488,10 +505,10 @@ test (not in the repository) with the machine at a 1-minute load average of 10.6
   into a typed refusal. Only the reads of input are guarded, and only an abort token created per call is caught.
 - **A cache of solved trees or supports** to make `supportOf` cheap: the plan says the grounding is data with no hidden state, and
   `architecture.test.ts` forbids module-level state.
-- **Sweeping the sums deepest-first, then shallowest-first**, which would settle a tree in two passes instead of 17 to 27 and make `supportOf` several
-  times cheaper: more code on the path every ruling depends on, for a cost that is only visible at the largest size. Not done.
-- **Sorting the schema copy** by id, so that the whole `Grounding` would be order-independent: `Grounding.schema` is "the validated copy", the
-  author's order is what a renderer would expect to see, and the order-independence tests compare everything else.
+- **Sweeping the sums deepest-first, then shallowest-first**, to lower the number of passes (17 to 27 on the 64-field schema): more code on the
+  path every ruling depends on. Not done, and I did not measure what it would save.
+- **Sorting the schema copy** by id, so that the whole `Grounding` would be order-independent: `Grounding.schema` is "the validated copy" and keeps the
+  author's order (row `M54`), and the order-independence tests compare everything else.
 - **Putting a `Map` or an index in the `Grounding`** so that `supportOf` need not rebuild the structure: the plan says plain data, and the JSON
   round trip is tested.
 - **Accepting an empty id, label or unit**, or any number of operands: cases nobody asked for.
@@ -500,7 +517,7 @@ test (not in the repository) with the machine at a 1-minute load average of 10.6
 
 - That the oracle's window rule is right for every tree: it is sound by an argument about read-once trees (the sum of the tightest constants bounds any
   finite bound) and guarded by a throw if two windows disagree on whether a world exists; no test shows the argument.
-- That the generator reaches what a real snapshot would: 2 to 4 base fields, constants mostly in a range of about 10, trees up to 7 fields; the
+- That the generator reaches what a real snapshot would: 2 to 4 base fields, small constants (see `BASELINES` and `genExtent` in `fixtures.ts`), trees up to 7 fields; the
   largest sizes are hand-worked, not generated, and in between nothing is claimed.
 - That 28 instances not given to the oracle (and 5 to 6% of the support, core and open-ends instances) would have passed.
 - That the read-once classes are all the ways to observe an input (Decision 8), or that an inherited property read through a polluted `Object.prototype`
@@ -510,7 +527,7 @@ test (not in the repository) with the machine at a 1-minute load average of 10.6
 - That the `hostile-input` message cannot carry untrusted text beyond what the tests probe: it is built from fixed words and the path of a read.
 - That anything forces a later layer to call `readSchema` or `ground` rather than build a `Grounding` by hand: M5's `recheck` is specified to re-ground
   the carried evidence; a hand-built `Grounding` is outside what `extentOf`, `supportOf` and `openEndsOf` claim, and one with a cycle is shown only to end the call.
-- That the sabotage ledger covers every possible edit: it shows these edits go red (the exceptions, `M43` and `O14`, are explained above), not that no edit goes green.
+- That the sabotage ledger covers every possible edit: it shows these edits go red (the exceptions, `M43`, `O14` and `M60`, are explained above), not that no edit goes green.
 - That timing holds on another machine or under another load; that CI passes on the pushed branch (see the pull request).
 
 ## Revision after the first L4 pass
@@ -521,7 +538,7 @@ four wording defects. Each was reproduced before it was applied. Everything belo
 | # | Finding | Reproduced | What changed |
 |---|---|---|---|
 | R1 | "nothing in this package decides anything from `source`" is false: a source that is not a string of 1 to 64 code units makes the observation malformed | with one base field and one observation `[3, 3]`, the sources `""`, 65 x's and the number 5 each turn E(a) from `[3, 3]` into `[0, inf)`; "memo" and 64 x's leave it | the ADR (Decision 3, plan-wording item 7) and the comment on `readObservations` say so; the relabelling test's title says "valid" |
-| R2 | the pass bound is pinned only by the number in the error text | `pass < bound` in `solve.ts` left all 990 `lib/ground` tests green; on `x = x + y`, `x <= 38` and `x <= 39` conflict on pass 20 and `x <= 40` throws | a test for those three facts; row `V1`: **1 failed** (architecture 1) |
+| R2 | the pass bound is pinned only by the number in the error text | `pass < bound` in `solve.ts` left the `lib/ground` tests green; on `x = x + y`, `x <= 38` and `x <= 39` conflict on pass 20 and `x <= 40` throws | a test for those three facts; row `V1`: **1 failed** (architecture 1) |
 | R3 | "code units" is not pinned: every boundary test uses one ASCII character | `[...value].length <= max` in `isText` left the suite green and accepted 65 astral characters (130 code units) as an id | a test per side with astral characters (half the limit accepted, one more malformed, for an id, label and unit, and an observation's id, source and quote); row `V2`: **2 failed** (observation-faults 1, schema-faults 1) |
 | R4 | "maximal run" is pinned only for two-digit runs | adding the first three digits of a run longer than six digits as a run of its own, and splitting every run into pieces of four, each left the suite green | rows for runs of 7, 8, 12 and 13 digits (the whole run accepted; the prefixes, suffixes and pieces tried were refused: a sample, which the second pass found too small, see S2 below); rows `V3` and `V4`: **1 failed** each (observation-faults 1) |
 | R5 | "seven structural schema rules" | the test has `malformed` and six structural rules, seven in the plan's precedence line | reworded (the verifier's text said "the plan's precedence without `hostile-input`"; the plan's line has no `hostile-input` in it, so the sentence says that `hostile-input` is outside it) |
@@ -555,6 +572,15 @@ enumerates, for one run of each length from 2 to 13 digits (the first n digits o
 substring of it: 454 checks, in which the whole run must be accepted as a bound and every other substring refused. What that covers: every substring of
 those twelve runs. What it does not cover: other runs of the same lengths. Rows `V3` to `V7` against the tests at `296f3c6`:
 `V5`, `V6` and `V7` **0 failed** each, `V3` and `V4` **1 failed** each (the rows of R4); with the enumeration: **1 failed** each (observation-faults 1).
+
+**Audit.** Every factual sentence of this file and of the pull request body, and every claim-making comment and test title in `lib/ground/**`, was
+checked against something looked at or run (the table of claims, evidence and verdicts is in the session's scratch directory, not in the repository).
+What did not survive was narrowed or deleted: in `lib/ground` comments and titles in the commit "docs(ground): comments and test titles narrowed to what
+the tests show (audit)", and in this file in the commit that added this paragraph. The kinds of sentence: a wrong count (three modules share `plain.ts`;
+five import it); a list presented as complete ("the whole call fails only when ..." left out `invalid-schema`; the order tests do not check "each list");
+a universal over all inputs where the tests are a sample ("never read", "never throws, whatever it is given"); a cause nobody measured (the parser, "the
+richest instances", why `M43` ran out of memory); a quotation marked as the plan's words that was not verbatim, or attributed to the wrong plan item (D6);
+a test count the file says it does not quote ("all 990 tests"); and a sentence that contradicted the next one (`O14`, the oracle's window).
 
 ## Falsifiability log
 
