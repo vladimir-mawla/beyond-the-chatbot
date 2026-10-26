@@ -413,44 +413,49 @@ killed by tests that feed them a value that makes them fire (`O2`, `O3`), and th
 
 ## Timing
 
-Measured with `vitest run --reporter=json` (per-test durations), `AI_AGENT` and `CLAUDECODE` unset, after the last test was added (the fix round
-after the first L4 pass added five tests and these figures were taken again). **The machine was never idle**: other sessions were running work on it
-throughout, and it was busier for this set than for the first (load average, 1 minute on 10 cores: 19 to 22 at the start of the ambient runs, 41 to 46
-at the start of the runs with 20 `yes` added, one ambient run started at 45), so the figures say more about the load than about the tests. The default
-timeout (5 s) applies to one test, the project's rule is no more than about 40% of it (2 s) at CI load, and CI's runners are about 2 times slower than a
-quiet local run.
+Measured with `vitest run --reporter=json` (per-test durations), `AI_AGENT` and `CLAUDECODE` unset, on the final tests (`lib/` at `724f5f5`: 1765 tests in
+42 files for the whole suite, 996 in 14 files for `lib/ground`). The machine was shared with other sessions throughout, so the load average (1 minute,
+10 cores) at the start of each run is in the table; it lags, and the first 20-`yes` run started before the average had moved. The figures say more about
+that load than about the tests. This milestone's brief asked that no test take more than about 40% of its timeout at CI-equivalent load; the default
+timeout is 5 s, so 40% is 2 s. I did not measure CI-equivalent load, and the 20 `yes > /dev/null` processes (started by one shell command and killed with
+`pkill -x yes` after the three runs; `pgrep -x yes` found none before and none after) are my own stress, not a model of CI.
 
 | Run | Load at start | Wall | Slowest `lib/ground` test |
 |---|---|---|---|
-| `lib/ground` alone, ambient, run 1 | 18.7 | 11.8 s | 574 ms (`oracle-exactness`, seeds 151 to 200) |
-| `lib/ground` alone, ambient, run 2 | 19.1 | 6.9 s | 291 ms (`immutability`, the JSON round trip) |
-| `oracle-exactness.test.ts` alone, ambient | 21.6 | 4.6 s | 79 ms |
-| whole suite, ambient, run 1 | 20.1 | 42.2 s | 1295 ms (M1's module-graph scan run over these files) |
-| whole suite, ambient, run 2 | 45.4 | 32.9 s | 1244 ms (`order-independence`, seeds 51 to 100) |
-| `lib/ground` alone, 20 `yes` added | 41.6 | 61.5 s | **2600 ms** (M1's module-graph scan run over these files) |
-| `oracle-exactness.test.ts` alone, 20 `yes` added | 45.9 | 22.8 s | 664 ms |
-| whole suite, 20 `yes` added | 42.2 | 58.1 s | 1731 ms (`immutability`, the JSON round trip) |
+| `lib/ground` alone, ambient, run a | 4.4 | 6.1 s | 201 ms (`architecture`, a hand-rolled comparison in `solve.ts`) |
+| `lib/ground` alone, ambient, run b | 6.1 | 6.0 s | 267 ms (`architecture`, the closed-module-graph scan) |
+| `oracle-exactness.test.ts` alone, ambient | 5.9 | 4.4 s | 76 ms |
+| whole suite, ambient, five runs | 6.4, 8.1, 8.5, 11.1, 12.2 | 13.4 to 13.6 s | 303 to 439 ms (`immutability`, `integer-only`, `architecture`) |
+| `lib/ground` alone, 20 `yes` added | 4.5 | 22.2 s | **663 ms** (`core`, seeds 1201 to 1230) |
+| `oracle-exactness.test.ts` alone, 20 `yes` added | 11.8 | 16.4 s | 339 ms |
+| whole suite, 20 `yes` added | 12.8 | 26.4 s | 890 ms (`order-independence`, the 600-instance `source` relabelling loop) |
 
-The 20 `yes > /dev/null` processes were started by the same shell command and killed by `pkill -x yes` afterwards; `pgrep -x yes` found none
-before and none after. **The slowest `lib/ground` test in this set is 2600 ms, 52% of the timeout, which is over the project's 40%**, at a load average
-of 42 to 46 (20 `yes` on top of a machine already at 20 or more, about 4 times oversubscribed). It is not a generated-instance loop: it is the one
-test that runs M1's closed-module-graph scan over the whole of `lib/` (the same kind of test is in M3's architecture test), and the TypeScript
-parser it drives is what slows down. The same test took 235 and 284 ms at a load of about 7 to 8 in the previous set of runs. I did not change it; what I can
-say is that a quiet run is about a twentieth of the timeout and that CI's 2 times is not 10 times. The slowest generated-instance test in this set is
-664 ms under 20 `yes` (13% of the timeout). In the previous set, before the five tests were added, the slowest `lib/ground` test with 20 `yes` added
-was 1090 ms at a load of 13 to 25; the earlier runs on a busy machine had M1's `never-sabotage.test.ts` (about 2 s) as the slowest test of the whole
-suite. **No timeout was raised anywhere** (`vitest.config.ts` is the scaffold's and was not touched, and no test passes a timeout of its own except
-seven tests in `schema-faults.test.ts` and `architecture.test.ts` that pass 2 s as a guard against a loop and take a few milliseconds).
+In the five ambient whole-suite runs the slowest test of all was M1's `never-sabotage.test.ts`, at 1.2 to 1.3 s; with 20 `yes` added the slowest test
+of all was the 890 ms one above (`never-sabotage` took 858 ms). No `lib/ground` test took more than 0.9 s in any of these runs. The 2.6 s that the
+earlier version of this section reported for the closed-module-graph scan was not reproduced: that test took 127 to 322 ms in these runs, 127 to 159 ms of
+them with 20 `yes` added. The earlier run started at a 1-minute load average of 42 to 46; none of these started above 12.8. I did not change the test,
+and I do not know why the earlier run was slower.
 
-How it got there: the first timing run, on the first version of the tests (load 13 to 17), had a generated-instance test at 1.5 s, because 500
-instances were one test. Every such loop was cut into smaller tests with the same totals and seeds (about 25 to 125 instances each), and the
-heaviest few seeds were not given to the oracle (28 of 8 000 for exactness, which were half of the oracle's time; a budget on the worst any
-subset can cost for the support, core and open-ends tests). A cost: the three tests of that family skip 5 to 6% of their instances, and what
-they skip is the richest ones.
+CI: `npm test` took 37.19 s in the CI job at `a5d2cd3` (1759 tests) and 48.55 s at `296f3c6` (1764 tests) (`gh run view --log`), against 13.4 to 13.6 s for the
+whole suite in the five ambient runs above, which is between 2.7 and 3.6 times as long. The CI log has no per-test durations, so the slowest M4 test on CI
+was not measured.
 
-On cost in use, not in tests: at the largest schema the contracts allow (64 fields, 64 observations, 31 levels), on this busy machine, `ground` took
-about 3 ms, one `supportOf` about 23 ms (all 64 fields in turn about 1.5 s) and `openEndsOf` for the root, both sides, about 23 ms. That is one
-schema measured twice, not a bound.
+What was done about test durations. The first timing run, on the first version of the tests, had a generated-instance test at 1.48 s
+(`oracle-exactness`, 500 instances as one test). The generated-instance loops were then cut into tests of 25 instances (`open-ends`,
+`single-observation`, `immutability`), 30 (`core`, `support-certificate`), 50 (`oracle-exactness`, `order-independence`), 80 (`monotonicity`) and 125
+(`integer-only`), and 300 (`locality`). Not every loop was cut: six loops are still single tests, of 300 and 500 instances (`immutability`), 600 and 800
+(`order-independence`), 3 000 (`single-observation`) and 4 000 (`schema-faults`), and the junk tests of `hostile-input.test.ts` run 1 000 seeds each in ten
+tests. Of those, `order-independence`'s 600-instance loop took 890 ms and `immutability`'s 500-instance JSON round trip 784 ms in the whole-suite run with 20
+`yes` added. The heaviest instances are not given to the oracle: 28 of the 8 000 for `oracle-exactness` (see Decision 8 for what they cost), and, for the
+support, core and open-ends tests, a budget on the worst any subset can cost, which skips 173 of 3 000, 80 of 1 500 and 101 of 2 000 instances (5.8%,
+5.3% and 5.05%); what is skipped is what is over that budget (`oracleWorstCost`). **No timeout was raised anywhere** (`vitest.config.ts` is the scaffold's and
+was not touched, and no test passes a timeout of its own except seven tests, six in `architecture.test.ts` and one in `schema-faults.test.ts`, that pass 2 s
+as a guard against a loop; the slowest of them took 26 ms in the runs above).
+
+On cost in use, not in tests: at the largest schema the contracts allow (64 fields, 64 observations, 31 levels), in two runs of three repetitions of a scratch
+test (not in the repository) with the machine at a 1-minute load average of 10.6 at the start, `ground` took 0.6 to 3.1 ms, `supportOf` for the root 36.6 to
+52.2 ms, `supportOf` for all 64 fields in turn 2.29 to 2.34 s, `openEndsOf` for the root with both sides 36.5 to 37.6 ms and `extentOf` for all 64 fields
+0.1 to 0.3 ms. That is one schema, not a bound.
 
 ## Plan wording and neighbours, flagged (the plan was not edited)
 
@@ -534,6 +539,14 @@ were measured again by running the whole ledger on the final tests.
 
 The verifier again could not break the engine; it rejected `296f3c6` for two items, one about the timing text (S1) and one about the coverage of
 the digit-run tests (S2), and asked for an audit of every factual sentence.
+
+**S1, the timing text** (rewritten in "Timing"). Five sentences were wrong or unmeasured: "the slowest generated-instance test is 664 ms (13%)" (the
+whole-suite 20-`yes` row was 1731 ms, `immutability`'s JSON round trip; 664 ms was `oracle-exactness` alone); "every such loop was cut ... about 25 to
+125 instances" (the chunked families are 25 to 125 instances, but six loops of 300 to 4 000 instances were still single tests, the `locality` chunks
+are 300, and the junk tests of `hostile-input` run 1 000 seeds each); "CI's runners are about 2 times slower than a quiet local run" (no measurement
+of mine said so; the CI and local durations are now both in "Timing"); "a quiet run is about a twentieth of the timeout" (the verifier's runs
+disagreed; mine are in "Timing"); "the TypeScript parser it drives is what slows down" (a cause I never measured). The loops were not split and no
+timeout was changed: the verifier did not reproduce the 2.6 s and nor did the new runs.
 
 **S2, the R4 rows were a sample.** "Every prefix, suffix and piece refused" and "maximal at every length" described a few runs, and the verifier's three
 edits (rows `V5`, `V6`, `V7`: a run of exactly 5 digits also yields its first three; a run of 9 to 11 digits also yields its first four; a run of 3 to 6
