@@ -5,8 +5,8 @@ import { extentOf, ground, openEndsOf, readSchema, supportOf } from "../index.js
 import { constraintsOf, solve, structureOf, treesOf } from "../solve.js";
 import { CANON, ORDER_DESK, base, canon, derived, genClaims, genInstance, mulberry32, obs, oracleFields, refIntake, schemaOf, shuffled } from "./fixtures.js";
 import type { Instance, RawField, RawObservation, RawSchema } from "./fixtures.js";
-import { classify, oracleBaselines, oracleCost, oracleTrees } from "./oracle.js";
-import type { Ruling } from "./oracle.js";
+import { classify, hasHole, oracleBaselines, oracleCost, oracleTrees } from "./oracle.js";
+import type { OField, Reach, Ruling } from "./oracle.js";
 
 /**
  * ORACLE EXACTNESS (plan section 6, M4, layer 2). Over a seeded generator (hand-rolled `mulberry32`, no new
@@ -398,4 +398,71 @@ describe("the canonical scenario of plan section 7: E, support, open ends and co
     expect(CANON.o1.quote).not.toMatch(/7|10/);
     for (const id of ["o1", "o2", "o4"] as const) expect(CANON[id].quote).not.toMatch(/\b10\b|\b7\b/);
   });
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// The oracle's own detectors and the plan's table, shown able to fire.
+// ---------------------------------------------------------------------------------------------------------
+
+describe("the oracle's own checks can fail, so that 'no mismatch' and 'no hole' mean something", () => {
+  const A: OField[] = [{ id: "a", baseline: { lo: 0, hi: null } }];
+  it("hasHole is true exactly when an integer between the least and greatest value is missing", () => {
+    expect(hasHole(2, 0, 2)).toBe(true); // {0, 2}
+    expect(hasHole(3, 0, 2)).toBe(false); // {0, 1, 2}
+    expect(hasHole(1, 5, 5)).toBe(false);
+    expect(hasHole(2, 5, 5)).toBe(true); // an impossible count is also refused
+    expect(hasHole(4, -2, 1)).toBe(false);
+    expect(hasHole(3, -2, 1)).toBe(true);
+  });
+
+  it("a set of values with a hole makes oracleTrees say not contiguous, through the call site", () => {
+    const realistic = oracleTrees(A, [{ id: "o", field: "a", extent: { lo: 1, hi: 3 } }]);
+    expect(realistic[0]?.contiguous).toBe(true);
+    const holey = (): Reach => ({ count: 2, min: new Float64Array([0]), max: new Float64Array([2]), distinct: new Int32Array([2]) });
+    expect(oracleTrees(A, [], holey)[0]?.contiguous).toBe(false);
+  });
+
+  it("windows that disagree about whether a world exists make it throw instead of answer", () => {
+    let call = 0;
+    const disagree = (): Reach => ({ count: call++ === 0 ? 1 : 0, min: new Float64Array([0]), max: new Float64Array([0]), distinct: new Int32Array([1]) });
+    expect(() => oracleTrees(A, [], disagree)).toThrow(/too small/);
+  });
+
+  it("a side is unbounded exactly when widening the window moves it: [0, inf) has hi null, [0, 3] has hi 3, and a sum of two unbounded fields is unbounded above", () => {
+    const sum: OField[] = [{ id: "a", baseline: { lo: 0, hi: null } }, { id: "b", baseline: { lo: 0, hi: null } }, { id: "t", sum: ["a", "b"] }];
+    const e = oracleTrees(sum, [])[0]?.extents;
+    expect(e?.get("a")).toEqual({ lo: 0, hi: null });
+    expect(e?.get("t")).toEqual({ lo: 0, hi: null });
+    const finite = oracleTrees(sum, [{ id: "o", field: "t", extent: { lo: null, hi: 3 } }])[0]?.extents;
+    expect(finite?.get("a")).toEqual({ lo: 0, hi: 3 });
+    expect(finite?.get("t")).toEqual({ lo: 0, hi: 3 });
+    // negative unbounded below: a and b free, t pinned: each is unbounded on both sides
+    const free: OField[] = [{ id: "a", baseline: { lo: null, hi: null } }, { id: "b", baseline: { lo: null, hi: null } }, { id: "t", sum: ["a", "b"] }];
+    const pinned = oracleTrees(free, [{ id: "o", field: "t", extent: { lo: 0, hi: 0 } }])[0]?.extents;
+    expect(pinned?.get("a")).toEqual({ lo: null, hi: null });
+    expect(pinned?.get("t")).toEqual({ lo: 0, hi: 0 });
+  });
+});
+
+describe("the plan's table of five rulings, by hand (section 4.2), as `classify` applies it", () => {
+  const B = { lo: 0, hi: null };
+  const rows: readonly (readonly [string, Extent | undefined, Extent, Extent, Ruling])[] = [
+    ["a claim that B already satisfies rules nothing out", { lo: 4, hi: 9 }, B, { lo: 0, hi: null }, "vacuous"],
+    ["vacuous outranks conflicted", undefined, B, { lo: null, hi: null }, "vacuous"],
+    ["an unsatisfiable tree", undefined, B, { lo: null, hi: 3 }, "conflicted"],
+    ["E equals B: the evidence has not moved the quantity", B, B, { lo: null, hi: 3 }, "ungrounded"],
+    ["E inside the claim", { lo: 1, hi: 2 }, B, { lo: null, hi: 3 }, "entailed"],
+    ["E equal to the claim where it is bounded", { lo: 0, hi: 3 }, B, { lo: null, hi: 3 }, "entailed"],
+    ["E overlaps the claim and is not inside it", { lo: 2, hi: 6 }, B, { lo: null, hi: 3 }, "weakened"],
+    ["E touches the claim at one integer", { lo: 3, hi: 9 }, B, { lo: null, hi: 3 }, "weakened"],
+    ["E one past the claim", { lo: 4, hi: 9 }, B, { lo: null, hi: 3 }, "contradicted"],
+    ["the plan's step 4: E = [4, 9], claim at most 12", { lo: 4, hi: 9 }, B, { lo: null, hi: 12 }, "entailed"],
+    ["the plan's step 1: E = [4, inf), claim at most 12", { lo: 4, hi: null }, B, { lo: null, hi: 12 }, "weakened"],
+    ["the plan's step 3: E = [4, inf), claim at most 3", { lo: 4, hi: null }, B, { lo: null, hi: 3 }, "contradicted"],
+    ["a finite B: E = B is ungrounded", { lo: 0, hi: 10 }, { lo: 0, hi: 10 }, { lo: 0, hi: 5 }, "ungrounded"],
+    ["a finite B inside the claim is vacuous", { lo: 0, hi: 4 }, { lo: 0, hi: 10 }, { lo: -1, hi: 10 }, "vacuous"],
+  ];
+  for (const [name, e, b, claim, want] of rows) {
+    it(`${name}: ${want}`, () => expect(classify(e, b, claim)).toBe(want));
+  }
 });

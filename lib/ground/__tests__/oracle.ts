@@ -98,7 +98,12 @@ function windowCap(defs: readonly OField[], observations: readonly OObs[]): numb
   return total;
 }
 
-interface Reach {
+/** The values of a field take `distinct` different integers between `min` and `max`: some integer in between is missing. */
+export function hasHole(distinct: number, min: number, max: number): boolean {
+  return distinct !== max - min + 1;
+}
+
+export interface Reach {
   readonly count: number;
   readonly min: Float64Array;
   readonly max: Float64Array;
@@ -186,8 +191,12 @@ function reach(bases: readonly OField[], derived: readonly OField[], order: read
   return { count, min, max, distinct };
 }
 
-/** Answer for one tree (a connected component), given every field of the schema and every observation. */
-function oracleTree(all: readonly OField[], ids: readonly string[], observations: readonly OObs[]): OracleTree {
+/**
+ * Answer for one tree (a connected component), given every field of the schema and every observation. `enumerate` is the
+ * enumeration, and is a parameter only so that a test can hand the oracle a set with a hole and two windows that
+ * disagree (no real input makes either happen), which is the only way to see those two checks fire through here.
+ */
+function oracleTree(all: readonly OField[], ids: readonly string[], observations: readonly OObs[], enumerate: typeof reach = reach): OracleTree {
   const defs = ids.map((id) => all.find((f) => f.id === id) as OField);
   const mine = observations.filter((o) => ids.includes(o.field));
   const bases = defs.filter((f) => f.baseline !== undefined);
@@ -208,8 +217,8 @@ function oracleTree(all: readonly OField[], ids: readonly string[], observations
   const order = [...bases, ...derived];
 
   const cap = windowCap(defs, mine);
-  const small = reach(bases, derived, order, mine, cap);
-  const large = reach(bases, derived, order, mine, cap + 2);
+  const small = enumerate(bases, derived, order, mine, cap);
+  const large = enumerate(bases, derived, order, mine, cap + 2);
   if ((small.count === 0) !== (large.count === 0)) {
     throw new Error(`the oracle's window ${cap} is too small: ${small.count} worlds inside it and ${large.count} inside the next one`);
   }
@@ -222,14 +231,14 @@ function oracleTree(all: readonly OField[], ids: readonly string[], observations
     const lo: Bound = small.min[i] === large.min[i] ? (small.min[i] as number) : null;
     const hi: Bound = small.max[i] === large.max[i] ? (small.max[i] as number) : null;
     extents.set(f.id, { lo, hi });
-    if ((small.distinct[i] as number) !== (small.max[i] as number) - (small.min[i] as number) + 1) contiguous = false;
+    if (hasHole(small.distinct[i] as number, small.min[i] as number, small.max[i] as number)) contiguous = false;
   });
   return { fields: ids, exists: true, extents, contiguous, cap, worlds: worldsInLarge };
 }
 
-/** Every tree of the schema, by enumeration. `observations` may name fields of any tree. */
-export function oracleTrees(fields: readonly OField[], observations: readonly OObs[]): OracleTree[] {
-  return oracleComponents(fields).map((ids) => oracleTree(fields, ids, observations));
+/** Every tree of the schema, by enumeration. `observations` may name fields of any tree. `enumerate` is for the oracle's own tests only. */
+export function oracleTrees(fields: readonly OField[], observations: readonly OObs[], enumerate: typeof reach = reach): OracleTree[] {
+  return oracleComponents(fields).map((ids) => oracleTree(fields, ids, observations, enumerate));
 }
 
 /** Only the tree that holds `field`. */
