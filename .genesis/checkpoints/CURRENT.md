@@ -1,21 +1,25 @@
 # CURRENT
 
 - **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`), M2 (deploy skeleton,
-  `app/api/health/**`) and M3 (extent algebra, `lib/extent/**`) are `done`; M4 to M9 are `todo` in this
-  revision. The part of the engine that grounds evidence and rules a claim is not built: `lib/ground` and
-  `lib/entail` do not exist. What exists is M1's types and structural invariants and M3's extent algebra,
-  the interval arithmetic those layers are planned to use (see "What M3 adds"; nothing imports it yet).
-  `.genesis/PLAN.md` (G0-G2) and the tooling skeleton are in place, a skeleton is deployed (see "What M2
-  adds"), and `app/page.tsx` is still the genesis placeholder. Each milestone is separate, with its own
-  branch, its own PR, and its own independent (L4) verifier.
+  `app/api/health/**`), M3 (extent algebra, `lib/extent/**`) and M4 (ground, `lib/ground/**`) are `done`;
+  M5 to M9 are `todo` in this revision. **Next: M5 (entail, `lib/entail/**`).** The part of the engine that
+  rules a claim is not built: `lib/entail` does not exist. What exists is M1's types and structural
+  invariants, M3's extent algebra and M4's `lib/ground`, which reads an untrusted schema and snapshot and
+  propagates them to an extent, a support and a core per field (see "What M3 adds" and "What M4 adds";
+  nothing outside `lib/ground` imports `lib/ground` yet). `.genesis/PLAN.md` (G0-G2) and the tooling
+  skeleton are in place, a skeleton is deployed (see "What M2 adds"), and `app/page.tsx` is still the
+  genesis placeholder. Each milestone is separate, with its own branch, its own PR, and its own independent
+  (L4) verifier.
 
-- **last updated:** 2026-10-24 (UTC), in the `chore(genesis): mark M3 done` bookkeeping PR, after M3 passed
-  independent L4 verification and merged (PR #5). The previous revision was the `mark M2 done` PR's
-  (PR #4), written after M2 merged (PR #3); the one before it was the `mark M1 done` PR's (PR #2), written
-  after M1 merged (PR #1), and the one before that was written immediately after genesis (repo scaffold,
-  `.genesis/` ritual, README, two tests, CI workflow), before any milestone build had begun. Recorded
-  honestly rather than implying progress that does not exist: a checkpoint that misstates status in
-  either direction is worse than no checkpoint at all.
+- **last updated:** 2026-11-06 (UTC), in the `chore(genesis): mark M4 done` bookkeeping PR, after M4 passed
+  independent L4 verification and merged (PR #7). The previous revision was the `mark M3 done` PR's
+  (PR #6), written after M3 merged (PR #5); the one before it was the `mark M2 done` PR's (PR #4), written
+  after M2 merged (PR #3); the one before that was the `mark M1 done` PR's (PR #2), written after M1 merged
+  (PR #1), and the one before that was written immediately after genesis (repo scaffold, `.genesis/`
+  ritual, README, two tests, CI workflow), before any milestone build had begun. Recorded honestly rather
+  than implying progress that does not exist: a checkpoint that misstates status in either direction is
+  worse than no checkpoint at all. This revision also corrects one sentence of the previous one, about how
+  many reviews and fix rounds M3 took (see the M3 row and "What M3 adds").
 
 ## Milestone state, as of this revision
 
@@ -23,8 +27,8 @@
 |---|---|---|
 | M1 contracts | `done` | PR #1 → `c3eba1d` (squash-merged; the PR page still shows the pre-rewrite `1a7cf44`, see below); independent L4 APPROVE on the fourth review, after three fix rounds |
 | M2 deploy | `done` | PR #3 → `d7aedb4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE in round 2, after one fix round; live, see "What M2 adds" below |
-| M3 extent algebra | `done` | PR #5 → `612bdd4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE on the fourth review, after three fix rounds; see "What M3 adds" below |
-| M4 ground | `todo` | designed only |
+| M3 extent algebra | `done` | PR #5 → `612bdd4` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE on the third review, after two fix rounds (R1 REJECT of `a0a33e2`, R2 REJECT of `2caf41c`, R3 APPROVE of `c6588b5`). The previous revision said "the fourth review, after three fix rounds"; that was wrong, see "What M3 adds" |
+| M4 ground | `done` | PR #7 → `ccd594a` (squash-merged; the PR page shows the same SHA, see below); independent L4 APPROVE at the fourth review, a targeted close at `43d1e64`, after three rejections (`a5d2cd3`, `296f3c6`, `e94cb97`, per ADR 0004) and one more fix, the one-sentence ADR correction `eb3a8a0` that the close made its condition; see "What M4 adds" below |
 | M5 entail | `todo` | designed only |
 | M6 domain (order desk) | `todo` | designed only |
 | M7 failure suite | `todo` | designed only |
@@ -32,13 +36,16 @@
 | M9 deliverables | `todo` | designed only |
 
 `main` is the genesis base (the plan, tooling config, app shell, two tests, a CI workflow, the README and
-the `.genesis/` ritual) plus five merged PRs: #1, M1 (`lib/contracts/**`, its tests, and
+the `.genesis/` ritual) plus seven merged PRs: #1, M1 (`lib/contracts/**`, its tests, and
 `.genesis/decisions/0001-contracts.md`); #2, `mark M1 done`, which edited only the two `.genesis/` files
 (`git diff --stat c3eba1d f9cb2eb`); #3, M2 (`app/api/health/**` with its tests,
 `.genesis/decisions/0002-deploy.md`, and one changed line in `README.md`, the `Live:` line); #4,
-`mark M2 done`, which edited only the same two `.genesis/` files (`git diff --stat d7aedb4 40eb046`); and
-#5, M3 (`lib/extent/**` with its tests, and `.genesis/decisions/0003-extent.md`: 15 new files, nothing else
-touched, see the last section). `lib/` holds `contracts` and `extent` and there is no `domains/`. The one
+`mark M2 done`, which edited only the same two `.genesis/` files (`git diff --stat d7aedb4 40eb046`); #5,
+M3 (`lib/extent/**` with its tests, and `.genesis/decisions/0003-extent.md`: 15 new files, nothing else
+touched, see the last section); #6, `mark M3 done`, which edited only the same two `.genesis/` files
+(`git diff --stat 612bdd4 4a41b7b`); and #7, M4 (`lib/ground/**` with its tests, and
+`.genesis/decisions/0004-ground.md`: 27 new files, nothing else touched, see the last section). `lib/`
+holds `contracts`, `extent` and `ground` and there is no `domains/`. The one
 route is `app/api/health`; it is deployed (see "What M2 adds"). The engine directories are `lib/extent`,
 `lib/ground`, `lib/entail` (plus `lib/contracts`), not the house-template names; if a brief says
 otherwise, `.genesis/PLAN.md` wins and the builder flags the mismatch.
@@ -58,9 +65,9 @@ GitHub's PR page for #1 still shows the pre-rewrite merge SHA. To match it again
 
 The genesis tip moved the same way: `8943493` (the pre-rewrite parent of `1a7cf44`) is now `141f1cd`.
 
-PR #2, #3, #4 and #5 need no pair: GitHub reports their merge commits as `f9cb2ebc55bd...`,
-`d7aedb4c770d...`, `40eb046a918a...` and `612bdd403ba5...` (`gh pr list --state all --json number,mergeCommit`),
-which are the SHAs on `main` now.
+PR #2 to #7 need no pair: GitHub reports their merge commits as `f9cb2ebc55bd...`, `d7aedb4c770d...`,
+`40eb046a918a...`, `612bdd403ba5...`, `4a41b7bbeb95...` and `ccd594a4bcc7...`
+(`gh pr list --state all --json number,mergeCommit`), which are the SHAs on `main` now.
 
 What was compared, and nothing more. The pre-rewrite commits are on no branch any more; they were read
 by SHA from GitHub's commits API, which still serves them today and may not always.
@@ -110,9 +117,9 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   the lockfile from 80 platform entries (215 packages) to 53 (188), removing exactly those 27; npm 10.9.9
   keeps all 80. The test does not detect other kinds of lockfile damage.
 - **Does not prove anything about the engine.** The scaffold has none. The only engine code is M1's
-  contracts (types and structural invariants), the health route that self-checks M1's guard (M2) and the
-  extent algebra (M3), covered in the next three sections; M4 and M5 are `todo`, so grounding, propagation
-  over a schema, ruling and recheck are still designs, not results. The plan's own section 8 numbers come
+  contracts (types and structural invariants), the health route that self-checks M1's guard (M2), the
+  extent algebra (M3) and `lib/ground` (M4), covered in the next four sections; M5 is `todo`, so the
+  ruling of a claim and the recheck of a certificate are still designs, not results. The plan's own section 8 numbers come
   from a throwaway model that is not in this repository.
 - `vercel.json` is committed and pinned to `npm ci` / `npm run build`, and since M2 a test pins it:
   `app/api/health/__tests__/vercel-config.test.ts` requires exactly those two keys with exactly those two
@@ -134,7 +141,8 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   judging that was the independent verification's job, and its verdict is in the milestone table above.
 - M1 is the contracts only. When M1 merged, M3 to M5 were `todo`, so nothing about folding evidence into
   extents, propagating bounds, ruling a claim or rechecking a certificate had been built or demonstrated.
-  M3 has since built the extent algebra (see "What M3 adds"); M4 and M5 are still `todo`.
+  M3 and M4 have since built the extent algebra and the grounding (see "What M3 adds" and "What M4
+  adds"); M5 is still `todo`.
 
 ## What M2 adds, and what was run to check it
 
@@ -185,8 +193,8 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
 - **What this does not show.** One `curl` is one request at one time: it shows which commit Vercel served
   and that the four self-checks passed then, not that the deployment is unchanged since. The health route
   imports only `lib/contracts` (`route.ts` imports `./checks`, and `checks.ts` imports `lib/contracts`), so
-  a green `/api/health` says nothing about `lib/extent`, which M3 has since added, and `lib/ground` and
-  `lib/entail` do not exist yet. By ADR 0002's own account (Decision 1) the four values exercise three
+  a green `/api/health` says nothing about `lib/extent` or `lib/ground`, which M3 and M4 have since added,
+  and `lib/entail` does not exist yet. By ADR 0002's own account (Decision 1) the four values exercise three
   cells of M1's guard and one whole value, not every cell, so a guard that broke another cell would not
   turn the endpoint red; M1's `integrity.test.ts` is what pins the rest.
 
@@ -268,11 +276,23 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
 
 - That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
   judging that was the independent verification's job, and its verdict is in the milestone table above.
-  The verifier's report is not in this repository: the round and verdict are as handed to this PR's
-  author, with the three fix rounds described as (1) a read-once test gap, closed by a table over the first
-  read in `hostile-input.test.ts`, a test seam for the oracle's hole check and corrected ADR sentences,
-  (2) a test title and an ADR clause narrowed, and (3) a PR-body diff command corrected. The third is an
-  edit to the PR description, not to a file, so the next bullet cannot show it.
+  The verifier's report is not in this repository: that the third review approved `c6588b5` is as handed
+  to the `mark M3 done` PR's author, and PR #5 carries no comment or review from the verifier (its only
+  comment is Vercel's).
+- **Erratum, corrected in the `mark M4 done` PR.** The previous revision said M3's APPROVE came
+  "on the fourth review, after three fix rounds". The record shows three reviews and two fix rounds. ADR
+  0003's Status line has the first independent pass rejecting `a0a33e2` (R1 REJECT). PR #5's description has
+  a "Review round" answering that rejection and a "Second review round" answering a rejection of `2caf41c`
+  (R2 REJECT), and then the head `c6588b5`, which was approved (R3 APPROVE); nothing in the description or
+  the commits shows a fourth review. The three "fix rounds" the earlier revision
+  listed were two rounds. The first was a read-once test gap closed by a table over the first read in `hostile-input.test.ts`, a test seam
+  for the oracle's hole check and corrected ADR sentences. The second answered the three wording items of
+  the second rejection: a test title narrowed, an ADR clause narrowed, and a PR-body diff command corrected
+  (the earlier revision counted the test title and the ADR clause as a second round and the diff command as
+  a third). The diff command is an edit to the PR description, not to a file, so the next bullet cannot
+  show it. The same wrong count was in the PR #6 description and in the note under the milestone table in
+  `.genesis/DONE.html`; the note is corrected in the same commit as this file, and the merged PR
+  description is not edited.
 - **What the fix rounds changed**, as far as the repository shows. PR #5 had twenty commits. ADR 0003's
   Status line names `a0a33e2` as the head the first independent review rejected. The eight commits after it
   (`ffedf61` to `c6588b5`, the PR head) change `lib/extent/__tests__/hostile-input.test.ts`,
@@ -285,25 +305,105 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
   from `d7aedb4`.
 - **What this does not show.** One `curl` is one request at one time: it shows which commit Vercel served
   and that the four self-checks passed then, not that the deployment is unchanged since. The health route
-  imports only `lib/contracts`, so the response says nothing about M3's code. `lib/ground` and `lib/entail`
-  do not exist, so nothing about folding evidence over a schema, ruling a claim or rechecking a certificate
-  has been built or demonstrated; M3 supplies arithmetic for that and no caller yet.
+  imports only `lib/contracts`, so the response says nothing about M3's code. When M3 merged, `lib/ground`
+  and `lib/entail` did not exist, so nothing about folding evidence over a schema, ruling a claim or
+  rechecking a certificate had been built or demonstrated; M3 supplied arithmetic for that and no caller.
+  `lib/ground` has since landed (see "What M4 adds"); `lib/entail` has not.
+
+## What M4 adds, and what was run to check it
+
+`.genesis/decisions/0004-ground.md` (ADR 0004) is the record of what M4 decided, measured and left unproven.
+This section points at it and records only what was run for this revision; where it cites a Decision, the
+ADR's wording is the claim and this file adds nothing to it.
+
+- **What it is.** `lib/ground/**`: the six functions of `.genesis/PLAN.md` section 5 that M4 owns
+  (`readSchema`, `ground`, `extentOf`, `supportOf`, `openEndsOf`, `declOf`), exported from
+  `lib/ground/index.ts` with their result types, and nothing else; `solve`, `shrink` and the other helpers
+  are internal (read from `index.ts`, which says `__tests__/architecture.test.ts` pins the list). Ten
+  sources and sixteen files under `__tests__/` (fourteen test files, `fixtures.ts` and `oracle.ts`), plus
+  ADR 0004: 27 new files, 7079 insertions, no deletions (`git diff --stat 4a41b7b ccd594a`), and
+  `git diff 4a41b7b ccd594a -- . ':!lib/ground' ':!.genesis/decisions/0004-ground.md'` is empty, so no other
+  file was touched.
+- **Tests:** `npm ci && npm test` on a clone of `main` at `ccd594a` (this branch before its two edits), run
+  with `env -u AI_AGENT -u CLAUDECODE` and `--reporter=json`, gave 42 files and 1765 tests passed, none
+  failed. By directory: `tests/` (the two genesis files) 2 files / 6 tests, `lib/contracts/__tests__/` 16 files
+  / 294 tests, `app/api/health/__tests__/` 3 files / 63 tests, `lib/extent/__tests__/` 7 files / 406 tests
+  and `lib/ground/__tests__/` 14 files / 996 tests (`architecture` 28, `core` 60, `hostile-input` 61,
+  `immutability` 34, `integer-only` 28, `locality` 8, `monotonicity` 56, `observation-faults` 105,
+  `open-ends` 85, `oracle-exactness` 189, `order-independence` 57, `schema-faults` 93,
+  `single-observation` 84, `support-certificate` 108). `npm run typecheck` and `npm run build` (from a
+  deleted `.next`) also exited 0 on that tree. The same figures, 1765 tests in 42 files and 996 in the
+  fourteen `lib/ground` files, are in the verifier's close report. These are this PR author's own runs, not
+  the L4 verifier's; ADR 0004 quotes the total number of tests only in its "Timing" section and says it
+  goes stale when a test is added.
+- **What the independent verification said.** Its close report is posted as a comment on PR #7; it is not
+  in the repository. At `43d1e64` it asked for one docs change and approved once that was made: ADR 0004's
+  U1 cited `immutability.test.ts:171` and "line 208", and those tests were on lines 172 and 209, which also
+  made the sweep sentence "U7 was the only wrong one" false; the fix was to cite the two tests by title.
+  It stated its claim as "clear of the defects found so far", not clear in general. Of 22 new mutations it
+  ran, 18 were killed; the four survivors it named are C1 and C3 (they change only the documented
+  non-result `passes` field), E1 (`declOf` first-wins, unpinned but stated correctly) and F1 (unreachable
+  in practice). It listed two optional, non-gating items that were not applied: Decision 2 could mention
+  the 64-schema shuffle test, and Decision 8's depth tally is over 7972 oracle instances, not 8000.
+- **What the review rounds changed**, as far as the repository shows. ADR 0004 records three rejected
+  passes, each answered by a revision section: the first rejected `a5d2cd3` (one false sentence about
+  `source`, three tests that pinned less than the sentences around them, four wording defects), the second
+  rejected `296f3c6` (the timing text and digit-run tests that were a sample) and the third rejected
+  `e94cb97` (seven sentences and titles, U1 to U7). The fourth review is the targeted close above. PR #7
+  has 58 commits, the last being `eb3a8a0`, `docs(adr): cite the immutability tests by title, not by line`;
+  `git diff 43d1e64 eb3a8a0 --stat` lists one file, `.genesis/decisions/0004-ground.md`, 2 insertions and 2
+  deletions. The verifier's approval was on that condition; the fix was checked against the two test files
+  by this PR's author and was not re-reviewed by the verifier. The verifier also states that the last fix
+  round before the close changed no source: the comment-stripped emit and declarations of the ten sources
+  are identical to `296f3c6`.
+- **Nothing calls it yet.** `git grep -nE "ground/|\.\./ground|lib/ground"` over the tree outside
+  `lib/ground/` and `.genesis/` hits only `lib/contracts/__tests__/architecture.test.ts` and
+  `lib/contracts/__tests__/support/module-graph.ts` (synthetic file trees held as strings and the layer
+  table) and two lines in `lib/extent/__tests__/architecture.test.ts` (a synthetic file that imports it, to
+  be refused); none is a real import from `app/`, `tests/` or a non-test source. By the reasoning in the
+  smoke-test bullet above (not re-measured for M4), `npm run build` therefore does not reach it.
+- **Observed 2026-11-06 at 22:27 UTC, before this PR:** `curl -i https://beyond-the-chatbot-xi.vercel.app/api/health`
+  answered HTTP 200 with the body below. Its `commit` was `ccd594a4bcc7211bb8cb15e377a7f9e991dad8da`, the
+  merge commit of PR #7 and the current `main` (`git rev-parse origin/main`). `checks.contracts.pass` was
+  true, `failing` was empty, and each of the four cases had `pass` true and `actual` equal to `expected`.
+  The `Vercel` commit status on `ccd594a` is `success` at 22:24:04 UTC, 32 seconds after PR #7 merged at
+  22:23:32 UTC (`gh api repos/vladimir-mawla/beyond-the-chatbot/commits/ccd594a4bcc7211bb8cb15e377a7f9e991dad8da/status`),
+  and the `CI` run on that commit (run 42304356740) completed with `success`. That is one deploy of one
+  merge, and merging this PR is expected to redeploy `main` and move the live `commit` off `ccd594a`.
+
+  ```json
+  {"status":"ok","commit":"ccd594a4bcc7211bb8cb15e377a7f9e991dad8da","checks":{"contracts":{"pass":true,"failing":[],"cases":[{"name":"well-formed-conflicted","pass":true,"expected":"ok","actual":"ok"},{"name":"ungrounded-carrying-established","pass":true,"expected":"unexpected-field/ungrounded/established","actual":"unexpected-field/ungrounded/established"},{"name":"weakened-with-empty-unmet","pass":true,"expected":"empty-array/weakened/unmet","actual":"empty-array/weakened/unmet"},{"name":"conflicted-missing-core","pass":true,"expected":"missing-field/conflicted/core","actual":"missing-field/conflicted/core"}]}}}
+  ```
+
+- That is the whole claim. A count of passing tests says they pass, not that they are the right tests;
+  judging that was the independent verification's job, and its verdict is in the milestone table above.
+  The claim of the verification itself is narrow: clear of the defects found so far. ADR 0004's "What is not
+  proven" lists what the tests do not show (the oracle's window rule, the generator's reach, the 28
+  instances not given to the oracle, that the read-once classes are all the ways to observe an input, and
+  that nothing forces a later layer to call `readSchema` or `ground`); this file adds nothing to it.
+- **What this does not show.** One `curl` is one request at one time. The health route imports only
+  `lib/contracts`, so the response says nothing about `lib/extent` or `lib/ground`. `lib/entail` does not
+  exist, so nothing about ruling a claim or rechecking a certificate has been built or demonstrated; M4
+  supplies the grounding for that and no caller yet.
 
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
-- `.genesis/decisions/` holds three decision records, `0001-contracts.md` (M1), `0002-deploy.md` (M2) and
-  `0003-extent.md` (M3), each written by the milestone that made the decisions it records (an ADR is
-  written by the milestone that made them). M4 to M9 have none yet. All three `Status` lines are out of
+- `.genesis/decisions/` holds four decision records, `0001-contracts.md` (M1), `0002-deploy.md` (M2),
+  `0003-extent.md` (M3) and `0004-ground.md` (M4), each written by the milestone that made the decisions it
+  records (an ADR is written by the milestone that made them). M5 to M9 have none yet. All four `Status` lines are out of
   date now that each of those milestones has had its independent pass. ADR 0001 and ADR 0002 still read
   "proposed ... not yet verified by an independent L4 pass". **ADR 0003's Status line (its lines 4 to 6)
   still says "this version has not been re-verified"**: the full line reads "proposed — written by the
   builder; revised after the first independent L4 pass rejected `a0a33e2` (...); this version has not been
   re-verified". That was true of the revision it was written for and is stale now that M3 has passed
-  independent verification (APPROVE on the fourth review, as handed to this PR's author). The word
-  "proposed" is stale in the same way. ADR 0002 was also written before the merge: its Decision 7 says the
+  independent verification (APPROVE on the third review, after two fix rounds; corrected in the `mark M4 done` PR, see "What M3 adds"). The word
+  "proposed" is stale in the same way. **ADR 0004's Status line (its lines 4 to 8)** ends "this version has
+  not been re-verified" after naming three rejected passes (`a5d2cd3`, `296f3c6`, `e94cb97`); the fourth
+  review, the targeted close at `43d1e64`, and the one-sentence fix after it (`eb3a8a0`) are not in it, and
+  "proposed" is stale there too. ADR 0002 was also written before the merge: its Decision 7 says the
   integration will redeploy `main` and that the deploy of `main` "is not something this milestone
   verified", and its "What is not proven" list still has "That the `main` redeploy after merge is
-  healthy". "What M2 adds" above is one observation of that redeploy, at one instant. None of the three
+  healthy". "What M2 adds" above is one observation of that redeploy, at one instant. None of the four
   records is edited here: each is its milestone's frozen file, and the bookkeeping exception covers only
   `DONE.html` and this file. They are recorded as known gaps instead.
 - **Text in M1's frozen files that M3 made false, not edited.** ADR 0003 ("Plan wording and neighbours",
@@ -325,6 +425,14 @@ Decision, the ADR's wording is the claim and this file adds nothing to it.
   stale, and neither looked at `.genesis/PLAN.md`, the frozen genesis plan. Nothing is fixed here: the
   files above belong to M1 and M3, and `README.md` belongs to M9 (`.genesis/PLAN.md` section 6, M9
   "Owns").
+- **Text in M1's frozen files that M4 made false, not edited.** A grep for this revision
+  (`\bM4\b|M3-M5|M3 to M5|M4-M5|lib/ground` with `not built|not yet|planned|does not exist|nothing|none of`,
+  over `lib/contracts`, `lib/extent`, `app`, `README.md`, `.env.example` and `tests`) found
+  `lib/contracts/schema.ts` line 11 (the plan "assigns that refusal to M4's `readSchema` (`operand-reused`),
+  which is not built": `readSchema` now exists, though whether it refuses a repeated operand under that name
+  was not traced for this entry) and, already counted above, `lib/contracts/__tests__/honest-limits.test.ts`
+  line 35 ("None of M3-M5 is built when this is written", dated by its own words). A search is not a proof
+  that nothing else is stale. Nothing is fixed here: the file belongs to M1.
 - **Which model did this work.** The genesis commits carry `Co-Authored-By: Claude Sonnet 5.5`, the
   attribution of the agent that made them. The sibling repositories carry a fixed
   `Co-Authored-By: Claude Opus 5.5` string required by the account's commit rule, written regardless of
@@ -381,3 +489,7 @@ lists it as 1 insertion and 1 deletion). Over `lib/`, `vercel.json`, `next.confi
 `.genesis/decisions/0003-extent.md`, all new: `git diff --stat 40eb046 612bdd4` lists those 15 files with
 3188 insertions and no deletions, and `git diff 40eb046 612bdd4 -- . ':!lib/extent'
 ':!.genesis/decisions/0003-extent.md'` is empty, so no file above was touched.
+Added by M4 (PR #7): `lib/ground/**` (26 files: ten sources, fourteen test files, `__tests__/fixtures.ts` and
+`__tests__/oracle.ts`) and `.genesis/decisions/0004-ground.md`, all new: `git diff --stat 4a41b7b ccd594a`
+lists those 27 files with 7079 insertions and no deletions, and `git diff 4a41b7b ccd594a -- . ':!lib/ground'
+':!.genesis/decisions/0004-ground.md'` is empty, so no file above was touched.
