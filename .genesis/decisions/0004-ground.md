@@ -589,8 +589,8 @@ a test count in a place where the file quoted none ("all 990 tests"); and a sent
 The verifier again could not break the engine: the emit of the ten sources with comments removed, and of their declarations, is identical to `296f3c6`.
 It rejected `e94cb97` for seven sentences or titles, all in prose that the audit wrote or left, and asked for a sweep for twins.
 
-- **U1**: Decision 7 said the aliasing test runs "on generated and hand-built instances"; `immutability.test.ts:171` runs on one hand-built instance (the
-  order desk with three observations) and a second test (line 208) checks `readSchema`'s copy.
+- **U1**: Decision 7 said the aliasing test runs "on generated and hand-built instances"; the `immutability.test.ts` test titled "nothing in the output is an object of the input, and editing the input afterwards changes nothing" runs on one hand-built instance (the
+  order desk with three observations), and the test titled "readSchema's copy likewise" checks `readSchema`'s copy.
 - **U2**: Decision 8 said a too-small oracle window makes the oracle throw; it throws only if the two windows disagree on whether a world exists. With the window halved,
   162 `oracle-exactness` tests fail, 107 with the throw and 55 without it.
 - **U3**: the ledger scope sentence said no other earlier test reads `lib/ground`; M3's `architecture.test.ts` runs the same three scans over `lib/` and keeps only
