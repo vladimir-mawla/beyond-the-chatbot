@@ -452,6 +452,14 @@ describe("what the scans do NOT see (stated, and pinned so that the statement st
     "evade-parse.ts": 'export const e = JSON.parse(\'{"kind":"entailed"}\');\n',
     "evade-class.ts": 'export class E {\n  kind = "entailed";\n}\n',
     "evade-template-substitution.ts": 'const v = "entailed";\nexport const e = { kind: `${v}` };\n',
+    "evade-conditional.ts": 'export const e = (c: boolean) => ({ kind: c ? "entailed" : "weakened" });\n',
+    "evade-nullish.ts": 'export const e = (x?: string) => ({ kind: x ?? "entailed" });\n',
+    "evade-or.ts": 'export const e = (x?: string) => ({ kind: x || "entailed" });\n',
+    "evade-and.ts": 'export const e = (x: boolean) => ({ kind: x && "entailed" });\n',
+    "evade-concat.ts": 'export const e = { kind: "ent" + "ailed" };\n',
+    "evade-tagged-template.ts": 'export const e = { kind: String.raw`entailed` };\n',
+    "evade-reflect.ts": 'export const read = (e: object): unknown => Reflect.get(e, "lo");\n',
+    "evade-destructuring-assignment.ts": 'export function read(e: { lo: number }): number {\n  let lo = 0;\n  ({ lo } = e);\n  return lo;\n}\n',
     // a bound read without `.lo` / `.hi` / ["lo"] / { lo }
     "evade-key-variable.ts": 'const key = "lo";\nexport const read = (e: Record<string, number>): number | undefined => e[key];\n',
     "evade-entries.ts": "export const read = (e: object): unknown[] => Object.values(e);\n",
@@ -461,17 +469,19 @@ describe("what the scans do NOT see (stated, and pinned so that the statement st
   const t = tree(Object.fromEntries(Object.entries(evasions).map(([name, body]) => [`${D}/${name}`, body])));
   const result = scanSources(t, join(t, "tsconfig.json"));
 
-  it("a computed key, an alias, a shorthand, a spread, Object.assign, JSON.parse, a class field and a substituted template build a variant name and are not reported", () => {
+  it("a computed key, an alias, a shorthand, a spread, Object.assign, JSON.parse, a class field, a substituted template, a conditional, `??`, `||`, `&&`, a string concatenation and a tagged template build a variant name and are not reported", () => {
     const flagged = new Set(result.findings.map((f) => f.file));
-    for (const name of ["evade-computed-key.ts", "evade-alias.ts", "evade-shorthand.ts", "evade-spread.ts", "evade-assign.ts", "evade-parse.ts", "evade-class.ts", "evade-template-substitution.ts"]) {
+    for (const name of ["evade-computed-key.ts", "evade-alias.ts", "evade-shorthand.ts", "evade-spread.ts", "evade-assign.ts", "evade-parse.ts", "evade-class.ts", "evade-template-substitution.ts", "evade-conditional.ts", "evade-nullish.ts", "evade-or.ts", "evade-and.ts", "evade-concat.ts", "evade-tagged-template.ts"]) {
       expect(flagged.has(name), name).toBe(false);
     }
   });
 
-  it("a bound read through a variable key or Object.values is not reported either", () => {
+  it("a bound read through a variable key, Object.values, Reflect.get or a destructuring assignment is not reported either", () => {
     const flagged = new Set(result.findings.map((f) => f.file));
     expect(flagged.has("evade-key-variable.ts")).toBe(false);
     expect(flagged.has("evade-entries.ts")).toBe(false);
+    expect(flagged.has("evade-reflect.ts")).toBe(false);
+    expect(flagged.has("evade-destructuring-assignment.ts")).toBe(false);
   });
 
   it("control: a parameter destructuring `{ lo }` IS reported, so the silence above is the scan's, not the file's", () => {

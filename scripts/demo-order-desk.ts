@@ -13,7 +13,7 @@ import type { ScriptRun, StepRun } from "../domains/order-desk/index.js";
  *   4. all five kinds were observed across the six steps.
  * The oracle imports nothing from `lib/` and calls nothing the engine exports: it lists every integer world of the
  * four-field order desk. `__tests__/demo.test.ts` pins that by a parsed scan, says which forms the scan does not see, and
- * gives each of the four conditions a test that makes it fail.
+ * gives each of the five conditions a test that makes it fail.
  */
 
 // ---------------------------------------------------------------------------------------------------------
@@ -123,6 +123,8 @@ export function verifyRun(run: ScriptRun): Verification {
         if (core.length !== ruling.core.length || oracleExtents(core) !== undefined) problems.push(`step ${step.step} ${where}: the core is satisfiable by the oracle`);
       }
     }
+    if (step.brief.rejected.length > 0) problems.push(`step ${step.step}: ${step.brief.rejected.length} draft claim(s) refused before ruling`);
+    if (step.brief.claims.length !== 4) problems.push(`step ${step.step}: ${step.brief.claims.length} of 4 draft claims were ruled`);
     if (!step.intact) problems.push(`step ${step.step}: recheck is not intact`);
   }
   for (const kind of ALL_KINDS) if (!kinds.has(kind)) problems.push(`kind never observed: ${kind}`);

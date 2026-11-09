@@ -201,6 +201,19 @@ describe("each part of the exit contract fails when it is broken (tampered copie
     });
   }, CHILD);
 
+  it("draft claims refused before ruling, or fewer than four ruled, fail the demo (a drafter that states NaN is refused by the engine, and the oracle never sees it)", () => {
+    const refused = thawed();
+    (refused.steps[0]!["brief"] as { rejected: unknown[] }).rejected = [{ index: 3, fault: { kind: "malformed", fields: ["extent"] } }];
+    (refused.steps[0]!["brief"] as { claims: unknown[] }).claims.pop();
+    const fewer = thawed();
+    (fewer.steps[1]!["brief"] as { claims: unknown[] }).claims.pop();
+    const [a, b] = verifyAll([refused, fewer]);
+    expect(a!.ok).toBe(false);
+    expect(a!.problems).toEqual(["step 1: 1 draft claim(s) refused before ruling", "step 1: 3 of 4 draft claims were ruled"]);
+    expect(b!.ok).toBe(false);
+    expect(b!.problems).toEqual(["step 2: 3 of 4 draft claims were ruled"]);
+  }, CHILD);
+
   it("a conflicted ruling whose core is satisfiable fails (drop o4 from step 5's question core), and so does a core that names a document not in the snapshot", () => {
     const run = thawed();
     ruling(run, 5, "answer")["core"] = ["o1", "o2", "o3"];
@@ -469,6 +482,14 @@ describe("the program itself", () => {
     expect(out.status).not.toBe(0);
     expect(out.out).toMatch(/FAIL: step 3 question: engine ruled weakened, oracle says contradicted/);
     expect(out.out).toContain("FAIL: kind never observed: contradicted");
+  }, 60_000);
+
+  it("sabotage: a drafter that states NaN for delivery (the engine refuses those claims) exits non-zero, with the refused claims named", () => {
+    const dir = copyWithEdit("domains/order-desk/drafter.ts", (t) => t.replace('exactly(FIELDS.deliveryDay, total, "sum")', 'exactly(FIELDS.deliveryDay, Number.NaN, "sum")'));
+    const out = demo(dir);
+    expect(out.status).not.toBe(0);
+    expect(out.out).toContain("FAIL: step 1: 1 draft claim(s) refused before ruling");
+    expect(out.out).toContain("FAIL: step 1: 3 of 4 draft claims were ruled");
   }, 60_000);
 
   it("the demo's source sets the exit code in two places only, a thrown run and a failed verification, and calls process.exit nowhere", () => {

@@ -276,6 +276,13 @@ describe("renderFluent: the chatbot's confident paragraph", () => {
     expect(renderFluent(draft).startsWith("I cannot say: that quantity. ")).toBe(true);
   });
 
+  it("prints whatever number-typed value the draft carries (a hand-built draft with NaN or 1.5 is printed as it is: it is a template, not a check)", () => {
+    const draft = fluentDraft(observationsOf(SNAPSHOTS[0]!), DELIVERY_Q);
+    const carrying = (value: number): FluentDraft => ({ ...draft, statements: draft.statements.map((s) => ({ ...s, claim: { ...s.claim, extent: { lo: value, hi: value } } })) as unknown as FluentDraft["statements"] });
+    expect(renderFluent(carrying(Number.NaN))).toContain("delivery is around day NaN");
+    expect(renderFluent(carrying(1.5))).toContain("delivery is around day 1.5");
+  });
+
   it("says 1 day, not 1 days, and 0 days", () => {
     const draft = fluentDraft([obs("packDays", 1, 1), obs("transitDays", 0, 0), obs("customsDays", 2, 2)], DELIVERY_Q);
     expect(renderFluent(draft)).toBe("Yes: delivery is around day 3. Packing takes about 1 day, transit about 0 days and customs clearance about 2 days.");

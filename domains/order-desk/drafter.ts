@@ -109,8 +109,8 @@ const days = (n: number): string => `${n} day${n === 1 ? "" : "s"}`;
 
 /**
  * The chatbot's paragraph: confident, one value for everything, no hedge. It is a fixed template over the draft: the
- * only numbers are the stated values, and it prints no label, id or other free text (a quantity it has no phrase for
- * is printed as "that quantity"). A prior is labelled as one.
+ * only numbers are the stated values, and it prints no label or id; for a draft from `fluentDraft` it prints no free text, and it prints
+ * whatever number-typed value a draft carries (a quantity it has no phrase for is printed as "that quantity"). A prior is labelled as one.
  */
 export function renderFluent(draft: FluentDraft): string {
   const [pack, transit, customs, delivery] = draft.statements;

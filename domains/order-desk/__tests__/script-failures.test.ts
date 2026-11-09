@@ -13,6 +13,8 @@ const hooks = vi.hoisted(() => ({
   ground: undefined as undefined | ((...args: unknown[]) => unknown),
   answer: undefined as undefined | ((...args: unknown[]) => unknown),
   recheck: undefined as undefined | ((...args: unknown[]) => unknown),
+  /** The schema argument of every `recheck` call, in order. */
+  recheckSeen: [] as unknown[],
 }));
 
 vi.mock("../../../lib/ground/index.js", async (importOriginal) => {
@@ -25,7 +27,7 @@ vi.mock("../../../lib/entail/index.js", async (importOriginal) => {
   return {
     ...real,
     answer: (...args: Parameters<typeof real.answer>) => (hooks.answer !== undefined ? hooks.answer(...args) : real.answer(...args)),
-    recheck: (...args: Parameters<typeof real.recheck>) => (hooks.recheck !== undefined ? hooks.recheck(...args) : real.recheck(...args)),
+    recheck: (...args: Parameters<typeof real.recheck>) => (hooks.recheckSeen.push(args[0]), hooks.recheck !== undefined ? hooks.recheck(...args) : real.recheck(...args)),
   };
 });
 
@@ -33,6 +35,7 @@ afterEach(() => {
   hooks.ground = undefined;
   hooks.answer = undefined;
   hooks.recheck = undefined;
+  hooks.recheckSeen = [];
 });
 
 describe("runScript reports an engine failure with its step, and does not throw", () => {
@@ -72,6 +75,18 @@ describe("runScript reports an engine failure with its step, and does not throw"
     if (!result.ok) return;
     expect(result.steps[0]!.intact).toBe(false);
     expect(result.steps[0]!.findings).toEqual(findings);
+  });
+
+  it("renders and rechecks over the engine's validated schema, not the domain constant", () => {
+    const relabel = (schema: any) => ({ ...schema, fields: schema.fields.map((f: any) => (f.id === "customsDays" ? { ...f, label: "CUSTOMS-FROM-ENGINE" } : f)) });
+    hooks.ground = (...args) => {
+      const result: any = hooks.realGround!(...args);
+      return { ...result, grounding: { ...result.grounding, schema: relabel(result.grounding.schema) } };
+    };
+    const run = runScript([CANON_SCRIPT[0]!]);
+    if (!run.ok) throw new Error("the run failed");
+    expect(run.steps[0]!.rendered).toContain("CUSTOMS-FROM-ENGINE");
+    expect((hooks.recheckSeen[0] as any).fields.find((f: any) => f.id === "customsDays").label).toBe("CUSTOMS-FROM-ENGINE");
   });
 
   it("the failure is reported at the step that fails, after the steps before it ran (ground refuses the four-document snapshot only: step 5)", () => {

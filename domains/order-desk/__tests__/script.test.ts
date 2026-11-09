@@ -271,16 +271,18 @@ describe("the engine does not read the prior (plan: changing PRIOR_CUSTOMS_DAYS 
     expect(compared).toBe(6 * 6 * 4);
   });
 
-  it("a limit, pinned: a prior of 0 changes the CUT of step 1's customs ruling (its `openEnds` loses the lower side, because the claim 'exactly 0' already satisfies the floor), though not what the evidence says", () => {
+  it("a limit, pinned: a prior of 0 changes the CUT of the customs ruling in steps 1 to 3 (its `openEnds` loses the lower side, because the claim 'exactly 0' already satisfies the floor), though not what the evidence says", () => {
     const g = groundOf(0);
-    const q = QUESTIONS[0]!.claim;
-    const customsRuling = (customs: number) => {
-      const result = answer(g, q, claimsOf(fluentDraft(observationsOf(SNAPSHOTS[0]!), q, { ...MODEL_PRIORS, customsDays: customs })));
-      if (!result.ok) throw new Error("no result");
-      return result.brief.claims[2]!;
-    };
-    expect(JSON.stringify(customsRuling(2))).toBe('{"kind":"ungrounded","field":"customsDays","tested":{"lo":2,"hi":2},"openEnds":[{"field":"customsDays","side":"lo"},{"field":"customsDays","side":"hi"}]}');
-    expect(JSON.stringify(customsRuling(0))).toBe('{"kind":"ungrounded","field":"customsDays","tested":{"lo":0,"hi":0},"openEnds":[{"field":"customsDays","side":"hi"}]}');
+    for (const step of CANON_SCRIPT.filter((s) => s.step <= 3)) {
+      const q = QUESTIONS[step.question]!.claim;
+      const customsRuling = (customs: number) => {
+        const result = answer(g, q, claimsOf(fluentDraft(observationsOf(SNAPSHOTS[0]!), q, { ...MODEL_PRIORS, customsDays: customs })));
+        if (!result.ok) throw new Error("no result");
+        return result.brief.claims[2]!;
+      };
+      expect(JSON.stringify(customsRuling(2)), `step ${step.step}`).toBe('{"kind":"ungrounded","field":"customsDays","tested":{"lo":2,"hi":2},"openEnds":[{"field":"customsDays","side":"lo"},{"field":"customsDays","side":"hi"}]}');
+      expect(JSON.stringify(customsRuling(0)), `step ${step.step}`).toBe('{"kind":"ungrounded","field":"customsDays","tested":{"lo":0,"hi":0},"openEnds":[{"field":"customsDays","side":"hi"}]}');
+    }
   });
 
   it("a limit, pinned: a prior of 7 to 10 puts the customs claim inside step 6's derived [7, 10], so THAT claim's kind moves (contradicted to weakened), and a prior of 6 or 11 does not", () => {
@@ -333,6 +335,12 @@ describe("runScript on other scripts", () => {
     for (const question of [5, -1, 0.5, Number.NaN, Number.NEGATIVE_INFINITY, 2 ** 40]) expect(bad(0, question), String(question)).toEqual({ ok: false, failure: { kind: "question-out-of-range", step: 7 } });
     // an earlier good step does not rescue a later bad one: the run stops at the first failure
     expect(runScript([{ step: 1, snapshot: 0, question: 0 }, { step: 2, snapshot: 9, question: 0 }])).toEqual({ ok: false, failure: { kind: "snapshot-out-of-range", step: 2 } });
+  });
+
+  it("a null entry, or a script that is not iterable, throws a TypeError (runScript's typed input is not an untrusted read place)", () => {
+    expect(() => runScript([null as unknown as ScriptStep])).toThrow(TypeError);
+    expect(() => runScript(5 as unknown as ScriptStep[])).toThrow(TypeError);
+    expect(() => runScript(null as unknown as ScriptStep[])).toThrow(TypeError);
   });
 
   it("an index that is not a number at all (a string, an inherited name) is out of range, not a lookup", () => {
