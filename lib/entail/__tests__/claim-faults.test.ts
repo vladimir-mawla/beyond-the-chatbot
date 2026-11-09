@@ -147,8 +147,8 @@ describe("the precedence malformed > unknown-field > vacuous-claim, one row per 
 
 describe("a differential fuzz of generated and corrupted claims against the reference", () => {
   const tally = { claims: 0, ok: 0, malformedField: 0, malformedExtent: 0, malformedBoth: 0, unknown: 0, vacuous: 0 };
-  const CHUNKS = 50;
-  const PER = 20;
+  const CHUNKS = 100;
+  const PER = 10;
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
     it(`seeds ${chunk * PER + 1} to ${chunk * PER + PER}`, () => {
       const problems: string[] = [];
