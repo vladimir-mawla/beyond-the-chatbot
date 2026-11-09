@@ -150,6 +150,13 @@ function sweep(model: Model, cap: number, seed: number, instances: number): Tall
   return tally;
 }
 
+/**
+ * Each sweep is 8 000 instances of 343 worlds: about 0.3 s here, about 1.2 s with 20 busy processes beside it, and CI is about three times
+ * slower than this machine. The default 5 s timeout would leave under a factor of 1.5 on the loaded figure, so the three sweeps carry an
+ * explicit one (an order of magnitude above it). The work is not reduced: the counts below are what the case quotes.
+ */
+const SWEEP_TIMEOUT_MS = 30_000;
+
 /** Counts of the seeded sweeps below (cap 6, seeds 9, 10 and 11), read off a run: they change only if the generator or the propagator does. */
 const DIAMOND_CONSISTENT = 3016;
 const DIAMOND_INEXACT = 757;
@@ -180,18 +187,18 @@ describe("09 read-once buys exactness, not soundness", () => {
     const tally = sweep(DIAMOND, 6, 9, 8000);
     expect(tally).toEqual({ instances: 8000, consistent: DIAMOND_CONSISTENT, unsound: 0, missedInconsistency: 0, inexact: DIAMOND_INEXACT });
     expect(tally.inexact).toBeGreaterThan(0);
-  });
+  }, SWEEP_TIMEOUT_MS);
 
   it("(c) ground also rejects x = a + b, y = a + c as operand-reused naming a, although the propagator is exact on it over 8 000 random instances", () => {
     const shared = schemaOf(baseField("a"), baseField("b"), baseField("c"), sumField("x", ["a", "b"]), sumField("y", ["a", "c"]));
     expect(ground(shared, [])).toEqual(refusal("a"));
     const tally = sweep(SHARED, 6, 10, 8000);
     expect(tally).toEqual({ instances: 8000, consistent: SHARED_CONSISTENT, unsound: 0, missedInconsistency: 0, inexact: 0 });
-  });
+  }, SWEEP_TIMEOUT_MS);
 
   it("the control: the same propagator and enumerator agree exactly on a read-once tree, so the harness can tell exact from loose", () => {
     const tally = sweep(TREE, 6, 11, 8000);
     expect(tally).toEqual({ instances: 8000, consistent: TREE_CONSISTENT, unsound: 0, missedInconsistency: 0, inexact: 0 });
     expect(tally.consistent).toBeGreaterThan(1000);
-  });
+  }, SWEEP_TIMEOUT_MS);
 });
