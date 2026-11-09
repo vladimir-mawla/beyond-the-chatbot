@@ -20,7 +20,7 @@ import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, copyOf, gr
  *  can say it was cut; re-running `answer` on the full snapshot is what catches it. (b) A forged `ungrounded`:
  *  `uncertifiable-silence`, the same result an honest `ungrounded` gets, and it does not make the Brief not intact.
  *  (c) Evidence that is invented: `reproduced`, as long as every bound's digits occur in the carried quote. A certificate
- *  covers knowledge that cites evidence; it never covers ignorance and never provenance.
+ *  covers knowledge that cites evidence; what these tests pin is that it does not cover ignorance or provenance.
  * SCALE AND LAYER (M5's `recheck.test.ts` pins the same limits by hand and on generated Briefs; this file's new ground is the
  * Briefs the DOMAIN produces): half 1 is swept over every ruling of the six real Briefs of the canonical script (`runScript`),
  * each non-null bound of each entailed, weakened or contradicted ruling tightened and loosened by 1, each weakened ruling's

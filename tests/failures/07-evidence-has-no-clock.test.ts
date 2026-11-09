@@ -12,7 +12,7 @@ import { DELIVERY, ORDER_DESK_SCHEMA, answerOk, claim, copyOf, groundOk, obs } f
  * TRACES TO: D9 (a snapshot is the closed world; there is no clock and no staleness; time is memory-ledger's problem), D3
  * (no clock, no counting, no randomness anywhere in the engine).
  *
- * THE LIMIT. A snapshot that includes `o2` (the carrier SLA) rules `entailed` forever. The engine has no time parameter, reads no
+ * THE LIMIT. A snapshot that includes `o2` (the carrier SLA) rules `entailed` for as long as the snapshot is the same (the tests move the clock a century either way, and thirty years in monthly steps). The engine has no time parameter, reads no
  * clock, and so cannot know that an observation was true last month and has since been recalled: it keeps entailing until the
  * SNAPSHOT changes (a new snapshot is a new grounding). Staleness belongs to memory-ledger; the composition (a `believed` memory
  * becoming an `Observation`) is named and not built.
