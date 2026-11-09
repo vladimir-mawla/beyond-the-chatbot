@@ -3,7 +3,7 @@ import type { Brief, Entailment } from "../../lib/contracts/index.js";
 import { answer, renderBrief, renderEntailment } from "../../lib/entail/index.js";
 import { QUESTIONS, claimsOf, fluentDraft, observationsOf } from "../../domains/order-desk/index.js";
 import type { ObservationName } from "../../domains/order-desk/index.js";
-import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, digitTokens, groundOk } from "./helpers.js";
+import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, digitTokens, groundOk, lazy } from "./helpers.js";
 
 /**
  * KIND: PROVES A PROPERTY, DISCLOSES ITS LIMIT (plan section 11, case 10).
@@ -79,13 +79,13 @@ function briefWithRefusals(): Fixture {
 const rulingsOf = (brief: Brief): readonly Entailment[] => [brief.answer, ...brief.claims];
 
 describe("10 render checks digits, not meaning", () => {
-  const fixtures = [...demoBriefs(), briefWithRefusals()];
+  const all = lazy(() => [...demoBriefs(), briefWithRefusals()]);
 
   it("the fixtures cover every variant, every kind of refusal, and the 400 rulings of the 80 states", () => {
     const kinds = new Set<string>();
     const faults = new Set<string>();
     let rulings = 0;
-    for (const { brief } of fixtures) {
+    for (const { brief } of all()) {
       for (const ruling of rulingsOf(brief)) kinds.add(ruling.kind);
       for (const refusal of brief.rejected) faults.add(refusal.fault.kind);
       rulings += rulingsOf(brief).length;
@@ -97,7 +97,7 @@ describe("10 render checks digits, not meaning", () => {
 
   it("THE DIGIT PROPERTY, per ruling: every digit token of every rendered ruling is a digit of that ruling's own fields and ids", () => {
     let checked = 0;
-    for (const { where, brief } of fixtures) {
+    for (const { where, brief } of all()) {
       for (const ruling of rulingsOf(brief)) {
         expect(foreignDigits(renderEntailment(ORDER_DESK_SCHEMA, ruling), ruling), `${where}: ${ruling.kind} ${ruling.field}`).toEqual([]);
         checked += 1;
@@ -107,14 +107,14 @@ describe("10 render checks digits, not meaning", () => {
   });
 
   it("THE DIGIT PROPERTY, per Brief: every digit token of every renderBrief is a digit of what the Brief carries or the position of a refusal", () => {
-    for (const { where, brief } of fixtures) {
+    for (const { where, brief } of all()) {
       const carried = [brief.answer, brief.claims, brief.rejected.map((r) => r.index)];
       expect(foreignDigits(renderBrief(ORDER_DESK_SCHEMA, brief), carried), where).toEqual([]);
     }
   });
 
   it("THE DENYLIST, separately: no rendered word of any ruling or Brief is a number word", () => {
-    for (const { where, brief } of fixtures) {
+    for (const { where, brief } of all()) {
       expect(numberWordsIn(renderBrief(ORDER_DESK_SCHEMA, brief)), where).toEqual([]);
       for (const ruling of rulingsOf(brief)) expect(numberWordsIn(renderEntailment(ORDER_DESK_SCHEMA, ruling)), `${where}: ${ruling.kind}`).toEqual([]);
     }
@@ -122,11 +122,18 @@ describe("10 render checks digits, not meaning", () => {
 
   describe("what each assertion does not see, on literal strings (neither covers the other)", () => {
     // Step 1's customs claim, ungrounded: its own digits are 0 and 2.
-    const ruling = answerOk(groundOk(ORDER_DESK_SCHEMA, observationsOf(["o1", "o2"])), claim(DELIVERY, null, 12), [claim(CUSTOMS, 2, 2)]).claims[0] as Entailment;
-    const honest = renderEntailment(ORDER_DESK_SCHEMA, ruling);
+    const ruling: Entailment = {
+      kind: "ungrounded",
+      field: CUSTOMS,
+      tested: { lo: 2, hi: 2 },
+      openEnds: [{ field: CUSTOMS, side: "lo" }, { field: CUSTOMS, side: "hi" }],
+    };
+    // A literal, not a call to the renderer: these tests are about what the two checks can and cannot see in a string.
+    const honest =
+      "Cannot answer: customs clearance exactly 2 days. The evidence does not move customs clearance from what the schema implies. Missing: no document bounds customs clearance from below; no document bounds customs clearance from above.";
 
-    it("the honest sentence passes both", () => {
-      expect(ruling.kind).toBe("ungrounded");
+    it("the honest sentence passes both, and is what the renderer says of that ruling", () => {
+      expect(renderEntailment(ORDER_DESK_SCHEMA, ruling)).toBe(honest);
       expect([foreignDigits(honest, ruling), numberWordsIn(honest)]).toEqual([[], []]);
     });
 

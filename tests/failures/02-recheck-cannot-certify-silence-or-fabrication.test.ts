@@ -4,7 +4,7 @@ import type { Brief, Entailment, Observation } from "../../lib/contracts/index.j
 import { recheck } from "../../lib/entail/index.js";
 import type { RecheckFinding } from "../../lib/entail/index.js";
 import { OBSERVATIONS, observationsOf, runScript } from "../../domains/order-desk/index.js";
-import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, copyOf, groundOk, obs } from "./helpers.js";
+import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, copyOf, groundOk, lazy, obs } from "./helpers.js";
 
 /**
  * KIND: HONEST PARTIAL PIN (plan section 11, case 02).
@@ -105,12 +105,16 @@ describe("02 recheck cannot certify silence or fabrication", () => {
   });
 
   describe("half 1, swept over the six real Briefs of the canonical script", () => {
-    const run = runScript();
-    if (!run.ok) throw new Error("fixture: the canonical script did not run");
+    const script = lazy(() => {
+      const made = runScript();
+      if (!made.ok) throw new Error("fixture: the canonical script did not run");
+      return made;
+    });
     const rulingsOf = (brief: Brief): readonly Entailment[] => [brief.answer, ...brief.claims];
     const positionOf = (index: number): "answer" | number => (index === 0 ? "answer" : index - 1);
 
     it("every one of the six honest Briefs is intact, and the only silence is the three `ungrounded` customs claims of steps 1 to 3", () => {
+      const run = script();
       const silent = run.steps.flatMap((step) => {
         const result = recheck(run.schema, step.brief);
         if (!result.ok) throw new Error("fixture: recheck refused a real Brief");
@@ -121,6 +125,7 @@ describe("02 recheck cannot certify silence or fabrication", () => {
     });
 
     it("every bound of every supported ruling, tightened or loosened by 1, is caught as its own bound-differs and nothing else moves (the two that invert an extent are refused whole)", () => {
+      const run = script();
       let tamperings = 0;
       let refused = 0;
       for (const step of run.steps) {
@@ -162,6 +167,7 @@ describe("02 recheck cannot certify silence or fabrication", () => {
     });
 
     it("every weakened ruling's `unmet` replaced by each of the other cuts is caught as unmet-differs", () => {
+      const run = script();
       const cuts: readonly (readonly string[])[] = [["lo"], ["hi"], ["lo", "hi"]];
       let tamperings = 0;
       for (const step of run.steps) {

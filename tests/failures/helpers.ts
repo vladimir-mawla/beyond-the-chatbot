@@ -89,3 +89,12 @@ export const DELIVERY = FIELDS.deliveryDay;
 export const PACK = FIELDS.packDays;
 export const TRANSIT = FIELDS.transitDays;
 export const CUSTOMS = FIELDS.customsDays;
+
+/** A value computed on first use, so a fixture that throws fails the test that asks for it and not the whole file at collection. */
+export function lazy<T>(make: () => T): () => T {
+  let made: { value: T } | undefined;
+  return () => {
+    if (made === undefined) made = { value: make() };
+    return made.value;
+  };
+}
