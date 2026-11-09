@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Brief, Entailment } from "../../lib/contracts/index.js";
 import { answer, renderBrief, renderEntailment } from "../../lib/entail/index.js";
-import { QUESTIONS, claimsOf, fluentDraft, observationsOf } from "../../domains/order-desk/index.js";
+import { QUESTIONS, claimsOf, fluentDraft, observationsOf, runScript } from "../../domains/order-desk/index.js";
 import type { ObservationName } from "../../domains/order-desk/index.js";
 import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, digitTokens, groundOk, lazy } from "./helpers.js";
 
@@ -102,6 +102,13 @@ describe("10 render checks digits, not meaning", () => {
     expect([...kinds].sort()).toEqual(["conflicted", "contradicted", "entailed", "ungrounded", "weakened"]);
     expect([...faults].sort()).toEqual(["hostile-input", "malformed", "unknown-field", "vacuous-claim"]);
     expect(rulings).toBe(80 * 5 + 2);
+  });
+
+  it("the plan's six section 7 steps (`runScript`) are among the fixtures: each step's rendered Brief is the rendering of one of the 80 states", () => {
+    const run = runScript();
+    if (!run.ok) throw new Error("fixture: the canonical script did not run");
+    const rendered = new Set(all().map(({ brief }) => renderBrief(ORDER_DESK_SCHEMA, brief)));
+    expect(run.steps.map((step) => rendered.has(step.rendered))).toEqual([true, true, true, true, true, true]);
   });
 
   it("THE DIGIT PROPERTY, per ruling: every digit token of every rendered ruling is a digit of that ruling's own fields and ids", () => {
