@@ -75,11 +75,9 @@ const within = (inner: OExtent, outer: OExtent): boolean => (outer.lo === null |
 const disjoint = (a: OExtent, b: OExtent): boolean => (a.hi !== null && b.lo !== null && a.hi < b.lo) || (b.hi !== null && a.lo !== null && b.hi < a.lo);
 const sameExtent = (a: OExtent, b: OExtent): boolean => a.lo === b.lo && a.hi === b.hi;
 
-/** The plan's table in the plan's precedence, from sets alone: conflicted, ungrounded (E = B), entailed (E in C), contradicted (E and C disjoint), else weakened. */
-function oracleKind(observations: readonly OObservation[], field: string, claim: OExtent): string {
-  const e = oracleExtents(observations);
+/** The plan's table in the plan's precedence, from sets alone: conflicted, ungrounded (E = B), entailed (E in C), contradicted (E and C disjoint), else weakened. `e` is `undefined` when no world exists. */
+function oracleKind(e: Record<string, OExtent> | undefined, b: Record<string, OExtent>, field: string, claim: OExtent): string {
   if (e === undefined) return "conflicted";
-  const b = oracleExtents([]) as Record<string, OExtent>;
   if (within(b[field] as OExtent, claim)) return "vacuous";
   if (sameExtent(e[field] as OExtent, b[field] as OExtent)) return "ungrounded";
   if (within(e[field] as OExtent, claim)) return "entailed";
@@ -107,13 +105,14 @@ export function verifyRun(run: ScriptRun): Verification {
   const problems: string[] = [];
   const kinds = new Set<string>();
   if (!run.ok) return { ok: false, problems: [`the script did not run: ${run.failure.kind} at step ${run.failure.step}`], kindsObserved: [], stepsChecked: 0 };
+  const baseline = oracleExtents([]) as Record<string, OExtent>;
   for (const step of run.steps) {
     const observations = observationsFor(step);
     const extents = oracleExtents(observations);
     const rulings = [{ where: "question", ruling: step.brief.answer }, ...step.brief.claims.map((ruling, i) => ({ where: `claim ${i}`, ruling }))];
     for (const { where, ruling } of rulings) {
       kinds.add(ruling.kind);
-      const expected = oracleKind(observations, ruling.field, ruling.tested);
+      const expected = oracleKind(extents, baseline, ruling.field, ruling.tested);
       if (ruling.kind !== expected) problems.push(`step ${step.step} ${where}: engine ruled ${ruling.kind}, oracle says ${expected}`);
       if ("established" in ruling && ruling.established !== undefined) {
         const e = extents?.[ruling.field];
@@ -154,8 +153,17 @@ export function reportOf(run: ScriptRun, verification: Verification): string {
 }
 
 function main(): void {
-  const run = runScript();
-  const verification = verifyRun(run);
+  let run: ScriptRun;
+  let verification: Verification;
+  try {
+    run = runScript();
+    verification = verifyRun(run);
+  } catch (error) {
+    // The engine throws only on an internal invariant violation (plan D11). That is a failed demo, reported as one.
+    console.log(`FAIL: the run threw: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+    return;
+  }
   console.log(reportOf(run, verification));
   if (!verification.ok) process.exitCode = 1;
 }
