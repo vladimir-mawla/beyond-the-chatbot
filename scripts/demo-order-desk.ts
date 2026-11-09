@@ -101,7 +101,7 @@ export interface Verification {
 const observationsFor = (step: StepRun): OObservation[] =>
   OBSERVATIONS.filter((o) => step.snapshot.includes(o.id)).map((o) => ({ id: o.id, field: o.field, lo: o.extent.lo, hi: o.extent.hi }));
 
-/** The four conditions of the file header, as a list of problems (empty = the demo passes). Pure: it only reads `run`. */
+/** The five conditions of the file header, as a list of problems (empty = the demo passes). Pure: it only reads `run`. */
 export function verifyRun(run: ScriptRun): Verification {
   const problems: string[] = [];
   const kinds = new Set<string>();
