@@ -64,6 +64,16 @@ describe("runScript reports an engine failure with its step, and does not throw"
     expect(runScript(CANON_SCRIPT)).toEqual({ ok: false, failure: { kind: "recheck-failed", step: 1, failure } });
   });
 
+  it("a Brief that recheck does not find intact is carried through as it is: `intact` false and the engine's own findings, not a constant", () => {
+    const findings = [{ position: "answer", result: { kind: "not-reproduced", reason: { kind: "unmet-differs" } } }];
+    hooks.recheck = () => ({ ok: true, intact: false, findings });
+    const result = runScript([CANON_SCRIPT[0]!]);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.steps[0]!.intact).toBe(false);
+    expect(result.steps[0]!.findings).toEqual(findings);
+  });
+
   it("the failure is reported at the step that fails, after the steps before it ran (ground refuses the four-document snapshot only: step 5)", () => {
     hooks.ground = (...args) => ((args[1] as unknown[]).length === 4 ? { ok: false, failure: { kind: "hostile-input", message: "fifth" } } : hooks.realGround!(...args));
     expect(runScript(CANON_SCRIPT)).toEqual({ ok: false, failure: { kind: "ground-failed", step: 5, failure: { kind: "hostile-input", message: "fifth" } } });
