@@ -55,7 +55,7 @@ describe("02 recheck cannot certify silence or fabrication", () => {
         ["loosened", side === "hi" ? 1 : -1],
       ] as const) {
         it(`the answer's ${name} bound ${how} by 1, support unchanged, is not-reproduced { bound-differs ${side}, carried ${honestBound + delta}, re-derived ${honestBound} }`, () => {
-          const brief = copyOf(briefA()) as { answer: { established: { lo: number; hi: number } } };
+          const brief = copyOf(briefA()) as unknown as { answer: { established: { lo: number; hi: number } } };
           brief.answer.established[side] = honestBound + delta;
           expect(recheck(ORDER_DESK_SCHEMA, brief as unknown as Brief)).toEqual({
             ok: true,
@@ -70,7 +70,7 @@ describe("02 recheck cannot certify silence or fabrication", () => {
     }
 
     it("a draft claim's bound changed is caught at that claim's position, and the answer next to it is still reproduced", () => {
-      const brief = copyOf(briefA()) as { claims: { established: { lo: number; hi: number } }[] };
+      const brief = copyOf(briefA()) as unknown as { claims: { established: { lo: number; hi: number } }[] };
       brief.claims[0]!.established.hi = 3; // honest: packing between 1 and 2
       expect(recheck(ORDER_DESK_SCHEMA, brief as unknown as Brief)).toEqual({
         ok: true,
