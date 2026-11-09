@@ -147,11 +147,12 @@ describe("the precedence malformed > unknown-field > vacuous-claim, one row per 
 
 describe("a differential fuzz of generated and corrupted claims against the reference", () => {
   const tally = { claims: 0, ok: 0, malformedField: 0, malformedExtent: 0, malformedBoth: 0, unknown: 0, vacuous: 0 };
-  const CHUNKS = 20;
+  const CHUNKS = 50;
+  const PER = 20;
   for (let chunk = 0; chunk < CHUNKS; chunk++) {
-    it(`seeds ${chunk * 50 + 1} to ${chunk * 50 + 50}`, () => {
+    it(`seeds ${chunk * PER + 1} to ${chunk * PER + PER}`, () => {
       const problems: string[] = [];
-      for (let seed = chunk * 50 + 1; seed < chunk * 50 + 51; seed++) {
+      for (let seed = chunk * PER + 1; seed < chunk * PER + PER + 1; seed++) {
         const rng = mulberry32(seed);
         const inst = genInstance(rng);
         const grounded = groundOf(inst.schema, inst.observations);
@@ -182,7 +183,7 @@ describe("a differential fuzz of generated and corrupted claims against the refe
     });
   }
   it("the fuzz reached every verdict (needs every chunk above to have run)", () => {
-    expect(tally.claims, "all chunks ran: do not filter this file with -t").toBe(CHUNKS * 50 * 12);
+    expect(tally.claims, "all chunks ran: do not filter this file with -t").toBe(CHUNKS * PER * 12);
     console.log(`readClaim fuzz: ${tally.claims} claims: ok ${tally.ok}, malformed field ${tally.malformedField}, malformed extent ${tally.malformedExtent}, malformed both ${tally.malformedBoth}, unknown-field ${tally.unknown}, vacuous-claim ${tally.vacuous}`);
     for (const [name, n] of Object.entries({ ok: tally.ok, field: tally.malformedField, extent: tally.malformedExtent, both: tally.malformedBoth, unknown: tally.unknown, vacuous: tally.vacuous })) expect(n, name).toBeGreaterThanOrEqual(100);
   });

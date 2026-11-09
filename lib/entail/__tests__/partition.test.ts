@@ -29,8 +29,8 @@ import type { Instance, RawField, RawObservation, RawSchema } from "./fixtures.j
  * hand-worked case at the largest size the contracts allow.
  */
 
-const CHUNKS = 160;
-const PER_CHUNK = 50;
+const CHUNKS = 320;
+const PER_CHUNK = 25;
 const TOTAL = CHUNKS * PER_CHUNK;
 /** As in `lib/ground`'s oracle-exactness: an instance whose worlds the oracle would have to list more than this many times is not asked. */
 const ORACLE_BUDGET = 200_000;
