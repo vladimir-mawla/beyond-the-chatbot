@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertEntailmentWellFormed, fieldId } from "../../contracts/index.js";
+import { assertEntailmentWellFormed } from "../../contracts/index.js";
 import type { Entailment, Extent } from "../../contracts/index.js";
 import { oracleIsSubset, oracleMeet, oracleUnmetSides } from "../../extent/__tests__/fixtures.js";
 import { classify, oracleBaselines, oracleBounds, oracleCost, oracleTrees, oracleWorstCost } from "../../ground/__tests__/oracle.js";
@@ -358,7 +358,7 @@ describe("hand-worked at the largest size the contracts allow: 64 fields, 64 obs
     expect(weak.ok && weak.entailment.kind === "weakened" && weak.entailment.unmet).toStrictEqual(["hi"]);
     expect(weak.ok && weak.entailment.kind === "weakened" && weak.entailment.openEnds).toStrictEqual([]);
   });
-  it("an intermediate field: D16 is [136, 152] (F16 = 136, sixteen unit gaps plus b00's), and the spare field is its own tree", () => {
+  it("an intermediate field: D16 is [136, 153] (b00 to b16 sum to 0 + 1 + .. + 16 = 136 at the floor, and one more per operand at the ceiling, 17), and the spare field is its own tree", () => {
     const r = rule(g, { field: "d16", extent: { lo: 137, hi: null } });
     expect(r.ok && r.entailment.kind === "weakened" && r.entailment.established).toStrictEqual({ lo: 136, hi: 153 });
     const spare = rule(g, { field: "spare", extent: { lo: 1, hi: null } });
@@ -370,7 +370,7 @@ describe("hand-worked at the largest size the contracts allow: 64 fields, 64 obs
     expect(r.ok && r.entailment.kind).toBe("conflicted");
     const core = r.ok && r.entailment.kind === "conflicted" ? r.entailment.core : [];
     expect(core.length).toBeGreaterThan(1);
-    expect(rule(squeezed, { field: "spare", extent: { lo: 1, hi: null } }).ok && true).toBe(true);
-    void fieldId;
+    const spare = rule(squeezed, { field: "spare", extent: { lo: 1, hi: null } });
+    expect(spare.ok && spare.entailment.kind).toBe("contradicted");
   });
 });
