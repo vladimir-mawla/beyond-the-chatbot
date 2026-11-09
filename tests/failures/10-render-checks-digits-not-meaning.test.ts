@@ -70,9 +70,18 @@ function demoBriefs(): Fixture[] {
 /** A Brief with one refusal of each kind a draft claim can get: unknown field, malformed, vacuous, and one that could not be read. */
 function briefWithRefusals(): Fixture {
   const g = groundOk(ORDER_DESK_SCHEMA, observationsOf(["o1", "o2"]));
-  const hostile = { field: PACK, get extent(): never { throw new Error("no"); } };
+  let reads = 0;
+  const hostile = {
+    field: PACK,
+    get extent(): never {
+      reads += 1;
+      throw new Error("no");
+    },
+  };
   const result = answer(g, claim(DELIVERY, null, 12), [{ field: "nope", extent: { lo: 1, hi: 2 } }, null, claim(PACK, 0, null), hostile, claim(CUSTOMS, 2, 2)]);
   if (!result.ok) throw new Error("fixture");
+  // The hostile element was read exactly once, and refused as `hostile-input`.
+  if (reads !== 1) throw new Error(`fixture: the hostile claim was read ${reads} times`);
   return { where: "a Brief with refusals", brief: result.brief };
 }
 
