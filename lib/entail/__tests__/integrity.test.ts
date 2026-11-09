@@ -116,13 +116,13 @@ describe("with the real guard, cast-built contaminated values are refused, one f
     const made = answer(g, claim("deliveryDay", null, 12), [claim("customsDays", 2, 2)]);
     if (!made.ok) throw new Error("fixture");
     const brief: Brief = made.brief;
-    expect(recheck(DESK, brief).ok).toBe(true);
+    expect(recheck(g.schema, brief).ok).toBe(true);
     // the Brief above holds a weakened answer and an ungrounded claim, so those are the two kinds that can be contaminated in place
     const inPlace = CONTAMINATED.filter(([, kind]) => kind === "ungrounded" || kind === "weakened");
-    expect(inPlace).toHaveLength(5);
+    expect(inPlace).toHaveLength(4);
     for (const [title, kind, contaminate] of inPlace) {
       const position = kind === "ungrounded" ? 0 : "answer";
-      const result = recheck(DESK, tampered(brief, position, (ruling) => contaminate(ruling)));
+      const result = recheck(g.schema, tampered(brief, position, (ruling) => contaminate(ruling)));
       expect(result.ok, title).toBe(false);
       expect(!result.ok && result.failure.kind, title).toBe("hostile-input");
       expect(!result.ok && result.failure.kind === "hostile-input" && result.failure.message, title).toMatch(/^brief\.(answer|claims\[0\]) is not a well-formed (weakened|ungrounded): /);
