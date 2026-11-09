@@ -10,7 +10,8 @@ import type { ScriptRun, StepRun } from "../domains/order-desk/index.js";
  *   2. every ruling's kind equals the kind the ORACLE below gives it, and every `established` extent equals the oracle's
  *      extent for that quantity (and a `conflicted` ruling's core is, by the oracle, unsatisfiable on its own);
  *   3. `recheck.intact` on every Brief;
- *   4. all five kinds were observed across the six steps.
+ *   4. all five kinds were observed across the six steps;
+ *   5. every step ruled all four draft claims and refused none (the drafter always states four).
  * The oracle imports nothing from `lib/` and calls nothing the engine exports: it lists every integer world of the
  * four-field order desk. `__tests__/demo.test.ts` pins that by a parsed scan, says which forms the scan does not see, and
  * gives each of the five conditions a test that makes it fail.
