@@ -90,7 +90,7 @@
         <tr><td>M2</td><td>Deploy skeleton (deployed now, never last)</td><td>DEPLOY</td><td><code>curl -sf $DEPLOY_URL/api/health</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M3</td><td>Extent algebra (<code>lib/extent</code>)</td><td>BUILD</td><td><code>npm test -- lib/extent</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M4</td><td>Ground: schema, observations, propagation, support, core (<code>lib/ground</code>)</td><td>BUILD</td><td><code>npm test -- lib/ground</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
-        <tr><td>M5</td><td>Entail: claim, ruling, brief, render, recheck (<code>lib/entail</code>)</td><td>BUILD</td><td><code>npm test -- lib/entail</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
+        <tr><td>M5</td><td>Entail: claim, ruling, brief, render, recheck (<code>lib/entail</code>)</td><td>BUILD</td><td><code>npm test -- lib/entail</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M6</td><td>Domain: the order desk (<code>domains/order-desk</code>)</td><td>INTEGRATE</td><td><code>npm run demo:order-desk</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
         <tr><td>M7</td><td>The failure suite (10 cases)</td><td>VERIFY</td><td><code>npm test -- failures</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
         <tr><td>M8</td><td>Interactive demo</td><td>BUILD</td><td>deployed URL renders the same Brief as the last step of <code>npm run demo:order-desk</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
@@ -99,11 +99,16 @@
     </table>
     <p class="note">Total token budget = 9 milestones × 150000. Update <span class="pill wip">wip</span> /
        <span class="pill ok">done</span> as loops complete — a milestone only flips to <code>done</code>
-       after independent (L4) verification, never by the building agent marking its own work. M1 to M4 are
+       after independent (L4) verification, never by the building agent marking its own work. M1 to M5 are
        <code>done</code> (M1: PR #1, independent L4 APPROVE on the fourth review, after three fix rounds;
        M2: PR #3, independent L4 APPROVE in round 2, after one fix round; M3: PR #5, independent L4 APPROVE
        on the third review, after two fix rounds; M4: PR #7, independent L4 APPROVE at the fourth review, a
-       targeted close, after three rejections and the one-sentence fix that close required); the other five rows
+       targeted close, after three rejections and the one-sentence fix that close required; M5: PR #9, three
+       change-request reviews and then a close without a new verifier pass: a full L4 pass at <code>dda00a9</code>
+       (REQUEST CHANGES, docs only); fix round 1, then a targeted close at <code>fcec2a3</code> (REQUEST CHANGES,
+       four sentences); fix round 2, then a targeted close at <code>f952e14</code> (REQUEST CHANGES, three small
+       items); fix round 3, three edits, approved at <code>5aaab0a</code> by the orchestrator's mechanical check, on
+       the verifier's statement that the milestone is clear once those edits are applied); the other four rows
        are still <code>todo</code>.
        This table is mirrored in <code>PLAN.md</code> (§6) for the agent to parse.</p>
   </div>
