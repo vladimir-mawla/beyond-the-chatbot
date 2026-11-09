@@ -162,7 +162,7 @@ function problemsWith(text: string, e: Entailment, schema: Schema): string[] {
     const cut = e.unmet.map((side) => (side === "lo" ? "lower" : "upper")).join(" and ");
     if (!text.includes(`Withheld: the ${cut} bound.`)) out.push(`the cut "${cut}" is not named as withheld`);
     // a weakened ruling's gaps open the sentence after "Withheld", so the first is capitalised
-    for (const end of e.openEnds) if (!text.toLowerCase().includes(gap(end))) out.push(`open end ${end.field}/${end.side} is missing`);
+    for (const end of e.openEnds) if (!text.toLowerCase().includes(gap(end).toLowerCase())) out.push(`open end ${end.field}/${end.side} is missing`);
     if (e.openEnds.length === 0 && !text.includes("No quantity is named as missing.")) out.push("an empty open-end list is not said");
   }
   if (e.kind === "ungrounded") {
