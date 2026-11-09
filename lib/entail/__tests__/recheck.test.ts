@@ -300,8 +300,8 @@ const FUZZ_KINDS = ["bound-plus", "bound-minus", "bound-null", "bound-given", "s
 type FuzzKind = (typeof FUZZ_KINDS)[number];
 
 describe("a differential fuzz: seventeen tamperings, answered as the oracle and the reference intake say", () => {
-  const CHUNKS = 60;
-  const PER = 10;
+  const CHUNKS = 100;
+  const PER = 6;
   const ORACLE_BUDGET = 60_000;
   const seen = { scenarios: 0, skipped: 0, applied: new Map<FuzzKind, number>(), answers: new Map<string, number>(), compared: 0, refused: 0, mostEvidence: 0 };
   const bump = <K>(map: Map<K, number>, key: K): void => void map.set(key, (map.get(key) ?? 0) + 1);

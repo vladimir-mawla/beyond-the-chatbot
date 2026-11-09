@@ -341,19 +341,22 @@ describe("hand-worked at the largest size the contracts allow: 64 fields, 64 obs
       entailment: { kind: "entailed", field: "d31", tested: { lo: null, hi: 528 }, established: { lo: 496, hi: 528 }, support: { lo: every(1, 31), hi: every(0, 31) } },
     });
   });
-  it("one past each bound at the maximum: 'D31 <= 527' and 'D31 >= 497' are weakened with the cut named, '<= 495' and '>= 529' are contradicted", () => {
-    const kinds = [
-      [{ lo: null, hi: 527 }, "weakened"],
-      [{ lo: 497, hi: null }, "weakened"],
-      [{ lo: null, hi: 495 }, "contradicted"],
-      [{ lo: 529, hi: null }, "contradicted"],
-      [{ lo: null, hi: 528 }, "entailed"],
-      [{ lo: 496, hi: null }, "entailed"],
-    ] as const;
-    for (const [extent, kind] of kinds) {
+  // one test per claim: each `rule` at this size costs tens of milliseconds, and six of them in one test were the slowest test of the file
+  const PAST: readonly (readonly [Extent, string])[] = [
+    [{ lo: null, hi: 527 }, "weakened"],
+    [{ lo: 497, hi: null }, "weakened"],
+    [{ lo: null, hi: 495 }, "contradicted"],
+    [{ lo: 529, hi: null }, "contradicted"],
+    [{ lo: null, hi: 528 }, "entailed"],
+    [{ lo: 496, hi: null }, "entailed"],
+  ];
+  for (const [extent, kind] of PAST) {
+    it(`one past each bound at the maximum: D31 in ${JSON.stringify(extent)} is ${kind} ('<= 527' and '>= 497' are weakened, '<= 495' and '>= 529' contradicted, '<= 528' and '>= 496' entailed)`, () => {
       const r = rule(g, { field: "d31", extent });
       expect(r.ok && r.entailment.kind, JSON.stringify(extent)).toBe(kind);
-    }
+    });
+  }
+  it("the weakened claim one past the upper bound names the cut and no open end: D31 <= 527 withholds the upper side only", () => {
     const weak = rule(g, { field: "d31", extent: { lo: null, hi: 527 } });
     expect(weak.ok && weak.entailment.kind === "weakened" && weak.entailment.unmet).toStrictEqual(["hi"]);
     expect(weak.ok && weak.entailment.kind === "weakened" && weak.entailment.openEnds).toStrictEqual([]);

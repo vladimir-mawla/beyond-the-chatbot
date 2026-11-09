@@ -64,8 +64,8 @@ function objectsIn(value: unknown, into: Set<unknown> = new Set()): Set<unknown>
 
 const sharedWith = (output: unknown, inputs: ReadonlySet<unknown>): number => [...objectsIn(output)].filter((node) => inputs.has(node)).length;
 
-const CHUNKS = 24;
-const PER_CHUNK = 25;
+const CHUNKS = 60;
+const PER_CHUNK = 10;
 const seen = { instances: 0, outputs: 0, nodes: 0, briefs: 0, refusals: 0, conflicted: 0, rechecked: 0, frozenInputs: 0, deepest: 0 };
 
 /** The depth of the deepest object or array in a value. */
