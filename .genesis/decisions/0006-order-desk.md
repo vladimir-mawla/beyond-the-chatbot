@@ -68,7 +68,7 @@ Each edit applied to the final tree, `vitest run domains lib/contracts` (M1's su
 
 | Row | File | Edit | Result |
 |---|---|---|---|
-| `P1` | `lib/extent/sum.ts` | `sumBackward`'s upper-bound sign flipped (plan) | 1 failed (demo)? see below: the demo's program tests, not the in-process suite, hold this; run in a fresh copy: exit non-zero, oracle FAIL lines at step 6 |
+| `P1` | `lib/extent/sum.ts` (in a fresh copy of the source) | `sumBackward`'s upper-bound sign flipped (plan) | the program exits non-zero; every FAIL line is at step 6 (`demo.test.ts`, "sumBackward's upper-bound sign flipped") |
 | `P2` | `drafter.ts` | `PRIOR_CUSTOMS_DAYS` 2 to 3 (plan) | 10 failed (drafter, script) |
 | `P3` | `script.ts` | the domain builds an object literal whose `kind` is `"entailed"` | 1 failed (architecture) |
 | `P4` | `drafter.ts` | the drafter imports `meet` from `lib/extent` | 3 failed (architecture) |
@@ -117,7 +117,7 @@ Each edit applied to the final tree, `vitest run domains lib/contracts` (M1's su
 | `M13` | demo | a thrown run is rethrown, not reported | 1 failed (demo) |
 | `M14` | demo | the oracle's containment is strict on the lower end | 12 failed (demo) |
 
-`P1` is reported by the program tests in `demo.test.ts` (which sabotage a copy of the engine and run the real program), so it is in the control of every row above as a passing test, not a failure count; its recorded result is the one in Finding 2. Two rows are green and each is argued: `S2` and `S7` replace the engine's validated copy of the schema by the domain's constant, which `readSchema` returned equal to the constant (`canon.test.ts`, "is accepted by readSchema, and the copy it returns equals the constant"), so the two programs differ in no observable value (an equivalent mutant; no test distinguishes them, and none could while the schema is a constant). `P5` is a typecheck-only guard: the vitest run is green because types are erased, and CI's `npm run typecheck` step is what turns red. Some rows also print one `tsc` error from an unused variable the edit left; those are not the guard.
+`P1` is a test, not a failure count: `demo.test.ts` sabotages a copy of the engine and runs the real program, and the test passes when the program fails as described (Finding 2). Two rows are green and each is argued: `S2` and `S7` replace the engine's validated copy of the schema by the domain's constant, which `readSchema` returned equal to the constant (`canon.test.ts`, "is accepted by readSchema, and the copy it returns equals the constant"), so the two programs differ in no observable value (an equivalent mutant; no test distinguishes them, and none could while the schema is a constant). `P5` is a typecheck-only guard: the vitest run is green because types are erased, and CI's `npm run typecheck` step is what turns red. Some rows also print one `tsc` error from an unused variable the edit left; those are not the guard.
 
 ## Timing
 
@@ -125,7 +125,7 @@ Three ambient runs of the whole suite, then one with 20 `yes > /dev/null` (kille
 
 - The slowest M6 test with the **default** 5 s timeout: 395 ms ambient (`architecture.test.ts`, "the closed module graph ..."), 265 ms in the loaded run (the stricter-drafter-rule test); the 40% line is 2 s.
 - The slowest M6 tests overall are the child-process tests of `demo.test.ts`, each with an **explicit** 30 s timeout: 1.05 s ambient (the real program twice), 2.15 s in the loaded run ("agrees with the engine on all 80 states"). CI is about 3 times slower than local; the explicit timeout leaves a factor above 10 on the worst loaded figure.
-- The whole suite: 18.8 s in the first sabotage-control run; every run was green (see the PR).
+- The whole suite was green in all four runs (3044 tests, 57 files).
 
 ## Plan wording and neighbours, flagged (the plan was not edited)
 
