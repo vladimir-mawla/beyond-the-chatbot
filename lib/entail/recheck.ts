@@ -63,13 +63,12 @@ export type RecheckResult =
  *  5. `intact` is true when no finding is `not-reproduced`. An `uncertifiable-silence` does not make a `Brief` not
  *     intact: it says what cannot be certified, not that anything is wrong.
  *
- * WHAT IT DOES NOT CERTIFY, at full strength, and `recheck.test.ts` pins each as a result rather than hiding it.
+ * WHAT IT DOES NOT CERTIFY, at full strength. `recheck.test.ts` pins as results the dropped bound and support, fabricated observations, an `ungrounded` ruling that is never certified, an `openEnds` that is never compared, two rulings that disagree, and carried evidence nothing names. The padded forgery of `silentSides` and the re-labelled Brief below are stated here and in ADR 0005 and are pinned by no test.
  *  - A bound with empty support is compared with the schema-only bound and nothing else, so a `Brief` that drops a
  *    supported bound AND its support together claims silence on that side and is `reproduced` with the side in
  *    `silentSides`. An omission cannot be seen from the `Brief` alone.
- *    `silentSides` is a syntactic test (the side's support list is empty), not a semantic one: a forger who cites any carried observation in place of the dropped support defeats it, and the Brief is `reproduced` with `silentSides: []`.
- *    A holder cannot rely on `silentSides` to find omissions.
- *  - `recheck` does not bind a Brief to the question that was asked: `field` and `tested` are carried and never compared with any question, so a Brief re-labelled to a different claim whose ruling holds on the carried evidence is `reproduced`. Binding a Brief to its asker is outside `lib/entail` (plan section 10, "Cryptographic receipts on a `Brief`": an asker-binding is not provided, and the README says so).
+ *    `silentSides` is a syntactic test (the side's support list is empty), not a semantic one: a forger who names in place of the dropped support an observation that is carried in `Brief.evidence` (an id that is not carried is `missing-evidence`), and sets the carried bound to what that observation alone gives, defeats it, and the Brief is `reproduced` with `silentSides: []`. For a bound dropped to the schema's floor, a carried observation that adds nothing to that side needs no other change. A holder cannot rely on `silentSides` to find omissions.
+ *  - `recheck` does not bind a Brief to the question that was asked: `field` and `tested` are carried and never compared with any question, so a Brief re-labelled to a different claim whose ruling holds on the carried evidence is `reproduced`. Binding a Brief to its asker is outside `lib/entail` (plan section 10, "Considered and rejected", bullet "Cryptographic receipts on a `Brief`": an asker-binding is not provided; the plan assigns saying so to the README, which M9 rewrites and which does not yet say it).
  *  - Carried observations that are invented, with quotes that contain the right digits, are certified: authorship is
  *    asserted, not proved. The quotes are carried so that a holder can compare them with the real documents.
  *  - A `weakened` ruling's `openEnds` is read for being an array and for being empty or not, and never compared with
