@@ -28,9 +28,9 @@ It imports from `lib/` only the types `Claim` and `FieldId`, and no value at all
 
 Two things are invented and disclosed. The plan names only `PRIOR_CUSTOMS_DAYS = 2`; the pack and transit priors are needed so that the drafter is total over all sixteen snapshots M8 offers (the canonical snapshots never use them), and equal what the canonical documents give. The crossed-ends rule is the other. `fluentDraft` also takes an optional third argument, `priors`, defaulting to `MODEL_PRIORS`, so that a test can vary a prior (a plan extension; the plan's signature has two parameters).
 
-The question is carried in the draft so that the paragraph can answer it, and never changes a statement (`drafter.test.ts`, "the question does not change a single statement"). The draft is `{question, statements: [4 x {claim, basis}]}`: one record per quantity, no index-paired arrays. `renderFluent` is a fixed template over the draft; it prints the stated numbers and the template's words, no id, label, source or other free text (a quantity it has no phrase for prints as "that quantity"); `drafter.test.ts` checks, over all 80 states, that every number it prints is a stated value and that "typical" appears exactly when some statement rests on a prior.
+The question is carried in the draft so that the paragraph can answer it, and never changes a statement (`drafter.test.ts`, "the question does not change a single statement"). The draft is `{question, statements: [4 x {claim, basis}]}`: one record per quantity, no index-paired arrays. `renderFluent` is a fixed template over the draft; for a draft from `fluentDraft` it prints the stated numbers and the template's words, with no id, label, source or other free text (a quantity it has no phrase for prints as "that quantity"); `drafter.test.ts` checks, over all 80 states, that every number it prints is a stated value and that "typical" appears exactly when some statement rests on a prior.
 
-**The drafter's inputs are not an untrusted read place**: they are this package's own constants or a subset of them, typed. What it produces goes to the engine as `unknown`, and the engine reads it as untrusted. So the "read-once" table of the sibling milestones has no place here; `runScript` reads each of a step's three numbers once into a local and treats an index that is not an integer inside the menu as a typed failure (`script.test.ts`, "a script step whose indexes are outside the menus fails ...", with NaN, +-Infinity, 2**40, a fraction, strings and inherited names).
+**The drafter's inputs are not an untrusted read place**: they are this package's own constants or a subset of them, typed. What it produces goes to the engine as `unknown`, and the engine reads it as untrusted. So the "read-once" table of the sibling milestones has no place here; `runScript` reads each of a step's three numbers once into a local and treats an index that is not an integer inside the menu as a typed failure (`script.test.ts`, "a script step whose indexes are outside the menus fails ...", with NaN, +-Infinity, 2**40, a fraction, strings and inherited names). `runScript` throws on a null entry or a non-iterable script (`script.test.ts`, "a null entry, or a script that is not iterable, throws a TypeError"); `renderFluent` prints whatever number-typed value the draft carries (`drafter.test.ts`, "prints whatever number-typed value").
 
 Section 7's step 5 gives delivery as 14 in the drafter (a direct document exists), where M5's fixture has 6 for that step. The kinds are the same (all conflicted); the drafter's rule decides, and `drafter.test.ts` ("the plan's section 7 drafter column") pins 14.
 
@@ -42,7 +42,7 @@ Section 7's step 5 gives delivery as 14 in the drafter (a direct document exists
 
 ## Decision 4 — the demo, and its oracle
 
-`scripts/demo-order-desk.ts` runs the script and prints, per step, the chatbot's paragraph, the rendered Brief and the `recheck` findings, then exits non-zero unless: the script ran; every ruling's kind equals the oracle's and every `established` extent equals the oracle's extent for that quantity, and a conflicted ruling's core is unsatisfiable by the oracle; `recheck.intact` on every Brief; all five kinds were observed. (Stronger than the plan: the plan asks for the extents; the kinds and the core are added.) A thrown run is reported as `FAIL: the run threw: ...` and exits 1. The core check says the core is unsatisfiable, not that it is irreducible.
+`scripts/demo-order-desk.ts` runs the script and prints, per step, the chatbot's paragraph, the rendered Brief and the `recheck` findings, then exits non-zero unless: the script ran; every ruling's kind equals the oracle's and every `established` extent equals the oracle's extent for that quantity, and a conflicted ruling's core is unsatisfiable by the oracle; `recheck.intact` on every Brief; all five kinds were observed; every step ruled all four draft claims and refused none (the drafter always states four, `drafter.test.ts` "totality"; a NaN claim is refused by the engine and would otherwise be invisible to the oracle). (Stronger than the plan: the plan asks for the extents; the kinds and the core are added.) A thrown run is reported as `FAIL: the run threw: ...` and exits 1. The core check says the core is unsatisfiable, not that it is irreducible.
 
 **The oracle** (between two marker comments in the script) lists every world: three base quantities in `[0, cap]` with `cap = 40`, delivery their sum, each inside every observation's extent. An upper side is unbounded exactly when widening the window to 41 moves it (the rule of M3/M4, plan section 8 defect 9); lower sides are never unbounded because the baseline is 0. It imports nothing and calls nothing; the script imports only the domain's index. 40 is larger than every finite constant in the canon (the largest is 14), an argument, not a test; the oracle throws if a world exists in one window and not the other.
 
@@ -54,11 +54,11 @@ Section 7's step 5 gives delivery as 14 in the drafter (a direct document exists
 
 ## Decision 5 — what the domain may not do
 
-`architecture.test.ts` scans the seven sources (parsed): imports only a sibling or `lib/{contracts,ground,entail}/index.js` (so never `lib/extent`, never a file inside a layer); the values each file may take from a layer, every allowance used by some source; the sibling graph, every edge used; the drafter's whole lib import is `type { Claim, FieldId }`; no object literal whose `kind` property is a variant name (identifier key, string key, no-substitution template, wrapped in parentheses, `as` or `satisfies`); no bound read (`.lo`, `.hi`, `["lo"]`, a destructured `lo` or `hi`) in any source but the drafter; no top-level `let` or `var`. A synthetic tree has one violation per file. **Not seen, pinned by the test "what the scans do NOT see"**: a computed key, an alias, a shorthand, a spread, `Object.assign`, `JSON.parse`, a class field and a substituted template that build a variant name; a bound read through a variable key or `Object.values`. A destructured parameter `{ lo }` is seen (a control). The drafter is exempt from the bound rule because it computes stated values (midpoints) from observations' ends; what keeps it from being an engine is that it imports none, which the import rule checks. M1's whole-repository graph scan and determinism guard run over the domain from `architecture.test.ts` and are asserted to have parsed every source and test file.
+`architecture.test.ts` scans the seven sources (parsed): imports only a sibling or `lib/{contracts,ground,entail}/index.js` (so never `lib/extent`, never a file inside a layer); the values each file may take from a layer, every allowance used by some source; the sibling graph, every edge used; the drafter's whole lib import is `type { Claim, FieldId }`; no object literal whose `kind` property is a variant name (identifier key, string key, no-substitution template, wrapped in parentheses, `as` or `satisfies`); no bound read (`.lo`, `.hi`, `["lo"]`, a destructured `lo` or `hi`) in any source but the drafter; no top-level `let` or `var`. A synthetic tree has one violation per file. **Not seen, pinned by the test "what the scans do NOT see"**: a computed key, an alias, a shorthand, a spread, `Object.assign`, `JSON.parse`, a class field and a substituted template, a conditional (`?:`), `??`, `||` and `&&` branches, a string concatenation and a tagged template that build a variant name; a bound read through a variable key, `Object.values`, `Reflect.get` and a destructuring assignment (each form has a fixture in the test that reports it as not seen). A destructured parameter `{ lo }` is seen (a control). The drafter is exempt from the bound rule because it computes stated values (midpoints) from observations' ends; what keeps it from being an engine is that it imports none, which the import rule checks. M1's whole-repository graph scan and determinism guard run over the domain from `architecture.test.ts` and are asserted to have parsed every source and test file.
 
 ## Findings the build produced
 
-1. **The plan's claim "changing `PRIOR_CUSTOMS_DAYS` moves only the drafter column, no `Entailment` does" is true for the kind, established extent, support and core of every ruling when the customs prior is 1 to 6** (`script.test.ts`, "the engine does not read the prior", 6 steps x 6 priors x 4 claims, and the question's ruling untouched), **and not quite true outside that range, both pinned**: a prior of 0 changes the *cut* of step 1's customs ruling (its `openEnds` loses the lower side, because the claim "exactly 0" already satisfies the floor), and a prior of 7 to 10 makes step 6's customs claim fall inside the derived `[7, 10]`, so that one claim's kind goes from `contradicted` to `weakened`; 6 and 11 do not. In every case `tested` follows the claim. The engine reads the claim it is given, and the prior is only a number in the claim.
+1. **The plan's claim "changing `PRIOR_CUSTOMS_DAYS` moves only the drafter column, no `Entailment` does" is true for the kind, established extent, support and core of every ruling when the customs prior is 1 to 6** (`script.test.ts`, "the engine does not read the prior", 6 steps x 6 priors x 4 claims, and the question's ruling untouched), **and not quite true outside that range, both pinned**: a prior of 0 changes the *cut* of the customs ruling in steps 1 to 3 (its `openEnds` loses the lower side, because the claim "exactly 0" already satisfies the floor), and a prior of 7 to 10 makes step 6's customs claim fall inside the derived `[7, 10]`, so that one claim's kind goes from `contradicted` to `weakened`; 6 and 11 do not. In every case `tested` follows the claim. The engine reads the claim it is given, and the prior is only a number in the claim.
 2. **Sabotage of `sumBackward`'s sign.** Flipping only the upper-bound line (`hi - other.lo` to `hi + other.lo`) makes the program exit non-zero with the oracle's lines all at step 6, as the plan says (`demo.test.ts`, "sumBackward's upper-bound sign flipped"): `established {"lo":7,"hi":18} differs from the oracle's {"lo":7,"hi":10}`; and "recheck is not intact" at step 6. Flipping the lower-bound line, alone or with the upper, never reaches the oracle: `lib/ground`'s own propagation guard throws ("did not settle"), and the demo reports it as a thrown run and exits non-zero.
 3. The 80 states of M8's exhaustive check (16 subsets x 5 menu questions) already all answer, with `recheck` intact, and agree with the oracle (`demo.test.ts`, "agrees with the engine on all 80 states"); this is M6's evidence about the domain, not M8's.
 
@@ -83,49 +83,50 @@ Each edit applied to the final tree, `vitest run domains lib/contracts` (M1's su
 | `D9` | `drafter.ts` | a stated value is a lower bound only | 13 failed (drafter, script) |
 | `D11` | `drafter.ts` | the drafter imports the value `fieldId` (the plan allows it) | 2 failed (architecture) |
 | `D12` | `drafter.ts` | the prior note is never printed | 2 failed (drafter, script) |
+| `Z2` | `drafter.ts` | the drafter states NaN for a summed delivery (the engine refuses those claims); also the real program exits non-zero with the refused claims named (`demo.test.ts`, "a drafter that states NaN") | 30 failed (demo, drafter, script) |
 | `S1` | `script.ts` | `intact` a constant true | 2 failed (demo, script-failures) |
-| `S2` | `script.ts` | render over `ORDER_DESK_SCHEMA` instead of the engine's validated copy | **0 failed** |
+| `S2` | `script.ts` | render over `ORDER_DESK_SCHEMA` instead of the engine's validated copy | 1 failed (script-failures) |
 | `S3` | `script.ts` | no integer check on the snapshot index | 1 failed (script) |
 | `S4` | `script.ts` | a rejected observation ignored | 1 failed (script-failures) |
 | `S5` | `script.ts` | the drafter is shown no documents | 5 failed (script) |
-| `S6` | `script.ts` | draft claims not sent to the engine | 16 failed (demo, script) |
-| `S7` | `script.ts` | recheck over `ORDER_DESK_SCHEMA` instead of the validated copy | **0 failed** |
+| `S6` | `script.ts` | draft claims not sent to the engine | 19 failed (demo, script) |
+| `S7` | `script.ts` | recheck over `ORDER_DESK_SCHEMA` instead of the validated copy | 1 failed (script-failures) |
 | `S9` | `script.ts` | the domain reads a bound | 1 failed (architecture) |
 | `S10` | `script.ts` | imports `lib/extent` | 3 failed (architecture) |
 | `S11` | `script.ts` | imports a file inside `lib/ground` | 4 failed (architecture) |
-| `O1` | `observations.ts` | o1's quote loses the digit 2 | 26 failed (canon, demo, script, script-failures) |
+| `O1` | `observations.ts` | o1's quote loses the digit 2 | 29 failed (canon, demo, script, script-failures) |
 | `O2` | `observations.ts` | the second snapshot loses o3 | 13 failed (canon, demo, drafter, script) |
-| `O3` | `observations.ts` | o4's extent 13 against a quote saying 14 | 24 failed (canon, demo, drafter, script, script-failures) |
+| `O3` | `observations.ts` | o4's extent 13 against a quote saying 14 | 26 failed (canon, demo, drafter, script, script-failures) |
 | `O4` | `observations.ts` | `observationsOf` keeps an unknown id as `undefined` | 2 failed (canon) |
 | `Q1` | `questions.ts` | the first question says 13 | 5 failed (canon, script) |
 | `Q2` | `questions.ts` | the customs question is about packing | 10 failed (canon, demo, drafter, script) |
-| `C1` | `schema.ts` | delivery's sum drops customs | 28 failed (canon, demo, script) |
-| `C2` | `schema.ts` | customs has a floor of 1 | 15 failed (canon, demo, script) |
+| `C1` | `schema.ts` | delivery's sum drops customs | 29 failed (canon, demo, script) |
+| `C2` | `schema.ts` | customs has a floor of 1 | 16 failed (canon, demo, script) |
 | `F1` | `freeze.ts` | `deepFreeze` does not freeze children | 4 failed (canon, drafter, script) |
 | `M1` | demo | ignores `recheck.intact` | 3 failed (demo) |
 | `M2` | demo | does not require all five kinds | 2 failed (demo) |
 | `M3` | demo | does not compare established extents | 3 failed (demo) |
 | `M4` | demo | does not compare kinds | 5 failed (demo) |
 | `M5` | demo | does not check a conflict's core | 2 failed (demo) |
-| `M6` | demo | the oracle never reports an unbounded side | 10 failed (demo) |
-| `M7` | demo | the oracle has no `ungrounded` row | 11 failed (demo) |
+| `M6` | demo | the oracle never reports an unbounded side | 11 failed (demo) |
+| `M7` | demo | the oracle has no `ungrounded` row | 12 failed (demo) |
 | `M8` | demo | the oracle region mentions an import (`void runScript`) | 1 failed (demo) |
-| `M9` | demo | the oracle window is 3, not 40 | 10 failed (demo) |
-| `M10` | demo | a failed verification does not set the exit code | 4 failed (demo) |
+| `M9` | demo | the oracle window is 3, not 40 | 11 failed (demo) |
+| `M10` | demo | a failed verification does not set the exit code | 5 failed (demo) |
 | `M11` | demo | the oracle's begin marker renamed | 2 failed (demo) |
 | `M12` | demo | `ALL_KINDS` drops `conflicted` | 5 failed (demo) |
 | `M13` | demo | a thrown run is rethrown, not reported | 1 failed (demo) |
-| `M14` | demo | the oracle's containment is strict on the lower end | 12 failed (demo) |
+| `M14` | demo | the oracle's containment is strict on the lower end | 13 failed (demo) |
 
-`P1` is a test, not a failure count: `demo.test.ts` sabotages a copy of the engine and runs the real program, and the test passes when the program fails as described (Finding 2). Two rows are green and each is argued: `S2` and `S7` replace the engine's validated copy of the schema by the domain's constant, which `readSchema` returned equal to the constant (`canon.test.ts`, "is accepted by readSchema, and the copy it returns equals the constant"), so the two programs differ in no observable value (an equivalent mutant; no test distinguishes them, and none could while the schema is a constant). `P5` is a typecheck-only guard: the vitest run is green because types are erased, and CI's `npm run typecheck` step is what turns red. Some rows also print one `tsc` error from an unused variable the edit left; those are not the guard.
+`P1` is a test, not a failure count: `demo.test.ts` sabotages a copy of the engine and runs the real program, and the test passes when the program fails as described (Finding 2). S2 and S7 were green when the ledger was first written; `script-failures.test.ts` "renders and rechecks over the engine's validated schema" now kills both. `P5` is a typecheck-only guard: the vitest run is green because types are erased, and CI's `npm run typecheck` step is what turns red. Some rows also print one `tsc` error from an unused variable the edit left; those are not the guard.
 
 ## Timing
 
-Three ambient runs of the whole suite, then one with 20 `yes > /dev/null` (killed afterwards; none left), per-test durations from `vitest --reporter=json`, `AI_AGENT` and `CLAUDECODE` unset. The machine was shared; the load average at the start of the loaded run was 25.
+Three ambient runs of the whole suite, then one with 20 `yes > /dev/null` (killed afterwards; none left), per-test durations from `vitest --reporter=json`, `AI_AGENT` and `CLAUDECODE` unset. The machine was shared.
 
-- The slowest M6 test with the **default** 5 s timeout: 395 ms ambient (`architecture.test.ts`, "the closed module graph ..."), 265 ms in the loaded run (the stricter-drafter-rule test); the 40% line is 2 s.
-- The slowest M6 tests overall are the child-process tests of `demo.test.ts`, each with an **explicit** 30 s timeout: 1.05 s ambient (the real program twice), 2.15 s in the loaded run ("agrees with the engine on all 80 states"). CI is about 3 times slower than local; the explicit timeout leaves a factor above 10 on the worst loaded figure.
-- The whole suite was green in all four runs (3044 tests, 57 files).
+- The slowest M6 test with the **default** 5 s timeout: 505 ms ambient and 501 ms in the loaded run, both `architecture.test.ts`, "the closed module graph ..."; the 40% line is 2 s.
+- The slowest M6 tests overall are the child-process tests of `demo.test.ts`, each with an **explicit** 30 s timeout: 606 ms ambient (the lower-bound sabotage run), 1.79 s in the loaded run ("agrees with the engine on all 80 states"). CI is about 3 times slower than local; the explicit timeout leaves a factor above 5 on the worst loaded figure.
+- The whole suite was green in all four runs (3049 tests, 57 files; 134 tests in the 6 files under `domains/order-desk`). The load average (1 minute) at the start of the loaded run was 18.5.
 
 ## Plan wording and neighbours, flagged (the plan was not edited)
 
