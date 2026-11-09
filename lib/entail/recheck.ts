@@ -252,8 +252,9 @@ function readBrief(raw: unknown): BriefRead {
 
     if (!isArray("brief.evidence", evidence)) return refuse("brief.evidence is not an array");
     const evidenceCount = lengthOf("brief.evidence", evidence);
-    // Too long to take in: `ground` refuses from the length alone, and a sparse array of that length is all it reads.
-    if (evidenceCount > MAX_OBSERVATIONS) return { ok: true, rulings, evidence: new Array<unknown>(evidenceCount) };
+    // Too long to take in: `ground` refuses from the length alone, so it is handed an empty array that says that length (not an array of that
+    // length: `new Array(n)` throws a RangeError for an `n` of 2**32 or more, which a hostile `length` can be).
+    if (evidenceCount > MAX_OBSERVATIONS) return { ok: true, rulings, evidence: new Proxy<unknown[]>([], { get: (target, key, receiver) => (key === "length" ? evidenceCount : Reflect.get(target, key, receiver)) }) };
     const snapshot: unknown[] = [];
     for (let i = 0; i < evidenceCount; i++) snapshot.push(observationOf(i, attempt(`brief.evidence[${i}]`, () => evidence[i])));
     return { ok: true, rulings, evidence: snapshot };
