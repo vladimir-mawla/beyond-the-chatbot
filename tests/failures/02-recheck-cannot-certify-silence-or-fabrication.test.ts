@@ -3,7 +3,7 @@ import { obsId } from "../../lib/contracts/index.js";
 import type { Brief, Entailment, Observation } from "../../lib/contracts/index.js";
 import { recheck } from "../../lib/entail/index.js";
 import type { RecheckFinding } from "../../lib/entail/index.js";
-import { OBSERVATIONS, observationsOf } from "../../domains/order-desk/index.js";
+import { OBSERVATIONS, observationsOf, runScript } from "../../domains/order-desk/index.js";
 import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, copyOf, groundOk, obs } from "./helpers.js";
 
 /**
@@ -21,6 +21,11 @@ import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, copyOf, gr
  *  `uncertifiable-silence`, the same result an honest `ungrounded` gets, and it does not make the Brief not intact.
  *  (c) Evidence that is invented: `reproduced`, as long as every bound's digits occur in the carried quote. A certificate
  *  covers knowledge that cites evidence; it never covers ignorance and never provenance.
+ * SCALE AND LAYER (M5's `recheck.test.ts` pins the same limits by hand and on generated Briefs; this file's new ground is the
+ * Briefs the DOMAIN produces): half 1 is swept over every ruling of the six real Briefs of the canonical script (`runScript`),
+ * each non-null bound of each entailed, weakened or contradicted ruling tightened and loosened by 1, each weakened ruling's
+ * `unmet` replaced by each other possible cut, each `ungrounded` ruling checked: every tampering is expected to be caught as
+ * its own typed result (two tightenings that would invert an extent are refused whole as `hostile-input`, by the Brief's shape guard, and are counted apart), and the count of tamperings is asserted, so a sweep that silently covered less would be red.
  * The assertions are `recheck`'s typed results. This file does not assert that a caller "should also replay".
  *
  * WHAT WOULD MAKE THIS FAIL: HALF 1: `recheck` comparing only `kind` (the bound tests go red), or not comparing `unmet` (the
@@ -28,6 +33,12 @@ import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, copyOf, gr
  * (a) goes red), certifying an `ungrounded` (b), or authenticating provenance in any way that rejected carried evidence
  * with the right digits (c); turning digit-containment off makes the digits contrast of (c) red.
  */
+
+/** Counts of the sweeps above, read off the canonical script (a number changes only if the canonical Briefs do). */
+const TAMPERED_BOUNDS = 74;
+/** The tamperings that leave an extent inverted (a lower end past the upper): the Brief is refused whole, which is not a `recheck` finding. */
+const REFUSED_AS_NOT_AN_EXTENT = 2;
+const TAMPERED_CUTS = 32;
 
 const intact = (position: "answer" | number, silentSides: readonly ("lo" | "hi")[] = []): RecheckFinding => ({ position, result: { kind: "reproduced", silentSides } });
 
@@ -90,6 +101,89 @@ describe("02 recheck cannot certify silence or fabrication", () => {
         intact: false,
         findings: [{ position: "answer", result: { kind: "not-reproduced", reason: { kind: "unmet-differs" } } }],
       });
+    });
+  });
+
+  describe("half 1, swept over the six real Briefs of the canonical script", () => {
+    const run = runScript();
+    if (!run.ok) throw new Error("fixture: the canonical script did not run");
+    const rulingsOf = (brief: Brief): readonly Entailment[] => [brief.answer, ...brief.claims];
+    const positionOf = (index: number): "answer" | number => (index === 0 ? "answer" : index - 1);
+
+    it("every one of the six honest Briefs is intact, and the only silence is the three `ungrounded` customs claims of steps 1 to 3", () => {
+      const silent = run.steps.flatMap((step) => {
+        const result = recheck(run.schema, step.brief);
+        if (!result.ok) throw new Error("fixture: recheck refused a real Brief");
+        expect(result.intact, `step ${step.step}`).toBe(true);
+        return result.findings.filter((f) => f.result.kind === "uncertifiable-silence").map(() => step.step);
+      });
+      expect(silent).toEqual([1, 2, 3]);
+    });
+
+    it("every bound of every supported ruling, tightened or loosened by 1, is caught as its own bound-differs and nothing else moves (the two that invert an extent are refused whole)", () => {
+      let tamperings = 0;
+      let refused = 0;
+      for (const step of run.steps) {
+        const honest = recheck(run.schema, step.brief);
+        if (!honest.ok) throw new Error("fixture");
+        rulingsOf(step.brief).forEach((ruling, index) => {
+          if (ruling.kind !== "entailed" && ruling.kind !== "weakened" && ruling.kind !== "contradicted") return;
+          for (const side of ["lo", "hi"] as const) {
+            const bound = ruling.established[side];
+            if (bound === null) continue;
+            for (const delta of [1, -1]) {
+              const doctored = copyOf(step.brief) as unknown as { answer: { established: Record<string, number> }; claims: { established: Record<string, number> }[] };
+              (index === 0 ? doctored.answer : doctored.claims[index - 1]!).established[side] = bound + delta;
+              const result = recheck(run.schema, doctored as unknown as Brief);
+              const after = ruling.established.lo !== null && ruling.established.hi !== null ? { ...ruling.established, [side]: bound + delta } : null;
+              if (after !== null && (after["lo"] as number) > (after["hi"] as number)) {
+                // A tampering that leaves the extent inverted is not a ruling at all: the whole Brief is refused as hostile, by position.
+                expect(result, `step ${step.step}, ${String(positionOf(index))}, ${side}`).toEqual({
+                  ok: false,
+                  failure: { kind: "hostile-input", message: `brief.${index === 0 ? "answer" : `claims[${index - 1}]`}.established is not an extent` },
+                });
+                refused += 1;
+                continue;
+              }
+              if (!result.ok) throw new Error("fixture: recheck refused a doctored Brief");
+              const expected = honest.findings.map((f) =>
+                f.position === positionOf(index)
+                  ? { position: f.position, result: { kind: "not-reproduced", reason: { kind: "bound-differs", side, carried: bound + delta, rederived: bound } } }
+                  : f,
+              );
+              expect(result.findings, `step ${step.step}, ${String(positionOf(index))}, ${side} ${delta > 0 ? "+" : "-"}1`).toEqual(expected);
+              expect(result.intact).toBe(false);
+              tamperings += 1;
+            }
+          }
+        });
+      }
+      expect([tamperings, refused]).toEqual([TAMPERED_BOUNDS, REFUSED_AS_NOT_AN_EXTENT]);
+    });
+
+    it("every weakened ruling's `unmet` replaced by each of the other cuts is caught as unmet-differs", () => {
+      const cuts: readonly (readonly string[])[] = [["lo"], ["hi"], ["lo", "hi"]];
+      let tamperings = 0;
+      for (const step of run.steps) {
+        const honest = recheck(run.schema, step.brief);
+        if (!honest.ok) throw new Error("fixture");
+        rulingsOf(step.brief).forEach((ruling, index) => {
+          if (ruling.kind !== "weakened") return;
+          for (const cut of cuts) {
+            if (cut.join() === ruling.unmet.join()) continue;
+            const doctored = copyOf(step.brief) as unknown as { answer: { unmet: readonly string[] }; claims: { unmet: readonly string[] }[] };
+            (index === 0 ? doctored.answer : doctored.claims[index - 1]!).unmet = cut;
+            const result = recheck(run.schema, doctored as unknown as Brief);
+            if (!result.ok) throw new Error("fixture");
+            const expected = honest.findings.map((f) =>
+              f.position === positionOf(index) ? { position: f.position, result: { kind: "not-reproduced", reason: { kind: "unmet-differs" } } } : f,
+            );
+            expect(result.findings, `step ${step.step}, ${String(positionOf(index))}, cut ${cut.join("+")}`).toEqual(expected);
+            tamperings += 1;
+          }
+        });
+      }
+      expect(tamperings).toBe(TAMPERED_CUTS);
     });
   });
 
