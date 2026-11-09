@@ -11,6 +11,7 @@ import { declOf } from "../ground/index.js";
  * What is NOT printed, on purpose: an observation's `quote` and `source` (free text, and `source` is never read by
  * the engine), and the text of a refused claim (`unknown-field` carries the draft's own, hostile, string, and it is
  * not echoed). A field the schema does not declare is printed by its id, so rendering never throws for want of a label.
+ * Observation ids and field ids are printed as given; they are free text too (1 to 128 units), so an id containing a newline forges a line in the rendering. `lib/entail` does not escape them.
  *
  * It renders what it is given. It does not check that a ruling is true: that is `recheck`'s job, and a `Brief` from
  * elsewhere should go through it before anyone relies on its text.
