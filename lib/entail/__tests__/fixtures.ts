@@ -2,8 +2,8 @@ import { MAX_MAGNITUDE } from "../../contracts/index.js";
 import type { Brief, Entailment, Extent, Observation, Schema } from "../../contracts/index.js";
 import { ground } from "../../ground/index.js";
 import type { Grounding } from "../../ground/index.js";
-import { base, derived, schemaOf } from "../../ground/__tests__/fixtures.js";
-import type { RawField, RawSchema } from "../../ground/__tests__/fixtures.js";
+import { base, derived, genInstance, mulberry32, schemaOf } from "../../ground/__tests__/fixtures.js";
+import type { Instance, RawField, RawSchema } from "../../ground/__tests__/fixtures.js";
 
 export { CANON, base, canon, chance, derived, genClaims, genInstance, int, mulberry32, obs, oracleFields, pick, refExtent, schemaOf, shuffled, ORDER_DESK, jsonCopy, nonPlainPaths, unfrozenPaths, numbersIn } from "../../ground/__tests__/fixtures.js";
 export type { Instance, RawField, RawObservation, RawSchema } from "../../ground/__tests__/fixtures.js";
@@ -222,3 +222,41 @@ export function logged<T extends object>(target: T, log: string[]): T {
 
 /** Digit tokens of a text: its maximal runs of ASCII digits, as strings. */
 export const digitTokens = (text: string): string[] => text.match(/[0-9]+/g) ?? [];
+
+// ---------------------------------------------------------------------------------------------------------
+// One generated scenario: a grounding, a question and a draft with refusals in it.
+// ---------------------------------------------------------------------------------------------------------
+
+export interface Scenario {
+  readonly seed: number;
+  readonly instance: Instance;
+  readonly grounding: Grounding;
+  readonly question: unknown;
+  readonly draft: readonly unknown[];
+}
+
+/**
+ * The scenario of one seed: `genInstance`'s schema and snapshot (the observations that are not hostile, so it always
+ * grounds), a question about one field, and a draft of up to eight claims of which about a fifth are refused (`null`,
+ * or a field the schema lacks). The same draw as `answer.test.ts` makes, so a seed means one scenario everywhere.
+ */
+export function scenarioOf(seed: number): Scenario {
+  const rng = mulberry32(seed);
+  const instance = genInstance(rng);
+  const accepted = instance.observations.filter((_, i) => !instance.hostile.has(i));
+  const grounding = groundOf(instance.schema, accepted);
+  const names = instance.schema.fields.map((f) => f.id);
+  const draft: unknown[] = [];
+  const size = Math.floor(rng() * 9);
+  for (let i = 0; i < size; i++) {
+    const roll = rng();
+    const field = names[Math.floor(rng() * names.length)] as string;
+    const lo = rng() < 0.3 ? null : Math.floor(rng() * 9) - 1;
+    const hi = rng() < 0.3 ? null : (lo ?? 0) + Math.floor(rng() * 6);
+    if (roll < 0.1) draft.push(null);
+    else if (roll < 0.2) draft.push({ field: "ghost", extent: { lo, hi } });
+    else draft.push({ field, extent: { lo, hi } });
+  }
+  const question = { field: names[Math.floor(rng() * names.length)], extent: { lo: Math.floor(rng() * 5), hi: null } };
+  return { seed, instance, grounding, question, draft };
+}
