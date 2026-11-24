@@ -195,6 +195,20 @@ export function callCount(sourceFile: SourceFile, name: string): number {
   return count;
 }
 
+/** The text of every string literal, template part and JSX text in a file (not comments, not identifiers). */
+export function literalTexts(sourceFile: SourceFile): string[] {
+  const out: string[] = [];
+  const visit = (node: Node): void => {
+    if (isStringLiteralLikeNode(node)) out.push(node.text);
+    else if (node.kind === SyntaxKind.TemplateHead || node.kind === SyntaxKind.TemplateMiddle || node.kind === SyntaxKind.TemplateTail || node.kind === SyntaxKind.JsxText) {
+      out.push((node as unknown as { readonly text: string }).text);
+    }
+    node.forEachChild(visit);
+  };
+  visit(sourceFile);
+  return out;
+}
+
 /** Is the first statement of the file the directive `"use client"`? */
 export function startsWithUseClient(sourceFile: SourceFile): boolean {
   const first = sourceFile.statements[0];
