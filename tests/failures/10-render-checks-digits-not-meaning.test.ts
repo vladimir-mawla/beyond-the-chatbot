@@ -14,7 +14,10 @@ import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, digitToken
  * asked each of the five menu questions, with the chatbot stand-in's draft claims), plus a Brief that carries refused claims,
  * the digit tokens of the rendering are a subset of the digits in the entailment's own fields and the ids it references. The
  * property is checked per ruling (`renderEntailment` against that ruling alone: the tight form) and per Brief (`renderBrief`
- * against everything the Brief carries, plus the positions of its refusals). A template that adds "typically 2 days" fails it.
+ * against everything the Brief carries, plus the positions of its refusals). A template that adds "typically 2 days" inside a ruling's own text fails the
+ * per-ruling check. The per-Brief check cannot see an added digit that already occurs somewhere in what the Brief carries (every
+ * one of the 80 demo Briefs carries a 2), so a suffix added only in `renderBrief`, such as "Checked 2 ways.", is caught here only
+ * if its digit is new to the Brief; case 06's exact sentence is what catches the other kind.
  * WHAT IT DOES NOT SEE. The check reads DIGITS, not meaning: a template that wrote "a couple of days" has no new digit and
  * passes it. A SECOND, SEPARATE assertion checks the rendered words of every fixture against a DENYLIST of number words
  * ("one" to "twenty", "couple", "few", "several", "dozen"). A denylist is only as good as its list: "a handful of days",
@@ -24,7 +27,8 @@ import { CUSTOMS, DELIVERY, ORDER_DESK_SCHEMA, PACK, answerOk, claim, digitToken
  * SCALE AND LAYER (M5's `render-properties.test.ts` pins the digit property on 600 generated scenarios and on the plan's six
  * steps): here it is the domain's whole finite state space as the user would see it, plus the denylist, which M5 does not have.
  *
- * WHAT WOULD MAKE THIS FAIL: a template that adds a number (the digit property goes red; the denylist stays green); a template
+ * WHAT WOULD MAKE THIS FAIL: a template that adds a number inside a ruling's text (the per-ruling digit property goes red), or one new to the Brief (the
+ * per-Brief property goes red); the denylist stays green; a template
  * that adds a number WORD from the list (the denylist goes red; the digit property stays green); a template that adds a
  * number word NOT on the list (neither goes red: the limit, pinned). Dropping a variant from the fixtures makes the coverage
  * assertion red.

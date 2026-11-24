@@ -9,8 +9,10 @@ import { DELIVERY, ORDER_DESK_SCHEMA, TRANSIT, answerOk, claim, groundOk, obs, r
  * KIND: PROVES A METAMORPHIC CLAIM, DISCLOSES THE COST (plan section 11, case 08).
  * TRACES TO: D6 (a conflict is never resolved: there is no trust order, recency or vote in the engine).
  *
- * WHAT IS PROVED. Relabel every `source` (and swap which observation carries "Warehouse system" and which "A forum post"): no
- * `Entailment` changes. Over ALL 80 states of the demo (every one of the 16 subsets of `o1..o4`, each asked each of the five
+ * WHAT IS PROVED. Relabel every `source` to another VALID source (a string of 1 to 64 code units; all five relabelings below
+ * are) and swap which observation carries "Warehouse system" and which "A forum post": no `Entailment` changes. The claim is
+ * scoped to valid sources: a source that is not a string of 1 to 64 code units makes its observation `malformed` at intake
+ * (`ground` rejects it and the snapshot loses it), which does change rulings; that refusal is M4's, not pinned here. Over ALL 80 states of the demo (every one of the 16 subsets of `o1..o4`, each asked each of the five
  * menu questions, with the chatbot stand-in's draft claims), under five relabelings, the Brief's `answer`, `claims` and
  * `rejected`, the grounding's trees and baselines, the rendered text and `recheck`'s result are byte-identical; the
  * `evidence` is identical except for the one field that was changed, `source`, which is carried as given.
@@ -23,6 +25,9 @@ import { DELIVERY, ORDER_DESK_SCHEMA, TRANSIT, answerOk, claim, groundOk, obs, r
  * deletion in a core or a support, a source-keyed tie-break, a "trusted source" list. The relabelings include the labels such a
  * list would use ("Warehouse system", "A forum post"), so a list keyed on either is caught.
  */
+
+/** 400 groundings and Briefs with rechecks: about 0.3 s here and 1.3 s under load, and CI is about three times slower, so it gets an explicit timeout rather than the 5 s default. */
+const METAMORPHIC_TIMEOUT_MS = 30_000;
 
 type Relabel = (observation: Observation, position: number) => string;
 
@@ -52,7 +57,7 @@ function view(documents: readonly Observation[], questionIndex: number) {
 }
 
 describe("08 there is no trust order between sources", () => {
-  it("METAMORPHIC: over all 80 states and five relabelings, no ruling, no tree, no baseline, no text and no recheck result changes; only the carried `source` does", () => {
+  it("METAMORPHIC: over all 80 states and five relabelings to other valid sources, no ruling, no tree, no baseline, no text and no recheck result changes; only the carried `source` does", () => {
     let comparisons = 0;
     let withEvidence = 0;
     for (let mask = 0; mask < 16; mask += 1) {
@@ -82,7 +87,7 @@ describe("08 there is no trust order between sources", () => {
     expect(comparisons).toBe(80 * 5);
     // Not vacuous: most of the 400 comparisons carried evidence whose source really was relabelled.
     expect(withEvidence).toBeGreaterThan(250);
-  });
+  }, METAMORPHIC_TIMEOUT_MS);
 
   it("THE COST: an authoritative source and a flaky one that disagree are refused equally, and swapping which carries which label changes nothing", () => {
     const authority = (id: string) => obs(id, TRANSIT, 3, 5, "Standard international transit takes 3 to 5 days", "Carrier SLA sheet (contractual)");
