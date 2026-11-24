@@ -50,9 +50,9 @@ function Chips({ ids, label }: { readonly ids: readonly string[]; readonly label
 function Card({ card }: { readonly card: CardView }) {
   return (
     <article className="card" data-kind={card.kind} data-card={card.key}>
-      <h4 className="card-title">
+      <h3 className="card-title">
         <Badge kind={card.kind} /> <span>{card.heading}</span>
-      </h4>
+      </h3>
       {card.stated === null ? null : <p className="muted">{card.stated}</p>}
       <p className="sentence">{card.sentence}</p>
       <p className="muted">{KIND_GLOSS[card.kind]}</p>
@@ -84,7 +84,7 @@ function Card({ card }: { readonly card: CardView }) {
 function Pairwise({ pairwise }: { readonly pairwise: PairwiseView }) {
   return (
     <section className="panel" aria-labelledby="pairwise-h">
-      <h3 id="pairwise-h">Why this is a conflict nobody could see by comparing documents</h3>
+      <h2 id="pairwise-h">Why this is a conflict nobody could see by comparing documents</h2>
       <p className="pairwise-line" data-testid="pairwise-line">
         {pairwise.line}
       </p>
@@ -117,7 +117,7 @@ function Pairwise({ pairwise }: { readonly pairwise: PairwiseView }) {
 function Forge({ forge, active, onForge }: { readonly forge: ForgeView; readonly active: boolean; readonly onForge: () => void }) {
   return (
     <section className="panel" aria-labelledby="forge-h">
-      <h3 id="forge-h">Can the Brief be tampered with?</h3>
+      <h2 id="forge-h">Can the Brief be tampered with?</h2>
       <p className="muted">
         A Brief carries its evidence, so a holder can re-derive each ruling with <code>recheck</code>. Forge one: raise an upper bound by one while still citing
         the same documents.

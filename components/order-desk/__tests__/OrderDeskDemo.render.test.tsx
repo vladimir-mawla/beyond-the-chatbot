@@ -149,8 +149,10 @@ describe("the forge", () => {
 describe("static structure of the markup (what a click-free test can say about accessibility)", () => {
   const markup = render(demoReducer(INITIAL_STATE, { type: "preset", step: 5 }));
 
-  it("one h1; the sections are h2s with ids that their regions are labelled by", () => {
+  it("one h1; the sections are h2s with ids that their regions are labelled by; no heading level is skipped", () => {
     expect(markup.match(/<h1>/g)).toHaveLength(1);
+    const levels = [...markup.matchAll(/<h([1-6])[ >]/g)].map((match) => Number(match[1]));
+    levels.forEach((level, index) => expect(level - (levels[index - 1] ?? 0), `h${String(level)} at heading ${String(index)} follows h${String(levels[index - 1])}`).toBeLessThanOrEqual(1));
     for (const id of ["steps-h", "docs-h", "q-h", "chatbot-h", "system-h"]) {
       expect(markup).toContain(`id="${id}"`);
       expect(markup).toContain(`aria-labelledby="${id}"`);
