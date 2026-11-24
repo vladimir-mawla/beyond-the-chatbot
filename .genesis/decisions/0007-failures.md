@@ -97,17 +97,19 @@ Each control was applied to the tree by a scratch script that replaces one strin
 | C10f | same | the test's own digit check sees nothing | 2 failed (10) |
 | C10g | same | the test's own denylist matches substrings | 2 failed (10) |
 | C10h | same | the test's own denylist gains "handful" | 1 failed (10) |
+| C12a | `lib/entail/render.ts` | `renderBrief` appends "Checked 2 ways." (fix round 1) | 1 failed (06): case 10 stays green, because the per-Brief digit check allows any digit the Brief carries and each of the 80 demo Briefs carries a 2 |
+| C12b | same | `renderBrief` appends "Checked 97 ways." (fix round 1) | 2 failed (06, 10 ×1: the per-Brief digit property) |
 | C11a | `domains/order-desk/script.ts` | `runScript` drafts from no documents | 1 failed (10) |
 
-35 controls. Across all of them, every one of the suite's 60 tests is red at least once (the union was computed from the per-control results, not read). The plan asks for at least five real sabotages: every case 01 to 10 has at least one control on the shipped source, except the in-file coverage of case 09's three harness tests and case 10's four blind-spot tests, which have none on `lib/` by design (they run no lib code) and are covered by C09b, C09c and C10e to C10h, mutations of the test's own checker. A mutation of a test is not a sabotage of shipped source; it shows that the test would notice its own checker changing, and nothing more.
+37 controls (35 from the first round, 2 added in fix round 1; the first-round rows were not re-run after the round's text and timeout edits, which change no assertion, except C08a, which was). Across all of them, every one of the suite's 60 tests is red at least once (the union was computed from the per-control results, not read). The plan asks for at least five real sabotages: every case 01 to 10 has at least one control on the shipped source, except the in-file coverage of case 09's three harness tests and case 10's four blind-spot tests, which have none on `lib/` by design (they run no lib code) and are covered by C09b, C09c and C10e to C10h, mutations of the test's own checker. A mutation of a test is not a sabotage of shipped source; it shows that the test would notice its own checker changing, and nothing more.
 
 ## Timing
 
 Three ambient runs of the whole suite (67 files, 3109 tests, 0 failed each), then one with 20 `yes > /dev/null` started beside it (killed afterwards; none left), per-test durations from `vitest --reporter=json`. The machine was shared (the 1-minute load average was already above 20 before the loaded run started, so the "loaded" figure is a loaded machine with 20 more).
 
-- Slowest M7 tests ambient: case 09's three sweeps, 634 ms, 737 ms and 660 ms for the slowest in each run. Slowest M7 test outside case 09: case 08's metamorphic test, 239 ms, 336 ms and 303 ms.
-- Loaded: case 09's slowest sweep 2214 ms (44% of the 5 s default); case 08's metamorphic test 990 ms (20%). CI is about three times slower than this machine.
-- Case 09's three sweeps therefore carry an explicit 30 s timeout (`SWEEP_TIMEOUT_MS`, with its justification in the file). The work was not reduced: the counts quoted in the case are what its tests assert. Everything else keeps the default 5 s, and its slowest loaded figure is 20% of it.
+- First round (the figures above this round's re-measure): case 09's three sweeps 634, 737 and 660 ms ambient and 2214 ms loaded (44% of the 5 s default), case 08's metamorphic test 239, 336 and 303 ms ambient and 990 ms loaded; the machine was shared and above load 20.
+- Fix round 1, re-measured on the final test files (three ambient runs of the whole suite, 3109 tests, 0 failed, load average 6.7 at the start; then one with 20 `yes > /dev/null` beside it, load average 29, killed afterwards, none left): case 08's metamorphic test 879, 438 and 381 ms ambient and 998 ms loaded. One loaded figure from the first round, 1346 ms, was reported by the verifier. CI is about three times slower than this machine, which would put that figure near 4 s.
+- Case 09's three sweeps and case 08's metamorphic test therefore carry an explicit 30 s timeout (`SWEEP_TIMEOUT_MS`, `METAMORPHIC_TIMEOUT_MS`, each with its reason in the file). The work was not reduced. Everything else keeps the default 5 s; no figure for the other M7 tests was re-measured this round.
 
 ## What is not proven
 
