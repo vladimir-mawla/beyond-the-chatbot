@@ -71,7 +71,7 @@ The types have limits the tests state. A plain `as Entailment` of a contaminated
 | an answer that depends on the order in which things were given | the result must be a function of the sets, not of input order | `lib/ground/ground.ts` | `lib/ground/__tests__/order-independence.test.ts` › "the grounding does not depend on the order of observations, fields, or operands" |
 | a result that shares memory with its input, or can be written to | evidence is immutable (D9) | `lib/ground/plain.ts` (`deepFreeze`) | `lib/ground/__tests__/immutability.test.ts` › "on the generated instances and the hand-built cases, everything the public functions return is deeply frozen" |
 
-What `ground` is held to, beyond refusing: its extents and conflicts equal a brute-force enumeration of the worlds on generated instances (`lib/ground/__tests__/oracle-exactness.test.ts` › "the engine against brute-force world enumeration on generated instances"); adding an observation with a fresh id never widens an established extent, and the exception for a repeated id is pinned, not hidden (`lib/ground/__tests__/monotonicity.test.ts` › "the exception, pinned: an observation whose id repeats an earlier one takes the earlier one out"). Those are checks against an oracle written in the test, on seeded instances; they are not proofs.
+What `ground` is held to, beyond refusing: its extents and conflicts equal a brute-force enumeration of the worlds on generated instances (`lib/ground/__tests__/oracle-exactness.test.ts` › "the engine against brute-force world enumeration on generated instances"); on the generated instances, adding an observation with a fresh id never widens an established extent (`lib/ground/__tests__/monotonicity.test.ts` › "on the generated instances, adding an observation with a fresh id never widens E"), and the exception for a repeated id is pinned, not hidden (› "the exception, pinned: an observation whose id repeats an earlier one takes the earlier one out"). Those are checks against an oracle written in the test, on seeded instances; they are not proofs.
 
 ### Stage 3: entail, ruling a claim (`lib/entail`)
 
@@ -100,7 +100,7 @@ What `recheck` does not refuse is also pinned: a supported bound dropped togethe
 
 | Refuses | Why | Where | Pinned by |
 |---|---|---|---|
-| showing a ruling the engine did not just produce | no pre-baked transcript: the page renders what `computeDemoView` returns | `components/order-desk/compute-demo-view.ts` | `components/order-desk/__tests__/compute-demo-view.test.ts` › "plan check (1): all 16 subsets x all 5 menu questions = 80 states, against the oracle" |
+| a ruling whose kind disagrees with the oracle's, in any of the 80 states | the page renders what `computeDemoView` returns, not a transcript | `components/order-desk/compute-demo-view.ts` | `components/order-desk/__tests__/compute-demo-view.test.ts` › "plan check (1): all 16 subsets x all 5 menu questions = 80 states, against the oracle" |
 | hiding the chatbot column when the system refuses | the two columns are the point | `components/order-desk/OrderDeskDemo.tsx` | `components/order-desk/__tests__/OrderDeskDemo.render.test.tsx` › "when the system refuses, the chatbot column is still there" |
 | a forged Brief passing recheck | the forge raises an upper bound by one and keeps its support | `components/order-desk/compute-demo-view.ts` (`forgeTarget`) | `components/order-desk/__tests__/compute-demo-view.test.ts` › "in every state where the control is enabled, forging makes recheck report bound-differs for that ruling; elsewhere it is disabled" |
 | asserting the headline conflict | the pairwise line is computed by `ground` on every pair, triple and the whole set | `components/order-desk/compute-demo-view.ts` (`pairwiseOf`) | `components/order-desk/__tests__/compute-demo-view.test.ts` › "with all four documents: 6 of 6 pairs consistent, 4 of 4 triples consistent, all four conflicted" |
@@ -113,7 +113,7 @@ What no test pins here: which action a control dispatches, and what a browser sh
 
 | Refuses | Why | Where | Pinned by |
 |---|---|---|---|
-| a build that falls back to Turbopack | the engine's `.js`-suffixed imports need webpack and `extensionAlias` | `next.config.ts`, `vercel.json` | `tests/smoke.test.ts` › "declares experimental.extensionAlias mapping .js to .ts/.tsx/.js"; `app/api/health/__tests__/vercel-config.test.ts` › "parses to exactly the pinned object" |
+| a build that falls back to Turbopack | the engine's `.js`-suffixed imports need webpack and `extensionAlias` | `next.config.ts`, `vercel.json` | `tests/smoke.test.ts` › "through next with --webpack and not Turbopack"; › "declares experimental.extensionAlias mapping .js to .ts/.tsx/.js"; `app/api/health/__tests__/vercel-config.test.ts` › "parses to exactly the pinned object" |
 | a lockfile that has silently lost its platform binaries | `npm ci` still exits 0 on one | `package-lock.json` | `tests/lockfile.test.ts` › "keeps all 15 @rolldown/binding-* entries, by name" |
 
 ## Ten limits, one place

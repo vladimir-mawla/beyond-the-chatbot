@@ -33,7 +33,8 @@ import { obsId } from "../../lib/contracts/index.js";
  *   6. THE DEPENDENCY LIST in `README.md` names exactly the packages of `package.json`, runtime and dev separately.
  *
  * WHAT THIS DOES NOT CHECK. That a cited test asserts what the sentence beside it says: only a person reading both can do that. That a sentence without
- * a citation is true, or that a number in prose matches the code. That a title that appears in a test file belongs to a test that can fail. That a
+ * a citation is true, or that a number in prose matches the code. That a title that appears in a test file belongs to a test that can fail. That a cited title identifies one test: a title is matched as a substring of any
+ * line that opens a test, and titles under 8 characters are refused. That a
  * quoted string appears on the LIVE page: it checks the markup the same component renders from the same source, not a deployment, and not what a browser
  * shows after a click; the by-hand record in `docs/WALKTHROUGH.md` is what covers a browser. That anyone can SPEAK at a stated rate: the word bound is on the
  * text. The scan reads Markdown by pattern; a citation written in another form (a path in a link, a path not in backticks, a title not after a path on its
@@ -55,6 +56,7 @@ export interface Citation {
 
 const TOKEN = /`((?:lib|domains|components|app|tests|scripts)\/[^`\s*]+\.tsx?)`|› "([^"]+)"/g;
 const TEST_FILE = /\.test\.tsx?$/;
+export const MIN_TITLE_LENGTH = 8;
 const TEST_OPENER = /\b(?:it|test|describe)(?:\.each\b.*?)?\(/;
 
 /** The citations of `markdown`, and the titles that follow no path on their line. */
@@ -98,7 +100,9 @@ export function citationProblems(markdown: string, root: string, name: string): 
     const source = readFileSync(absolute, "utf8");
     const sourceLines = source.split("\n");
     for (const title of titles) {
-      if (!source.includes(title)) {
+      if (title.length < MIN_TITLE_LENGTH) {
+        problems.push(`${where}: the title is under ${MIN_TITLE_LENGTH} characters, so it could match almost any test: "${title}"`);
+      } else if (!source.includes(title)) {
         problems.push(`${where}: the title is not in the file: "${title}"`);
       } else if (!sourceLines.some((sourceLine) => sourceLine.includes(title) && TEST_OPENER.test(sourceLine))) {
         problems.push(`${where}: the title occurs, but not on a line that opens an it, test or describe: "${title}"`);
@@ -410,6 +414,16 @@ describe("TEETH: the checker reports what it claims to, on a synthetic tree", ()
         'doc line 1: lib/x/__tests__/a.test.ts: the title occurs, but not on a line that opens an it, test or describe: "a title that only a comment holds"',
       ]);
       expect(citationProblems(cite("lib/x/a.ts", "export"), root, "doc")).toEqual(["doc line 1: lib/x/a.ts: a title is cited, but this is not a test file"]);
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("refuses a title under 8 characters, even one that is in the file", () => {
+    const { root, cleanup } = tree();
+    try {
+      expect(citationProblems(cite("lib/x/__tests__/a.test.ts", "T"), root, "doc")).toEqual(['doc line 1: lib/x/__tests__/a.test.ts: the title is under 8 characters, so it could match almost any test: "T"']);
+      expect(citationProblems(cite("lib/x/__tests__/a.test.ts", "the suite"), root, "doc")).toEqual([]);
     } finally {
       cleanup();
     }
