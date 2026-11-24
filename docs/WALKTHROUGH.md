@@ -25,7 +25,7 @@ The plan (`.genesis/PLAN.md`, M8 check 6) says the click-to-re-render path is ve
 
 **Forge.** At step 4, pressing "Forge the Brief" showed "recheck NOT intact: the forged ruling does not re-derive" and, for the question, "not re-derived: the upper bound says 10 but its own support gives 9".
 
-**Not checked in that session:** phone width, dark theme, keyboard-only use, other browsers, and the custom-question builder. This is a list of examples of what the record does not cover, not a complete list: for instance the record gives no ruling text for steps 2, 3, 4 and 6 beyond the kind, and does not say that the forge was tried in any state but step 4.
+**Not checked in that session:** phone width, dark theme, keyboard-only use, other browsers, and the custom-question builder. ADR 0008 records that the M8 builder checked a 375 px width and both colour themes by hand against a local production build; that is not a check of the live URL. The first list is examples of what the record does not cover, not a complete list: for instance the record gives no ruling text for steps 2, 3, 4 and 6 beyond the kind, and does not say that the forge was tried in any state but step 4.
 
 **What the M9 builder did, and did not do.** The builder fetched the live page's server-rendered HTML with `curl` on 2026-11-24 (the deployment at `a4e1fea`) and checked that the quoted on-screen strings of beats 1 and 2 (step 1, the state the page loads in) occur in its text, in the stated order. The strings of the later beats are checked against the markup the same component renders for that state, by the test below; they were not fetched from the deployed page, which serves step 1 until a control is used. Nothing was clicked.
 
