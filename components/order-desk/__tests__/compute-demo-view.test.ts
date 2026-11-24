@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { obsId } from "../../../lib/contracts/index.js";
-import type { Brief, Claim, Entailment, ObsId } from "../../../lib/contracts/index.js";
+import type { Brief, Claim, Entailment, Observation, ObsId } from "../../../lib/contracts/index.js";
 import { ground } from "../../../lib/ground/index.js";
 import { answer, recheck, renderBrief, renderEntailment } from "../../../lib/entail/index.js";
 import { CANON_SCRIPT, FIELDS, OBSERVATIONS, ORDER_DESK_SCHEMA, QUESTIONS, SNAPSHOTS, claimsOf, fluentDraft, renderFluent, runScript } from "../../../domains/order-desk/index.js";
@@ -14,6 +14,7 @@ import {
   computeDemoView,
   demoReducer,
   forgeTarget,
+  pairwiseOf,
   subsetsOfSize,
 } from "../compute-demo-view.js";
 import type { CardView, CustomQuestion, DemoState, DemoView } from "../compute-demo-view.js";
@@ -196,8 +197,11 @@ describe("the bridge shows the engine's own Brief, in full, not a summary of it"
     if (JSON.stringify(card.support === null ? null : { lo: [...card.support.lo], hi: [...card.support.hi] }) !== JSON.stringify(support)) problems.push("support");
     const core = ruling.kind === "conflicted" ? [...ruling.core] : null;
     if (JSON.stringify(card.core === null ? null : [...card.core]) !== JSON.stringify(core)) problems.push("core");
-    const gaps = ruling.kind === "weakened" || ruling.kind === "ungrounded" ? ruling.openEnds.length : 0;
-    if (card.openEnds.length !== gaps) problems.push("open ends");
+    const labelOf = (field: string): string => schema.fields.find((decl) => decl.id === field)?.label ?? field;
+    const gaps = ruling.kind === "weakened" || ruling.kind === "ungrounded" ? ruling.openEnds.map((end) => `${labelOf(end.field)}: nothing bounds it from ${end.side === "lo" ? "below" : "above"}`) : [];
+    if (JSON.stringify([...card.openEnds]) !== JSON.stringify(gaps)) problems.push("open ends");
+    const cut = ruling.kind === "weakened" ? `cut: ${ruling.unmet.map((side) => (side === "lo" ? "lower bound" : "upper bound")).join(" and ")}` : "";
+    if (card.cut !== cut) problems.push("cut");
     return problems;
   }
 
@@ -246,6 +250,11 @@ describe("the bridge shows the engine's own Brief, in full, not a summary of it"
     expect(cardDifferences(v1.answer, step1.brief.answer, run.schema)).toEqual([]);
     const shifted: CardView = { ...v1.answer, support: { lo: ["o1"], hi: ["o2"] } };
     expect(cardDifferences(shifted, step1.brief.answer, run.schema)).toEqual(["support"]);
+    // same kind, the same number of open ends, a different side; and a different cut
+    const flipped: CardView = { ...v1.answer, openEnds: v1.answer.openEnds.map((end) => end.replace("above", "below")) };
+    expect(v1.answer.openEnds.length).toBeGreaterThan(0);
+    expect(cardDifferences(flipped, step1.brief.answer, run.schema)).toEqual(["open ends"]);
+    expect(cardDifferences({ ...v1.answer, cut: "" }, step1.brief.answer, run.schema)).toEqual(["cut"]);
     // same kind, a different sentence
     expect(cardDifferences({ ...v1.answer, sentence: v1.answer.sentence.replace("4", "5") }, step1.brief.answer, run.schema)).toEqual(["sentence"]);
   });
@@ -304,8 +313,29 @@ describe("the pairwise table is computed by ground, on every pair, triple and th
     expect(new Set(subsetsOfSize([1, 2, 3, 4], 2).map((s) => s.join())).size).toBe(6);
   });
 
-  it("a conflict that does not need all four documents would show its own table: the line names the sizes it actually computed", () => {
-    // a hand-run of the same pieces on a different consistent set: three documents, no conflict, no table
+  it("pairwiseOf on hand-built observations that are not step 5: two documents that disagree; and one inconsistent pair inside a larger set", () => {
+    const doc = (id: string, field: Observation["field"], n: number, quote: string): Observation => ({ id: obsId(id), field, extent: { lo: n, hi: n }, quote, source: "a test" });
+    const packOne = doc("p1", FIELDS.packDays, 1, "Packed in 1 day");
+    const packTwo = doc("p2", FIELDS.packDays, 2, "Packed in 2 days");
+    const transit = doc("t3", FIELDS.transitDays, 3, "Transit takes 3 days");
+    const two = pairwiseOf([packOne, packTwo]);
+    expect(two?.line).toBe("all two: conflicted");
+    expect(two?.rows).toEqual([{ members: ["p1", "p2"], consistent: false }]);
+    const three = pairwiseOf([packOne, packTwo, transit]);
+    expect(three?.line).toBe("2 of 3 pairs consistent · all three: conflicted");
+    expect(three?.rows).toEqual([
+      { members: ["p1", "p2"], consistent: false },
+      { members: ["p1", "t3"], consistent: true },
+      { members: ["p2", "t3"], consistent: true },
+      { members: ["p1", "p2", "t3"], consistent: false },
+    ]);
+    // a consistent whole is reported as such
+    expect(pairwiseOf([packOne, transit])?.line).toBe("all two: consistent");
+    // observations the engine refuses at intake (a bound whose digits are not in the quote) give no table, not a wrong one
+    expect(pairwiseOf([{ ...packOne, quote: "Packed quickly" }, packTwo])).toBeUndefined();
+  });
+
+  it("three documents have no conflict, so there is no table", () => {
     expect(viewOf(state([obsId("o1"), obsId("o2"), obsId("o3")], 0)).pairwise).toBeNull();
   });
 });

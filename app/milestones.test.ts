@@ -102,12 +102,12 @@ describe("the guard's teeth, on pairs built here from the real DONE.html text", 
     expect(findDrift(withDone(all), htmlWithDone(all))).toEqual([]);
   });
 
-  it("DONE.html moved and the list did not: reported, naming the milestone", () => {
-    expect(findDrift(withDone(["M1"]), htmlWithDone(["M1", "M8"]))).toEqual(["M8: the list says not done, DONE.html says done"]);
+  it.each(MILESTONES.map((milestone) => milestone.id))("DONE.html moved and the list did not: reported, naming the milestone (%s)", (id) => {
+    expect(findDrift(withDone([]), htmlWithDone([id]))).toEqual([`${id}: the list says not done, DONE.html says done`]);
   });
 
-  it("the list moved and DONE.html did not: reported, naming the milestone", () => {
-    expect(findDrift(withDone(["M1", "M8"]), htmlWithDone(["M1"]))).toEqual(["M8: the list says done, DONE.html says todo"]);
+  it.each(MILESTONES.map((milestone) => milestone.id))("the list moved and DONE.html did not: reported, naming the milestone (%s)", (id) => {
+    expect(findDrift(withDone([id]), htmlWithDone([]))).toEqual([`${id}: the list says done, DONE.html says todo`]);
   });
 
   it("a milestone the list drops, or DONE.html drops, is reported as a row mismatch", () => {

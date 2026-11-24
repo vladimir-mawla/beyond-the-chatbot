@@ -342,7 +342,7 @@ function groundsConsistently(observations: readonly Observation[]): boolean | un
 }
 
 /** The pairwise table of a conflict: `ground` on every subset of the included documents of size two up to the whole set. */
-function pairwiseOf(observations: readonly Observation[]): PairwiseView | undefined {
+export function pairwiseOf(observations: readonly Observation[]): PairwiseView | undefined {
   const rows: PairwiseRow[] = [];
   const groups: { size: number; total: number; consistent: number }[] = [];
   for (let size = 2; size < observations.length; size++) {

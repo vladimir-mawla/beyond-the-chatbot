@@ -40,6 +40,15 @@ describe("the page renders the engine's text, as it is", () => {
     expect(markup.match(/data-card="/g)).toHaveLength(5);
   });
 
+  it("step 1's cards show the cut, the open ends on both sides, and what the chatbot said and where the value came from", () => {
+    const markup = render(INITIAL_STATE);
+    expect(markup).toContain("cut: upper bound");
+    expect(markup).toContain("customs clearance: nothing bounds it from above");
+    expect(markup).toContain("customs clearance: nothing bounds it from below");
+    expect(markup).toContain("The chatbot said 1 day (read from the documents).");
+    expect(markup).toContain("The chatbot said 2 days (a typical figure, not from any document).");
+  });
+
   it.each(PRESETS.map((preset, index) => ({ preset, step: steps[index]! })))("scripted step $preset.step: the paragraph, the rendered Brief and every sentence of the demo are in the markup", ({ preset, step }) => {
     const markup = render(demoReducer(INITIAL_STATE, { type: "preset", step: preset.step }));
     expect(markup).toContain(escapeHtml(step.paragraph));

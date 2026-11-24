@@ -16,7 +16,7 @@ export interface ODoc extends OExtent {
 }
 
 export const ORACLE_FIELDS: readonly string[] = ["packDays", "transitDays", "customsDays", "deliveryDay"];
-/** Larger than every finite number any test here uses (the largest is 14, and the custom sweeps stay at or under 20). */
+/** Larger than every finite number any test here uses (the largest is 14, and the custom sweeps use numbers up to 12). */
 const CAP = 40;
 
 function window(docs: readonly ODoc[], cap: number): { readonly min: number[]; readonly max: number[] } | undefined {
