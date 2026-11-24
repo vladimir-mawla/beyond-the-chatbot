@@ -2,9 +2,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSy
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createElement } from "react";
+import type { FunctionComponent } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { OrderDeskDemo } from "../../components/order-desk/OrderDeskDemo.js";
 import { INITIAL_STATE, demoReducer } from "../../components/order-desk/compute-demo-view.js";
 import type { DemoState } from "../../components/order-desk/compute-demo-view.js";
 import { obsId } from "../../lib/contracts/index.js";
@@ -41,6 +41,11 @@ import { obsId } from "../../lib/contracts/index.js";
  */
 
 const REPO = join(import.meta.dirname, "..", "..");
+
+// The component is a .tsx file, and `tsconfig.lib.json` (which type-checks everything under `tests/`) sets no `jsx`, so a static import of it is an error
+// (TS6142) in `npm run typecheck`. A dynamic import of a path held in a variable is resolved at run time by vitest and typed here by the cast below.
+const DEMO_COMPONENT = "../../components/order-desk/OrderDeskDemo.js";
+const { OrderDeskDemo } = (await import(/* @vite-ignore */ DEMO_COMPONENT)) as { OrderDeskDemo: FunctionComponent<{ initial?: DemoState }> };
 
 export interface Citation {
   readonly path: string;
