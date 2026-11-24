@@ -1,13 +1,56 @@
 /*
- * Minimal reset, plus (M8) the page-level layout for the one real page
- * this app will have: `app/page.tsx` and
- * `components/order-desk/OrderDeskDemo.tsx`. Component-scoped styling, if
- * any, will live alongside that component; this file only owns the
- * document-level reset and the `<main>` container.
+ * Document reset, colour tokens and the whole page's layout (the one real page: `app/page.tsx` and
+ * `components/order-desk/OrderDeskDemo.tsx`). A handoff file (plan section 6): genesis created the placeholder, M8 owns it.
  *
- * Handoff file (plan section 6, "Handoff files"): genesis creates this
- * placeholder; M8 owns and rewrites it. No other milestone touches it.
+ * Light and dark are both token sets; nothing below names a colour except through a token. Kind and verdict are never
+ * shown by colour alone: every badge carries its word.
  */
+:root {
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --text: #1c1c1a;
+  --muted: #5b5b55;
+  --line: #d6d6cf;
+  --accent: #1f5fbf;
+  --accent-text: #ffffff;
+  --focus: #b45309;
+  --entailed: #166534;
+  --weakened: #92400e;
+  --contradicted: #9f1239;
+  --ungrounded: #55556a;
+  --conflicted: #7c2d92;
+  --tint-entailed: #e6f4ea;
+  --tint-weakened: #fdf0d9;
+  --tint-contradicted: #fce8ec;
+  --tint-ungrounded: #ececf3;
+  --tint-conflicted: #f3e8f7;
+  --cited: #fff6c8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131312;
+    --surface: #1d1d1b;
+    --text: #ecece6;
+    --muted: #a8a8a0;
+    --line: #3a3a36;
+    --accent: #7ab0ff;
+    --accent-text: #0b1a33;
+    --focus: #fbbf24;
+    --entailed: #6ee7a0;
+    --weakened: #fbbf6a;
+    --contradicted: #fda4b8;
+    --ungrounded: #b8b8d0;
+    --conflicted: #e0a8f2;
+    --tint-entailed: #16301f;
+    --tint-weakened: #35260f;
+    --tint-contradicted: #3a1620;
+    --tint-ungrounded: #26262f;
+    --tint-conflicted: #2e1a36;
+    --cited: #3d3610;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -18,12 +61,447 @@ html {
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 main {
-  max-width: 64rem;
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: 1rem 1rem 3rem;
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem;
+}
+
+p {
+  margin: 0.4rem 0;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.lede {
+  font-size: 1.05rem;
+  max-width: 46rem;
+}
+
+.demo > * + * {
+  margin-top: 1rem;
+}
+
+.panel,
+.column {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.controls,
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 52rem) {
+  .controls,
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.step-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.button {
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.doc {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.doc[data-included="no"] {
+  opacity: 0.7;
+}
+
+.doc[data-cited="yes"] {
+  background: var(--cited);
+  border-color: var(--focus);
+}
+
+.doc-label,
+.choice {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+}
+
+.doc-label input,
+.choice input {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.1rem 0 0;
+  accent-color: var(--accent);
+}
+
+.doc-body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.doc-quote {
+  font-style: italic;
+}
+
+.doc-cited {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.chips-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+legend {
+  padding: 0;
+  margin-bottom: 0.3rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.builder {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.7rem;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.92rem;
+}
+
+.field select,
+.field input {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.paragraph {
+  margin: 0 0 0.6rem;
+  padding: 0.8rem;
+  border-left: 4px solid var(--muted);
+  background: var(--bg);
+  font-size: 1.02rem;
+}
+
+.system {
+  border-color: var(--accent);
+}
+
+.status {
+  margin: 0 0 0.6rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.05rem 0.55rem;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.badge[data-kind="entailed"] {
+  color: var(--entailed);
+  background: var(--tint-entailed);
+}
+.badge[data-kind="weakened"] {
+  color: var(--weakened);
+  background: var(--tint-weakened);
+}
+.badge[data-kind="contradicted"] {
+  color: var(--contradicted);
+  background: var(--tint-contradicted);
+}
+.badge[data-kind="ungrounded"] {
+  color: var(--ungrounded);
+  background: var(--tint-ungrounded);
+}
+.badge[data-kind="conflicted"] {
+  color: var(--conflicted);
+  background: var(--tint-conflicted);
+}
+
+.card {
+  margin: 0.6rem 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  border-left-width: 5px;
+  border-radius: 8px;
+}
+
+.card[data-kind="entailed"] {
+  border-left-color: var(--entailed);
+}
+.card[data-kind="weakened"] {
+  border-left-color: var(--weakened);
+}
+.card[data-kind="contradicted"] {
+  border-left-color: var(--contradicted);
+}
+.card[data-kind="ungrounded"] {
+  border-left-color: var(--ungrounded);
+}
+.card[data-kind="conflicted"] {
+  border-left-color: var(--conflicted);
+}
+
+.card-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.sentence {
+  font-weight: 500;
+}
+
+.cut {
+  margin: 0.3rem 0;
+  font-weight: 700;
+  color: var(--weakened);
+}
+
+.gaps {
+  margin: 0.3rem 0;
+  padding-left: 1.2rem;
+  font-size: 0.95rem;
+}
+
+.check {
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+}
+
+.check-label {
+  display: inline-block;
+  margin-right: 0.3rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.check[data-verdict="not-reproduced"] {
+  font-weight: 700;
+  color: var(--contradicted);
+}
+
+.brief {
+  margin: 0;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.claims-h {
+  margin-top: 1.2rem;
+}
+
+.refusal {
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.pairwise-line {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+td[data-consistent="no"] {
+  font-weight: 700;
+  color: var(--conflicted);
+}
+
+.findings {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.92rem;
+}
+
+.findings li[data-verdict="not-reproduced"] {
+  font-weight: 700;
+  color: var(--contradicted);
+}
+
+.forged {
+  margin-top: 0.6rem;
+  padding: 0.7rem;
+  border: 1px dashed var(--contradicted);
+  border-radius: 8px;
+}
+
+.site-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
