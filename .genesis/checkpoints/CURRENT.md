@@ -741,5 +741,5 @@ bf11c3e` lists those 16 files with 2588 insertions and no deletions, and `git di
 file above was touched.
 Added by M7 (PR #13): `tests/failures/**` (11 files: ten test files and `helpers.ts`) and
 `.genesis/decisions/0007-failures.md`, all new: `git diff --stat bbfc1fe b6f0d5c` lists those 12 files with 1761
-insertions and no deletions, and `git diff --name-only bbfc1fe b6f0d5c` has no other file. PR #14 changed
+insertions and no deletions, and `git diff --name-only bbfc1fe b6f0d5c` lists no file outside them. PR #14 changed
 `package.json` and `package-lock.json` only (`git diff --stat 6ed1d55 bbfc1fe`: `next` 16.4.3 to 16.4.6).
