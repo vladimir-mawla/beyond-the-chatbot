@@ -137,6 +137,8 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
 
 export interface RecheckView {
   readonly verdict: "reproduced" | "not-reproduced" | "uncertifiable-silence";
+  /** For `not-reproduced`, the engine's reason kind (`bound-differs` ...); `null` otherwise. */
+  readonly reasonKind: string | null;
   readonly text: string;
 }
 
@@ -277,8 +279,9 @@ function rejectionText(fault: { readonly kind: string }): string {
 const FINDING_NAME = (position: "answer" | number): string => (position === "answer" ? "question" : `claim ${String(position + 1)}`);
 
 function recheckViewOf(finding: RecheckFinding | undefined): RecheckView {
-  if (finding === undefined) return { verdict: "not-reproduced", text: "no finding was produced for this ruling" };
-  return { verdict: finding.result.kind, text: reproductionText(finding.result) };
+  if (finding === undefined) return { verdict: "not-reproduced", reasonKind: "no-finding", text: "no finding was produced for this ruling" };
+  const result = finding.result;
+  return { verdict: result.kind, reasonKind: result.kind === "not-reproduced" ? result.reason.kind : null, text: reproductionText(result) };
 }
 
 /** The observation ids a ruling rests on: a support's, or a core. Exhaustive over the five kinds. */
@@ -453,7 +456,7 @@ export function computeDemoView(state: DemoState): DemoResult {
     rulings.forEach((ruling, index) => {
       const card = cards[index];
       if (card === undefined) return;
-      for (const id of citedIds(ruling)) citedBy.set(id, [...(citedBy.get(id) ?? []), card.name]);
+      for (const id of new Set(citedIds(ruling))) citedBy.set(id, [...(citedBy.get(id) ?? []), card.name]);
     });
 
     const pairwise = brief.answer.kind === "conflicted" ? (pairwiseOf(observations) ?? null) : null;
