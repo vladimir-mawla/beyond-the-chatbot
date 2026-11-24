@@ -3,9 +3,10 @@
 - **active_loop:** none recorded. M1 (contracts, `lib/contracts/**`), M2 (deploy skeleton,
   `app/api/health/**`), M3 (extent algebra, `lib/extent/**`), M4 (ground, `lib/ground/**`), M5 (entail,
   `lib/entail/**`), M6 (domain: the order desk, `domains/order-desk/**` and `scripts/demo-order-desk.ts`) and M7
-  (the failure suite, `tests/failures/**`) and M8 (the interactive demo, `app/**` and `components/order-desk/**`)
-  are `done`; M9 is `todo` in this revision. **Next: M9 (the deliverables).** The engine is built end to end
-  and now has two callers: the M6 demo script, and the M8 page, whose one bridge,
+  (the failure suite, `tests/failures/**`), M8 (the interactive demo, `app/**` and `components/order-desk/**`)
+  and M9 (the deliverables: `README.md`, `docs/**`, `tests/docs/**`) are `done`: **all nine milestones are
+  `done`.** Nothing is next in the plan; the Loom recording is a human step (see "What M9 adds"). The engine is
+  built end to end and has two callers: the M6 demo script, and the M8 page, whose one bridge,
   `components/order-desk/compute-demo-view.ts`, is the only file under `components/` that imports `lib/**` or
   `domains/**` (M1's types and structural invariants, M3's extent algebra, M4's `lib/ground`, M5's `lib/entail`
   and M6's order desk; see "What M3 adds" to "What M8 adds"). `app/page.tsx` is the interactive demo and the
@@ -13,8 +14,9 @@
   (G0-G2) and the tooling skeleton are in place, and a skeleton is deployed (see "What M2 adds"). Each milestone
   is separate, with its own branch, its own PR, and its own independent (L4) verifier.
 
-- **last updated:** 2026-11-24 (UTC), in the `chore(genesis): mark M8 done` bookkeeping PR, after M8 was
-  independently reviewed, closed, and merged (PR #16, `53d7ea0`). The previous revision was the `mark M7 done`
+- **last updated:** 2026-11-24 (UTC), in the `chore(genesis): mark M9 done` bookkeeping PR, after M9 was
+  independently reviewed, closed, and merged (PR #18, `502a5f3`). The previous revision was the `mark M8 done`
+  PR's (PR #17), written after M8 merged (PR #16); before it, the `mark M7 done`
   PR's (PR #15), written after M7 merged (PR #13); before that, one per
   milestone back to the `mark M1 done` PR's (PR #2), and before that one written immediately after genesis (repo
   scaffold, `.genesis/` ritual, README, two tests, CI workflow), before any milestone build had begun. Recorded
@@ -48,10 +50,10 @@
 | M6 domain (order desk) | `done` | PR #11 → `bf11c3e` (squash-merged; the PR page shows the same SHA); independent L4 review in four steps, not an approval by a verifier at the last head: one full pass at `3e63cf8` (REQUEST CHANGES, five items, no behaviour defect); fix round 1 at `ce20025`, then a targeted close at `ce20025` (REQUEST CHANGES, two text edits); final edits at `a666e34`, approved by the orchestrator's mechanical check, on the verifier's statement that it would approve after those two edits, with no further verifier pass; see "What M6 adds" below |
 | M7 failure suite | `done` | PR #13 → `b6f0d5c` (squash-merged; the PR page shows the same SHA); independent L4 review in three steps, ending in an APPROVE of the head: one earlier pass stopped by the user before it reported; one full pass at `7bbb0ad` (REQUEST CHANGES, text only, two blocking items); fix round 1 at `3674f8a`, then main merged in (`d94fe74`); a targeted close at `d94fe74` (APPROVE); see "What M7 adds" below |
 | M8 interactive demo | `done` | PR #16 → `53d7ea0` (squash-merged; the PR page shows the same SHA); independent L4 review in four steps, not an approval by a verifier at the last head: one full pass at `c49b5d2` (REQUEST CHANGES, documentation only, no behaviour defect); fix round 1 at `dbf8fb5`; a targeted close at `dbf8fb5` (two prose sentences); final edits at `71e5e31`, approved by the orchestrator's mechanical check, on the verifier's statement that code and tests were clean and only two prose sentences were wrong, with no further verifier pass; see "What M8 adds" below |
-| M9 deliverables | `todo` | designed only |
+| M9 deliverables | `done` | PR #18 → `502a5f3` (squash-merged; the PR page shows the same SHA); independent L4 review in three steps, ending in an APPROVE of the head: one full pass at `4ab10ee` (REQUEST CHANGES, ten sentence-level items, no gate or citation-contradiction defect); fix round 1 at `3895adf`; a targeted close at `3895adf` (APPROVE, no findings); see "What M9 adds" below |
 
 `main` is the genesis base (the plan, tooling config, app shell, two tests, a CI workflow, the README and
-the `.genesis/` ritual) plus sixteen merged PRs (the previous revision said thirteen while listing #1 to #14, a
+the `.genesis/` ritual) plus eighteen merged PRs (an earlier revision said thirteen while listing #1 to #14, a
 miscount): #1, M1 (`lib/contracts/**`, its tests, and
 `.genesis/decisions/0001-contracts.md`); #2, `mark M1 done`, which edited only the two `.genesis/` files
 (`git diff --stat c3eba1d f9cb2eb`); #3, M2 (`app/api/health/**` with its tests,
@@ -70,7 +72,8 @@ done`, which edited the same two `.genesis/` files and one phrase of `.genesis/P
 (`tests/failures/**` and `.genesis/decisions/0007-failures.md`: 12 new files, see "What M7 adds"); #14, the
 `next` 16.4.3 to 16.4.6 upgrade (`bbfc1fe`); #15, `mark M7 done`, which edited only the same two `.genesis/` files
 (`git diff --stat bbfc1fe e888667`); and #16, M8 (`app/**`, `components/order-desk/**` and
-`.genesis/decisions/0008-demo.md`, see "What M8 adds"). `lib/` holds
+`.genesis/decisions/0008-demo.md`, see "What M8 adds"); #17, `mark M8 done`; and #18, M9 (`README.md`, `docs/**`,
+`tests/docs/citations.test.ts` and `.genesis/decisions/0009-deliverables.md`, see "What M9 adds"). `lib/` holds
 `contracts`, `extent`, `ground` and `entail`, and `domains/` holds `order-desk`. The routes are `/` (the M8 demo)
 and `app/api/health`; both are deployed (see "What M2 adds" and "What M8 adds"). The engine directories are `lib/extent`,
 `lib/ground`, `lib/entail` (plus `lib/contracts`), not the house-template names; if a brief says
@@ -146,7 +149,7 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
   contracts (types and structural invariants), the health route that self-checks M1's guard (M2), the
   extent algebra (M3), `lib/ground` (M4) and `lib/entail` (M5), covered in the next sections; M6 added one domain
   and a script that runs it through the engine (see "What M6 adds"); M7 added the failure suite (see "What M7
-  adds"); M8 added the interactive demo (see "What M8 adds"); M9 is `todo`. The plan's own section 8 numbers come
+  adds"); M8 added the interactive demo (see "What M8 adds"); M9 added the deliverables (see "What M9 adds"). The plan's own section 8 numbers come
   from a throwaway model that is not in this repository.
 - `vercel.json` is committed and pinned to `npm ci` / `npm run build`, and since M2 a test pins it:
   `app/api/health/__tests__/vercel-config.test.ts` requires exactly those two keys with exactly those two
@@ -169,7 +172,7 @@ the attribution fix itself. `fc17afd` has no common ancestor with that repositor
 - M1 is the contracts only. When M1 merged, M3 to M5 were `todo`, so nothing about folding evidence into
   extents, propagating bounds, ruling a claim or rechecking a certificate had been built or demonstrated.
   M3, M4 and M5 have since built the extent algebra, the grounding and the ruling and recheck, and M6 a domain
-  that runs through them (see "What M3 adds" to "What M6 adds"); M7 added the failure suite, and M8 the interactive demo; M9 is still `todo`.
+  that runs through them (see "What M3 adds" to "What M6 adds"); M7 added the failure suite, and M8 the interactive demo; M9 has since added the deliverables.
 
 ## What M2 adds, and what was run to check it
 
@@ -665,12 +668,47 @@ it cites a Decision, the ADR's wording is the claim and this file adds nothing t
   path against the live URL is recorded in `docs/WALKTHROUGH.md` by M9, not here. ADR 0008's Status line is stale
   (known gap below).
 
+## What M9 adds, and what was run to check it
+
+`.genesis/decisions/0009-deliverables.md` (ADR 0009) is the record of what M9 decided and left unproven,
+including its falsifiability log for the citations test. This section points at it and records only what was run
+for this revision.
+
+- **What it is.** The deliverables the plan names for M9 and nothing under `lib/`, `domains/`, `scripts/`,
+  `components/`, `app/` or `tests/failures/`: `README.md` (rewritten), `docs/ARCHITECTURE.md`, `docs/THESIS.md`,
+  `docs/WALKTHROUGH.md` (the live click-path record and the 90-second Loom script), `docs/NOTES.md` (the process
+  record), `tests/docs/citations.test.ts` and ADR 0009. `git diff --stat a4e1fea 502a5f3` lists 7 files changed,
+  931 insertions and 47 deletions, and its names are those seven, so `package*.json`, `.genesis/PLAN.md`,
+  `.genesis/DONE.html` and `app/milestones.ts` were left for this bookkeeping PR.
+- **Tests and gates (this author's own runs).** On a clone of `main` at `502a5f3` (the merge commit), `npm ci`,
+  then `env -u AI_AGENT -u CLAUDECODE npm test`: 73 files, 3321 tests, all passed. `main` was 72 files and 3290
+  tests after M8 (the M8 section above); the difference is `tests/docs/citations.test.ts`, which
+  `npx vitest run tests/docs` ran as 1 file, 31 tests, all passed. `npm run typecheck` and `npm run lint` exited
+  0. `docs/THESIS.md` is 295 words by `wc -w` (the test caps it at 300). CI on `502a5f3` (run 45472597352)
+  concluded `success`, as did the PR's checks at `3895adf` before the merge.
+- **The independent verification, recorded in this revision.** The reports are comments on PR #18 and are not in
+  the repository. One full L4 pass at `4ab10ee` returned REQUEST CHANGES: ten sentence-level items, and no gate
+  or citation-contradiction defect. Fix round 1 landed at `3895adf`, and a targeted close at `3895adf` returned
+  APPROVE with no findings. Its claim is narrow: clear of the defects found so far. The close was by a verifier
+  at the head that merged; there was no edit after it.
+- **The live URL.** `/api/health` reported `502a5f3a2926c024b15cc570243c4ef1b499f37f` as its `commit` after the
+  merge, with `status` `ok` and all four contract cases passing. The page footer now reads "All 9 milestones
+  are done." (`progressLine()` in `app/milestones.ts`, which this revision's `done: true` flip drives).
+- **The Next.js patch.** The only one in this repository's history is PR #14 (`bbfc1fe`), recorded above;
+  M9 changed no dependency.
+- **What this does not show.** The Loom is not recorded: it is the user's own step, from `docs/WALKTHROUGH.md`
+  section 2. The click path in the walkthrough was checked by hand once by the orchestrating agent and is
+  attributed there as such. The citations test cannot check that a cited test asserts what its sentence says.
+
 ## Known gaps in this repository's own record, stated up front rather than discovered later
 
 - `.genesis/decisions/` holds eight decision records, `0001-contracts.md` (M1), `0002-deploy.md` (M2),
   `0003-extent.md` (M3), `0004-ground.md` (M4), `0005-entail.md` (M5), `0006-order-desk.md` (M6),
   `0007-failures.md` (M7) and `0008-demo.md` (M8), each written by the milestone that made the decisions it records (an ADR is written
-  by the milestone that made them). M9 has none yet. All eight `Status` lines are out of
+  by the milestone that made them). M9 added a ninth, `0009-deliverables.md`, whose `Status` line reads
+  "proposed ... not yet reviewed by an independent L4 pass" although M9 has since been approved, and which this
+  revision leaves as it is, so all nine `Status` lines are out of date, and the sentences below about the first
+  eight say what each needs. All eight of those are out of
   date now that each of those milestones has had its independent pass. ADR 0001 and ADR 0002 still read
   "proposed ... not yet verified by an independent L4 pass". **ADR 0003's Status line (its lines 4 to 6)
   still says "this version has not been re-verified"**: the full line reads "proposed — written by the
@@ -738,7 +776,8 @@ it cites a Decision, the ADR's wording is the claim and this file adds nothing t
   check" cell read "deployed URL renders the same Brief as the last step of `npm run demo:order-desk`" while
   `PLAN.md` M8 check (3) said step 5; the `mark M8 done` PR changed the cell to say step 5, the user having
   approved the amendment on 2026-11-09.
-- **Prose outside the bookkeeping exception is out of date and was not edited.** `README.md` still has the
+- **Prose outside the bookkeeping exception is out of date and was not edited.** (`README.md` is no longer in
+  this entry: M9 rewrote it, PR #18; the next sentences describe what it said before that.) `README.md` had the
   heading "Status: in progress, nothing built yet" and says "genesis scaffold only", "two small tests",
   "no engine code and no domain logic", "all nine milestones are `todo`" and that the `demo:order-desk` script
   "does not exist until milestone M6, so it fails today" (it exists since M6 merged and exits 0); its `Live:` line is the one
