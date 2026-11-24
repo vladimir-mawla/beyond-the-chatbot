@@ -93,13 +93,13 @@
         <tr><td>M5</td><td>Entail: claim, ruling, brief, render, recheck (<code>lib/entail</code>)</td><td>BUILD</td><td><code>npm test -- lib/entail</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M6</td><td>Domain: the order desk (<code>domains/order-desk</code>)</td><td>INTEGRATE</td><td><code>npm run demo:order-desk</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M7</td><td>The failure suite (10 cases)</td><td>VERIFY</td><td><code>npm test -- failures</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
-        <tr><td>M8</td><td>Interactive demo</td><td>BUILD</td><td>deployed URL renders the same Brief as the last step of <code>npm run demo:order-desk</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
+        <tr><td>M8</td><td>Interactive demo</td><td>BUILD</td><td>deployed URL renders the same Brief as step 5 of <code>npm run demo:order-desk</code></td><td>L1, L4</td><td><span class="pill ok">done</span></td></tr>
         <tr><td>M9</td><td>Deliverables</td><td>RELEASE</td><td><code>git clone ... &amp;&amp; npm ci &amp;&amp; npm run typecheck &amp;&amp; npm test &amp;&amp; npm run build</code></td><td>L1, L4</td><td><span class="pill todo">todo</span></td></tr>
       </tbody>
     </table>
     <p class="note">Total token budget = 9 milestones × 150000. Update <span class="pill wip">wip</span> /
        <span class="pill ok">done</span> as loops complete — a milestone only flips to <code>done</code>
-       after independent (L4) verification, never by the building agent marking its own work. M1 to M7 are
+       after independent (L4) verification, never by the building agent marking its own work. M1 to M8 are
        <code>done</code> (M1: PR #1, independent L4 APPROVE on the fourth review, after three fix rounds;
        M2: PR #3, independent L4 APPROVE in round 2, after one fix round; M3: PR #5, independent L4 APPROVE
        on the third review, after two fix rounds; M4: PR #7, independent L4 APPROVE at the fourth review, a
@@ -115,7 +115,11 @@
        that it would approve after those two edits; M7: PR #13, one earlier L4 pass was stopped by the user before
        it reported; one full L4 pass at <code>7bbb0ad</code> (REQUEST CHANGES, text only, two blocking items); fix
        round 1 at <code>3674f8a</code>, then main merged in (<code>d94fe74</code>); a targeted close at
-       <code>d94fe74</code> (APPROVE)); the other two rows are still <code>todo</code>.
+       <code>d94fe74</code> (APPROVE); M8: PR #16, one full L4 pass at <code>c49b5d2</code> (REQUEST CHANGES,
+       documentation only, no behaviour defect); fix round 1 at <code>dbf8fb5</code>, then a targeted close at
+       <code>dbf8fb5</code> (two prose sentences); final edits at <code>71e5e31</code>, approved by the
+       orchestrator's mechanical check, on the verifier's statement that code and tests were clean and only
+       two prose sentences were wrong); the other row is still <code>todo</code>.
        This table is mirrored in <code>PLAN.md</code> (§6) for the agent to parse.</p>
   </div>
 
